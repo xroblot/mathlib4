@@ -585,11 +585,14 @@ Most explicitly, every element is the complement of a supremum of indepedendent 
 -/
 
 /-- This lemma is probably not as general as it can be. -/
-protected lemma sSupIndep.insert {a : α} {s : Set α} (hs : sSupIndep s) (hs' : ∀ b ∈ s, IsAtom b)
-    (ha : Disjoint a (sSup s)) : sSupIndep (insert a s) := by
+protected lemma sSupIndep.insert [ComplementedLattice α] {a : α} {s : Set α} (hs : sSupIndep s)
+    (has : Disjoint a (sSup s)) (ha : IsAtom a) (hs' : ∀ b ∈ s, IsAtom b) :
+    sSupIndep (insert a s) := by
   rintro b (rfl | hb)
-  · simpa using ha.mono_right <| sSup_le_sSup diff_subset
-  · rw [← (hs' _ hb).not_le_iff_disjoint]
+  · simpa using has.mono_right <| sSup_le_sSup diff_subset
+  · obtain ⟨c, hac⟩ := exists_isCompl a
+    
+    rw [← (hs' _ hb).not_le_iff_disjoint]
     rintro hba
     have := hs hb
     sorry -- Is this true?
@@ -597,7 +600,7 @@ protected lemma sSupIndep.insert {a : α} {s : Set α} (hs : sSupIndep s) (hs' :
 -- TODO: Possibly generalisable to complemented atomic lattices
 /-- In an atomistic lattice, every element `b` has a complement of the form `sSup s`, where each
 element of `s` is an atom. See also `complementedLattice_of_sSup_atoms_eq_top`. -/
-theorem exists_sSupIndep_eq_sSup_isAtom [IsAtomistic α] (b : α) :
+theorem exists_sSupIndep_eq_sSup_isAtom [ComplementedLattice α] (b : α) :
     ∃ s : Set α, sSupIndep s ∧ b = sSup s ∧ ∀ ⦃a⦄, a ∈ s → IsAtom a := by
   have zorn := zorn_subset
     (S := {s : Set α | sSupIndep s ∧ sSup s ≤ b ∧ ∀ a ∈ s, IsAtom a})
