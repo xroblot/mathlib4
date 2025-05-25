@@ -591,7 +591,6 @@ protected lemma sSupIndep.insert [ComplementedLattice α] {a : α} {s : Set α} 
   rintro b (rfl | hb)
   · simpa using has.mono_right <| sSup_le_sSup diff_subset
   · obtain ⟨c, hac⟩ := exists_isCompl a
-    
     rw [← (hs' _ hb).not_le_iff_disjoint]
     rintro hba
     have := hs hb
