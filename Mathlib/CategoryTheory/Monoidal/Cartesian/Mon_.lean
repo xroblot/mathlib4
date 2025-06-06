@@ -50,8 +50,8 @@ instance : CartesianMonoidalCategory (Mon_ C) where
   snd M N := .mk (snd M.X N.X) (by simp [toUnit_unique _ (𝟙 _)])
   tensorProductIsBinaryProduct M N :=
     BinaryFan.IsLimit.mk _ (fun {T} f g ↦ .mk (lift f.hom g.hom)
-      (by simp; ext <;> simp [toUnit_unique _ (𝟙 _)])
-      (by simp; ext <;> simp [toUnit_unique _ (𝟙 _), ← tensor_comp_assoc]))
+      (by dsimp; ext <;> simp [toUnit_unique _ (𝟙 _)])
+      (by dsimp; ext <;> simp [toUnit_unique _ (𝟙 _), ← tensor_comp_assoc]))
       (by aesop_cat) (by aesop_cat) (by aesop_cat)
   fst_def M N := by ext; simp [fst_def]; congr
   snd_def M N := by ext; simp [snd_def]; congr
