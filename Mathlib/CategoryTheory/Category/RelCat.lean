@@ -33,6 +33,7 @@ def RelCat :=
   Type u
 
 namespace RelCat
+variable {X Y Z : RelCat.{u}}
 
 instance inhabited : Inhabited RelCat := by unfold RelCat; infer_instance
 
@@ -51,17 +52,16 @@ instance instLargeCategory : LargeCategory RelCat where
 
 namespace Hom
 
-@[ext] lemma ext {X Y : RelCat} (f g : X ⟶ Y) (h : f.rel = g.rel) : f = g := by
+@[ext] lemma ext (f g : X ⟶ Y) (h : f.rel = g.rel) : f = g := by
   obtain ⟨R⟩ := f; obtain ⟨S⟩ := g; congr
 
 @[simp] protected theorem rel_id (X : RelCat.{u}) : rel (𝟙 X) = .id := rfl
 
-@[simp] protected theorem rel_comp {X Y Z : RelCat} (f : X ⟶ Y) (g : Y ⟶ Z) :
-    (f ≫ g).rel = f.rel.comp g.rel := rfl
+@[simp] protected theorem rel_comp (f : X ⟶ Y) (g : Y ⟶ Z) : (f ≫ g).rel = f.rel.comp g.rel := rfl
 
 theorem rel_id_apply₂ (X : RelCat) (x y : X) : x ~[rel (𝟙 X)] y ↔ x = y := .rfl
 
-theorem rel_comp_apply₂ {X Y Z : RelCat} (f : X ⟶ Y) (g : Y ⟶ Z) (x : X) (z : Z) :
+theorem rel_comp_apply₂ (f : X ⟶ Y) (g : Y ⟶ Z) (x : X) (z : Z) :
     x ~[(f ≫ g).rel] z ↔ ∃ y, x ~[f.rel] y ∧ y ~[g.rel] z := .rfl
 
 end Hom

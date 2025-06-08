@@ -44,6 +44,10 @@ namespace Rel
 variable {R r₁ r₂ : Rel α β} {S : Rel β γ} {s s₁ s₂ : Set α} {t t₁ t₂ : Set β} {u : Set γ}
   {a a₁ a₂ : α} {b : β} {c : γ}
 
+/-- Notation for apply a relation `R : Rel α β` to `a : α`, `b : β`, scoped to the `Rel` namespace.
+
+Since `Rel α β := Set (α × β)`, `a ~[R] b` is simply notation for `(a, b) ∈ R`, but this should
+be considered an implementation detail. -/
 scoped notation:50 a:50 " ~[" R "] " b:50 => (a, b) ∈ R
 
 variable (R) in
