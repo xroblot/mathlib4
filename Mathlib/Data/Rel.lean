@@ -250,6 +250,7 @@ protected lemma irrefl [R.IsIrrefl] : ¬ a ~[R] a := irrefl_of (· ~[R] ·) _
 
 instance {R : α → α → Prop} [IsIrrefl α R] : Rel.IsIrrefl {(a, b) | R a b} := ‹_›
 
+variable (R) in
 /-- A relation `R` on a type `α` is well-founded if all elements of `α` are accessible within `R`.
 -/
 abbrev IsWellFounded : Prop := WellFounded (· ~[R] ·)
