@@ -204,7 +204,7 @@ def IsInduced (G' : Subgraph G) : Prop :=
   ⟨coe_adj_sub _ _ _, hG' a.2 b.2⟩
 
 /-- `H.support` is the set of vertices that form edges in the subgraph `H`. -/
-def support (H : Subgraph G) : Set V := Rel.dom H.Adj
+def support (H : Subgraph G) : Set V := Rel.dom {(v, w) | H.Adj v w}
 
 theorem mem_support (H : Subgraph G) {v : V} : v ∈ H.support ↔ ∃ w, H.Adj v w := Iff.rfl
 
@@ -569,7 +569,7 @@ def _root_.SimpleGraph.toSubgraph (H : SimpleGraph V) (h : H ≤ G) : G.Subgraph
   symm := H.symm
 
 theorem support_mono {H H' : Subgraph G} (h : H ≤ H') : H.support ⊆ H'.support :=
-  Rel.dom_mono h.2
+  Rel.dom_mono fun _ hvw ↦ h.2 hvw
 
 theorem _root_.SimpleGraph.toSubgraph.isSpanning (H : SimpleGraph V) (h : H ≤ G) :
     (toSubgraph H h).IsSpanning :=
