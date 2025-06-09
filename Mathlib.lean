@@ -5164,7 +5164,6 @@ import Mathlib.RingTheory.HahnSeries.Basic
 import Mathlib.RingTheory.HahnSeries.HEval
 import Mathlib.RingTheory.HahnSeries.Lex
 import Mathlib.RingTheory.HahnSeries.Multiplication
-import Mathlib.RingTheory.HahnSeries.Order
 import Mathlib.RingTheory.HahnSeries.PowerSeries
 import Mathlib.RingTheory.HahnSeries.Summable
 import Mathlib.RingTheory.HahnSeries.Valuation
