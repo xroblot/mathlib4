@@ -98,6 +98,10 @@ open MonoidalCategory
 
 variable {A B C D : (CommAlgCat.{u} R)ᵒᵖ}
 
+@[simp] lemma coe_tensorObj_unop : (A ⊗ B).unop = A.unop ⊗[R] B.unop := rfl
+
+@[simp] lemma coe_tensorUnit_unop : (𝟙_ (CommAlgCat.{u} R)ᵒᵖ).unop = R := rfl
+
 @[simp] lemma rightWhisker_hom (f : A ⟶ B) :
     (f ▷ C).unop.hom = Algebra.TensorProduct.map f.unop.hom (.id _ _) := rfl
 
@@ -121,7 +125,7 @@ variable {A B C D : (CommAlgCat.{u} R)ᵒᵖ}
     (f ⊗ g).unop.hom = Algebra.TensorProduct.map f.unop.hom g.unop.hom := rfl
 
 @[simp] lemma toUnit_unop_hom (A : (CommAlgCat R)ᵒᵖ) :
-    (toUnit A).unop.hom = algebraMap R A.unop := rfl
+    (toUnit A).unop.hom = Algebra.ofId R A.unop := rfl
 
 @[simp] lemma fst_unop_hom (A B : (CommAlgCat R)ᵒᵖ) :
     (fst A B).unop.hom = Algebra.TensorProduct.includeLeft := rfl
