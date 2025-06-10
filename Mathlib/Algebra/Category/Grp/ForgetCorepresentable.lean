@@ -71,7 +71,7 @@ def Grp.coyonedaObjIsoForget :
 
 /-- The forget functor `CommGrp.{u} ⥤ Type u` is corepresentable. -/
 def CommGrp.coyonedaObjIsoForget :
-    CategoryTheory.coyoneda.obj (op (of (ULift.{u} (Multiplicative ℤ)))) ≅ forget CommGrp.{u} :=
+    coyoneda.obj (op (of (ULift.{u} (Multiplicative ℤ)))) ≅ forget CommGrp.{u} :=
   NatIso.ofComponents fun M ↦
     (ConcreteCategory.homEquiv.trans (uliftZPowersHom M.carrier).symm).toIso
 
@@ -83,7 +83,7 @@ def AddGrp.coyonedaObjIsoForget :
 
 /-- The forget functor `AddCommGrp.{u} ⥤ Type u` is corepresentable. -/
 def AddCommGrp.coyonedaObjIsoForget :
-    CategoryTheory.coyoneda.obj (op (of (ULift.{u} ℤ))) ≅ forget AddCommGrp.{u} :=
+    coyoneda.obj (op (of (ULift.{u} ℤ))) ≅ forget AddCommGrp.{u} :=
   NatIso.ofComponents fun M ↦
     (ConcreteCategory.homEquiv.trans (uliftZMultiplesHom M.carrier).symm).toIso
 

@@ -4,10 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import Mathlib.Algebra.Group.PUnit
-import Mathlib.Algebra.Group.Pi.Lemmas
 import Mathlib.Algebra.Group.TypeTags.Hom
 import Mathlib.Algebra.Group.ULift
 import Mathlib.CategoryTheory.Elementwise
+import Mathlib.CategoryTheory.Functor.ReflectsIso.Basic
 
 /-!
 # Category instances for `Monoid`, `AddMonoid`, `CommMonoid`, and `AddCommMmonoid`.
@@ -23,10 +23,9 @@ along with the relevant forgetful functors between them.
 
 assert_not_exists MonoidWithZero
 
-open CategoryTheory Opposite
-
 universe u v
 
+open CategoryTheory 
 
 /-- The category of additive groups and group morphisms. -/
 structure AddMonCat : Type (u + 1) where
