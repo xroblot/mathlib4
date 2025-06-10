@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yaël Dillies, Andrew Yang
 -/
 import Mathlib.Algebra.Category.MonCat.Basic
+import Mathlib.Algebra.Group.Pi.Lemmas
 import Mathlib.CategoryTheory.Yoneda
 
 /-!
@@ -35,7 +36,7 @@ def CommMonCat.coyonedaForget :
 /-- The coyoneda embedding of `Type` into `CommMonCat`-valued presheaves of commutative monoids. -/
 @[to_additive (attr := simps)
 "The coyoneda embedding of `Type` into `AddCommMonCat`-valued presheaves of commutative monoids."]
-def CommMonCat.coyonedaRight : (Type u)ᵒᵖ ⥤ CommMonCat.{u} ⥤ CommMonCat.{u} where
+def CommMonCat.pi : (Type u)ᵒᵖ ⥤ CommMonCat.{u} ⥤ CommMonCat.{u} where
   obj X := { obj G := of <| X.unop → G
              map f := ofHom <| Pi.monoidHom fun i ↦ f.hom.comp <| Pi.evalMonoidHom _ i }
   map f := { app N := ofHom <| Pi.monoidHom fun i ↦ Pi.evalMonoidHom _ <| f.unop i }

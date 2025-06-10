@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Yaël Dillies, Andrew Yang
 -/
 import Mathlib.Algebra.Category.Grp.Basic
+import Mathlib.Algebra.Group.Pi.Lemmas
 import Mathlib.CategoryTheory.Yoneda
 
 /-!
@@ -35,7 +36,7 @@ def CommGrp.coyonedaForget :
 /-- The coyoneda embedding of `Type` into `CommGrp`-valued presheaves of commutative groups. -/
 @[to_additive (attr := simps)
 "The coyoneda embedding of `Type` into `AddCommGrp`-valued presheaves of commutative groups."]
-def CommGrp.coyonedaRight : (Type u)ᵒᵖ ⥤ CommGrp.{u} ⥤ CommGrp.{u} where
+def CommGrp.pi : (Type u)ᵒᵖ ⥤ CommGrp.{u} ⥤ CommGrp.{u} where
   obj X := { obj G := of <| X.unop → G
              map f := ofHom <| Pi.monoidHom fun i ↦ f.hom.comp <| Pi.evalMonoidHom _ i }
   map f := { app G := ofHom <| Pi.monoidHom fun i ↦ Pi.evalMonoidHom _ <| f.unop i }
