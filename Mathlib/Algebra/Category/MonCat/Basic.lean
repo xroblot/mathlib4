@@ -25,7 +25,7 @@ assert_not_exists MonoidWithZero
 
 universe u v
 
-open CategoryTheory 
+open CategoryTheory
 
 /-- The category of additive groups and group morphisms. -/
 structure AddMonCat : Type (u + 1) where
