@@ -25,7 +25,7 @@ lemma irreducible_mem_submonoidClosure_subset : {p ∈ Submonoid.closure S | Irr
   refine fun x hx ↦
       Submonoid.closure_induction (s := S) (motive := fun x _ ↦ (Irreducible x → x ∈ S))
       (fun _ hx _ ↦ hx) (by simp) (fun a b _ _ ha hb h ↦ ?_) hx.1 hx.2
-  obtain rfl | rfl := h.eq_one_or_eq_one rfl <;> simp_all
+  obtain rfl | rfl := h.eq_one_or_eq_one <;> simp_all
 
 /-- Irreducible elements lie in all sets generating a salient monoid. -/
 @[to_additive "Irreducible elements lie in all sets generating a salient monoid."]
@@ -85,7 +85,8 @@ lemma Submonoid.closure_irreducible : Submonoid.closure {p : M | Irreducible p} 
       rw [hr', Set.singleton_subset_iff]
       refine mul_mem ?_ ?_ <;> refine prod_mem _ fun s hs ↦ pow_mem (subset_closure ?_) _ <;>
         rw [← hr'] <;> simpa using hs
-    specialize hSmax (y := S \ {r}) (by simp [this, hSgen]) Finset.sdiff_subset
+    specialize hSmax (y := S \ {r}) (by simp [Submonoid.closure_sdiff_eq_closure this, hSgen])
+      Finset.sdiff_subset
     simpa using hSmax hrS
   | 1 =>
     simp only [hr, pow_one, mul_assoc, eq_comm (a := r), mul_eq_left, LeftCancelMonoid.mul_eq_one,
