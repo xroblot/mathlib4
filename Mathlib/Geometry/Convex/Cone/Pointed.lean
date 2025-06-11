@@ -33,15 +33,15 @@ open Function
 
 section Definitions
 
-variable [Semiring R] [PartialOrder R] [IsOrderedRing R]
-variable [AddCommMonoid E] [Module R E]
+variable [Semiring R] [PartialOrder R] [IsOrderedRing R] [AddCommMonoid E] [Module R E]
+  {C₁ C₂ : PointedCone R E}
 
 /-- Every pointed cone is a convex cone. -/
 @[coe]
-def toConvexCone (S : PointedCone R E) : ConvexCone R E where
-  carrier := S
-  smul_mem' c hc _ hx := S.smul_mem ⟨c, le_of_lt hc⟩ hx
-  add_mem' _ hx _ hy := S.add_mem hx hy
+def toConvexCone (C : PointedCone R E) : ConvexCone R E where
+  carrier := C
+  smul_mem' c hc _ hx := C.smul_mem ⟨c, le_of_lt hc⟩ hx
+  add_mem' _ hx _ hy := C.add_mem hx hy
 
 instance : Coe (PointedCone R E) (ConvexCone R E) where
   coe := toConvexCone
@@ -50,47 +50,45 @@ theorem toConvexCone_injective : Injective ((↑) : PointedCone R E → ConvexCo
   fun _ _ => by simp [toConvexCone]
 
 @[simp]
-theorem pointed_toConvexCone (S : PointedCone R E) : (S : ConvexCone R E).Pointed := by
+theorem pointed_toConvexCone (C : PointedCone R E) : (C : ConvexCone R E).Pointed := by
   simp [toConvexCone, ConvexCone.Pointed]
 
-@[simp] lemma mem_toConvexCone {S : PointedCone R E} {x : E} : x ∈ S.toConvexCone ↔ x ∈ S := .rfl
+@[simp] lemma mem_toConvexCone {C : PointedCone R E} {x : E} : x ∈ C.toConvexCone ↔ x ∈ C := .rfl
 
-@[ext]
-theorem ext {S T : PointedCone R E} (h : ∀ x, x ∈ S ↔ x ∈ T) : S = T :=
-  SetLike.ext h
+@[ext] lemma ext (h : ∀ x, x ∈ C₁ ↔ x ∈ C₂) : C₁ = C₂ := SetLike.ext h
 
-lemma convex (S : PointedCone R E) : Convex R (S : Set E) := S.toConvexCone.convex
+lemma convex (C : PointedCone R E) : Convex R (C : Set E) := C.toConvexCone.convex
 
-instance instZero (S : PointedCone R E) : Zero S :=
-  ⟨0, S.zero_mem⟩
+instance instZero (C : PointedCone R E) : Zero C :=
+  ⟨0, C.zero_mem⟩
 
 /-- The `PointedCone` constructed from a pointed `ConvexCone`. -/
-def _root_.ConvexCone.toPointedCone {S : ConvexCone R E} (hS : S.Pointed) : PointedCone R E where
-  carrier := S
-  add_mem' hx hy := S.add_mem hx hy
-  zero_mem' := hS
+def _root_.ConvexCone.toPointedCone {C : ConvexCone R E} (hC : C.Pointed) : PointedCone R E where
+  carrier := C
+  add_mem' hx hy := C.add_mem hx hy
+  zero_mem' := hC
   smul_mem' := fun ⟨c, hc⟩ x hx => by
     simp_rw [SetLike.mem_coe]
     rcases eq_or_lt_of_le hc with hzero | hpos
-    · unfold ConvexCone.Pointed at hS
-      convert hS
+    · unfold ConvexCone.Pointed at hC
+      convert hC
       simp [← hzero]
     · apply ConvexCone.smul_mem
       · convert hpos
       · exact hx
 
 @[simp]
-lemma _root_.ConvexCone.mem_toPointedCone {S : ConvexCone R E} (hS : S.Pointed) (x : E) :
-    x ∈ S.toPointedCone hS ↔ x ∈ S :=
+lemma _root_.ConvexCone.mem_toPointedCone {C : ConvexCone R E} (hC : C.Pointed) (x : E) :
+    x ∈ C.toPointedCone hC ↔ x ∈ C :=
   Iff.rfl
 
 @[simp, norm_cast]
-lemma _root_.ConvexCone.coe_toPointedCone {S : ConvexCone R E} (hS : S.Pointed) :
-    S.toPointedCone hS = S :=
+lemma _root_.ConvexCone.coe_toPointedCone {C : ConvexCone R E} (hC : C.Pointed) :
+    C.toPointedCone hC = C :=
   rfl
 
 instance canLift : CanLift (ConvexCone R E) (PointedCone R E) (↑) ConvexCone.Pointed where
-  prf S hS := ⟨S.toPointedCone hS, rfl⟩
+  prf C hC := ⟨C.toPointedCone hC, rfl⟩
 
 end Definitions
 
@@ -114,48 +112,48 @@ between pointed cones induced from linear maps between the ambient modules that 
 -/
 
 /-- The image of a pointed cone under a `R`-linear map is a pointed cone. -/
-def map (f : E →ₗ[R] F) (S : PointedCone R E) : PointedCone R F :=
-  Submodule.map (f : E →ₗ[R≥0] F) S
+def map (f : E →ₗ[R] F) (C : PointedCone R E) : PointedCone R F :=
+  Submodule.map (f : E →ₗ[R≥0] F) C
 
 @[simp, norm_cast]
-theorem toConvexCone_map (S : PointedCone R E) (f : E →ₗ[R] F) :
-    (S.map f : ConvexCone R F) = (S : ConvexCone R E).map f :=
+theorem toConvexCone_map (C : PointedCone R E) (f : E →ₗ[R] F) :
+    (C.map f : ConvexCone R F) = (C : ConvexCone R E).map f :=
   rfl
 
 @[simp, norm_cast]
-theorem coe_map (S : PointedCone R E) (f : E →ₗ[R] F) : (S.map f : Set F) = f '' S :=
+theorem coe_map (C : PointedCone R E) (f : E →ₗ[R] F) : (C.map f : Set F) = f '' C :=
   rfl
 
 @[simp]
-theorem mem_map {f : E →ₗ[R] F} {S : PointedCone R E} {y : F} : y ∈ S.map f ↔ ∃ x ∈ S, f x = y :=
+theorem mem_map {f : E →ₗ[R] F} {C : PointedCone R E} {y : F} : y ∈ C.map f ↔ ∃ x ∈ C, f x = y :=
   Iff.rfl
 
-theorem map_map (g : F →ₗ[R] G) (f : E →ₗ[R] F) (S : PointedCone R E) :
-    (S.map f).map g = S.map (g.comp f) :=
-  SetLike.coe_injective <| Set.image_image g f S
+theorem map_map (g : F →ₗ[R] G) (f : E →ₗ[R] F) (C : PointedCone R E) :
+    (C.map f).map g = C.map (g.comp f) :=
+  SetLike.coe_injective <| Set.image_image g f C
 
 @[simp]
-theorem map_id (S : PointedCone R E) : S.map LinearMap.id = S :=
+theorem map_id (C : PointedCone R E) : C.map LinearMap.id = C :=
   SetLike.coe_injective <| Set.image_id _
 
 /-- The preimage of a convex cone under a `R`-linear map is a convex cone. -/
-def comap (f : E →ₗ[R] F) (S : PointedCone R F) : PointedCone R E :=
-  Submodule.comap (f : E →ₗ[R≥0] F) S
+def comap (f : E →ₗ[R] F) (C : PointedCone R F) : PointedCone R E :=
+  Submodule.comap (f : E →ₗ[R≥0] F) C
 
 @[simp, norm_cast]
-theorem coe_comap (f : E →ₗ[R] F) (S : PointedCone R F) : (S.comap f : Set E) = f ⁻¹' S :=
+theorem coe_comap (f : E →ₗ[R] F) (C : PointedCone R F) : (C.comap f : Set E) = f ⁻¹' C :=
   rfl
 
 @[simp]
-theorem comap_id (S : PointedCone R E) : S.comap LinearMap.id = S :=
+theorem comap_id (C : PointedCone R E) : C.comap LinearMap.id = C :=
   rfl
 
-theorem comap_comap (g : F →ₗ[R] G) (f : E →ₗ[R] F) (S : PointedCone R G) :
-    (S.comap g).comap f = S.comap (g.comp f) :=
+theorem comap_comap (g : F →ₗ[R] G) (f : E →ₗ[R] F) (C : PointedCone R G) :
+    (C.comap g).comap f = C.comap (g.comp f) :=
   rfl
 
 @[simp]
-theorem mem_comap {f : E →ₗ[R] F} {S : PointedCone R F} {x : E} : x ∈ S.comap f ↔ f x ∈ S :=
+theorem mem_comap {f : E →ₗ[R] F} {C : PointedCone R F} {x : E} : x ∈ C.comap f ↔ f x ∈ C :=
   Iff.rfl
 
 end Maps
