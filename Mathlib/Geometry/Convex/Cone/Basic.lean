@@ -40,7 +40,7 @@ assert_not_exists TopologicalSpace Real Cardinal
 
 open Set LinearMap Pointwise
 
-variable {𝕜 R M N O : Type*}
+variable {𝕜 R G M N O : Type*}
 
 /-! ### Definition of `ConvexCone` and basic properties -/
 
@@ -290,13 +290,13 @@ end AddCommMonoid
 
 section AddCommGroup
 
-variable [AddCommGroup M] [SMul R M] {C C₁ C₂ : ConvexCone R M}
+variable [AddCommGroup G] [SMul R G] {C C₁ C₂ : ConvexCone R G}
 
 /-- A convex cone is flat if it contains some nonzero vector `x` and its opposite `-x`. -/
-def Flat (C : ConvexCone R M) : Prop := ∃ x ∈ C, x ≠ (0 : M) ∧ -x ∈ C
+def Flat (C : ConvexCone R G) : Prop := ∃ x ∈ C, x ≠ (0 : G) ∧ -x ∈ C
 
 /-- A convex cone is salient if it doesn't include `x` and `-x` for any nonzero `x`. -/
-def Salient (C : ConvexCone R M) : Prop := ∀ x ∈ C, x ≠ (0 : M) → -x ∉ C
+def Salient (C : ConvexCone R G) : Prop := ∀ x ∈ C, x ≠ (0 : G) → -x ∉ C
 
 theorem salient_iff_not_flat : C.Salient ↔ ¬ C.Flat := by simp [Salient, Flat]
 
@@ -318,13 +318,13 @@ theorem Blunt.salient : C.Blunt → C.Salient := by
   exact mt Flat.pointed
 
 /-- A pointed convex cone defines a preorder. -/
-def toPreorder (C : ConvexCone R M) (h₁ : C.Pointed) : Preorder M where
+def toPreorder (C : ConvexCone R G) (h₁ : C.Pointed) : Preorder G where
   le x y := y - x ∈ C
   le_refl x := by rw [sub_self x]; exact h₁
   le_trans x y z xy zy := by simpa using add_mem zy xy
 
 /-- A pointed and salient cone defines a partial order. -/
-def toPartialOrder (C : ConvexCone R M) (h₁ : C.Pointed) (h₂ : C.Salient) : PartialOrder M :=
+def toPartialOrder (C : ConvexCone R G) (h₁ : C.Pointed) (h₂ : C.Salient) : PartialOrder G :=
   { toPreorder C h₁ with
     le_antisymm := by
       intro a b ab ba
@@ -335,9 +335,9 @@ def toPartialOrder (C : ConvexCone R M) (h₁ : C.Pointed) (h₂ : C.Salient) : 
       exact H ba }
 
 /-- A pointed and salient cone defines an `IsOrderedAddMonoid`. -/
-lemma to_isOrderedAddMonoid (C : ConvexCone R M) (h₁ : C.Pointed) (h₂ : C.Salient) :
+lemma to_isOrderedAddMonoid (C : ConvexCone R G) (h₁ : C.Pointed) (h₂ : C.Salient) :
     let _ := toPartialOrder C h₁ h₂
-    IsOrderedAddMonoid M :=
+    IsOrderedAddMonoid G :=
   let _ := toPartialOrder C h₁ h₂
   { add_le_add_left := by
       intro a b hab c
