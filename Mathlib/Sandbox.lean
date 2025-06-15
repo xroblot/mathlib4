@@ -2,6 +2,30 @@ import Mathlib
 
 open nonZeroDivisors NumberField
 
+-- theorem FractionalIdeal.dual_one_ne_zero (A K : Type*) {L B : Type*} [CommRing A] [Field K]
+--     [CommRing B] [Field L] [Algebra A K] [Algebra B L] [Algebra A B] [Algebra K L] [Algebra A L]
+--     [IsScalarTower A K L] [IsScalarTower A B L] [IsDomain A] [IsFractionRing A K]
+--     [FiniteDimensional K L] [Algebra.IsSeparable K L] [IsIntegralClosure B A L]
+--     [IsFractionRing B L] [IsIntegrallyClosed A] [IsDedekindDomain B] :
+--     dual A K (1 : FractionalIdeal B⁰ L) ≠ 0 := by simp
+
+theorem differentIdeal_ne_zero (A K L B: Type*) [CommRing A] [Field K]
+    [CommRing B] [Field L] [Algebra A K] [Algebra B L] [Algebra A B] [Algebra K L] [Algebra A L]
+    [IsScalarTower A K L] [IsScalarTower A B L] [IsDomain A] [IsFractionRing A K]
+    [FiniteDimensional K L] [Algebra.IsSeparable K L] [IsIntegralClosure B A L]
+    [IsIntegrallyClosed A] [IsDedekindDomain B] [IsFractionRing B L] [NoZeroSMulDivisors A B] :
+    differentIdeal A B ≠ 0 := by
+  rw [← (FractionalIdeal.coeIdeal_injective (R := B) (K := L)).ne_iff]
+  simp [coeIdeal_differentIdeal A K]
+
+theorem LinearMap.BilinForm.dualBasis_eq_iff {V : Type*} {K : Type*} [Field K] [AddCommGroup V]
+    [Module K V] {ι : Type*} [DecidableEq ι] [Finite ι] (B : LinearMap.BilinForm K V)
+    (hB : B.Nondegenerate) (b : Basis ι K V) (v : ι → V) :
+    B.dualBasis hB b = v ↔ ∀ i j, B (v i) (b j) = if j = i then 1 else 0 :=
+  ⟨fun h _ _ ↦ by rw [← h, apply_dualBasis_left],
+    fun h ↦ funext fun _ ↦ (B.dualBasis hB b).ext_elem_iff.mpr fun _ ↦ by
+      rw [dualBasis_repr_apply, dualBasis_repr_apply, apply_dualBasis_left, h]⟩
+
 /-- Doc. -/
 noncomputable def IntermediateField.LinearDisjoint.basis_of_basis_right {F : Type*} {E : Type*}
     [Field F] [Field E] [Algebra F E] {A B : IntermediateField F E} [FiniteDimensional F A]
@@ -22,17 +46,6 @@ theorem IntermediateField.LinearDisjoint.basis_of_basis_right_apply {F : Type*}
     [Finite ι] (b : Basis ι F B) (i : ι) :
     h₁.basis_of_basis_right h₂ b i = algebraMap B E (b i) := by
   simp [basis_of_basis_right]
-
-#exit
-    -- have : Fintype ι := Fintype.ofFinite ι
-    -- let b₁ : ι → M := algebraMap L₂ M ∘ b
-    refine basisOfLinearIndependentOfCardEqFinrank (b := b₁) ?_ ?_
-    · unfold b₁
-      have := b.linearIndependent
-      exact IntermediateField.LinearDisjoint.linearIndependent_right' h₁ b.linearIndependent
-    · rw [← Module.finrank_eq_card_basis b]
-      have := IntermediateField.LinearDisjoint.finrank_sup h₁
-      rw [h₂] at this
 
 /-- Doc -/
 noncomputable def Basis.traceDual {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
