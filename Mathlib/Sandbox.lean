@@ -2,6 +2,8 @@ import Mathlib
 
 open nonZeroDivisors NumberField
 
+
+
 -- theorem FractionalIdeal.dual_one_ne_zero (A K : Type*) {L B : Type*} [CommRing A] [Field K]
 --     [CommRing B] [Field L] [Algebra A K] [Algebra B L] [Algebra A B] [Algebra K L] [Algebra A L]
 --     [IsScalarTower A K L] [IsScalarTower A B L] [IsDomain A] [IsFractionRing A K]
