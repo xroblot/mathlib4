@@ -2,6 +2,11 @@ import Mathlib
 
 open nonZeroDivisors NumberField
 
+example {K : Type*} [Field K] {R₁ : Type*} [CommRing R₁] [IsDomain R₁] [Algebra R₁ K]
+    [IsFractionRing R₁ K] {I : FractionalIdeal R₁⁰ K} (hI : I ≠ 0) {x : K} :
+    1 = 0 := by
+  sorry
+
 theorem differentIdeal_ne_zero (A K L B: Type*) [CommRing A] [Field K]
     [CommRing B] [Field L] [Algebra A K] [Algebra B L] [Algebra A B] [Algebra K L] [Algebra A L]
     [IsScalarTower A K L] [IsScalarTower A B L] [IsDomain A] [IsFractionRing A K]
@@ -255,18 +260,23 @@ theorem FractionalIdeal.dual_eq_dual_mul_dual
     haveI : Algebra.IsSeparable L M := isSeparable_tower_top_of_isSeparable K L M
     dual A K (1 : FractionalIdeal C⁰ M) = dual B L (1 : FractionalIdeal C⁰ M) *
         (dual A K (1 : FractionalIdeal B⁰ L)).extended M h := by
+
   have : Module.Finite L M := Module.Finite.right K L M
   have : Module.Finite K L := Module.Finite.left K L M
   have : Algebra.IsSeparable L M := isSeparable_tower_top_of_isSeparable K L M
+
   have h : B⁰ ≤ Submonoid.comap (algebraMap B C) C⁰ :=
     nonZeroDivisors_le_comap_nonZeroDivisors_of_injective _ <| FaithfulSMul.algebraMap_injective _ _
+
   have hI₁ : dual A K (1 : FractionalIdeal B⁰ L) ≠ 0 :=
     dual_ne_zero A K <| one_ne_zero' (FractionalIdeal B⁰ L)
   have hI₂ : (dual A K (1 : FractionalIdeal B⁰ L)).extended M h ≠ 0 :=
     extended_ne_zero _ _ (FaithfulSMul.algebraMap_injective _ _) hI₁
+
   have h_loc {x : L} : algebraMap L M x = IsLocalization.map M (algebraMap B C) h x :=
     IsLocalization.algebraMap_apply_eq_map_map_submonoid B⁰ C L M x
-  apply le_antisymm
+
+  refine le_antisymm ?_ (fun x hx ↦ ?_)
   · intro x hx
     dsimp at hx ⊢
     rw [mem_coe] at hx ⊢
@@ -293,8 +303,7 @@ theorem FractionalIdeal.dual_eq_dual_mul_dual
       obtain ⟨b, hb₁, hb₂⟩ := this
       rw [← hb₂]
       simp
-      refine dual_ne_zero A K ?_
-      exact one_ne_zero' (FractionalIdeal B⁰ L)
+      refine dual_ne_zero A K (by simp)
     have h₃ {z : L} (hz : z ∈ (dual A K (1 : FractionalIdeal B⁰ L))⁻¹) :
         x * algebraMap L M z ∈ dual B L (1 : FractionalIdeal C⁰ M) := by
       rw [mem_dual (one_ne_zero' (FractionalIdeal C⁰ M))]
@@ -322,29 +331,200 @@ theorem FractionalIdeal.dual_eq_dual_mul_dual
     dsimp at h₆
     rwa [inv_mul_cancel_right₀] at h₆
     exact hI₂
-  · intro x hx
-    simp only [val_eq_coe, coe_mul, coe_dual_one, coe_extended_eq_span] at hx ⊢
+  · simp only [val_eq_coe, coe_mul, coe_dual_one, coe_extended_eq_span] at hx ⊢
     induction hx using Submodule.mul_induction_on' with
     | mem_mul_mem m hm n hn =>
         obtain ⟨s, hs, _, rfl⟩ := (Submodule.mem_span_image_iff_exists_fun _).mp hn
         simp_rw [Finset.mul_sum, mul_smul_comm]
-        refine Submodule.sum_smul_mem _ _ fun i _ ↦ ?_
-        rw [Submodule.mem_traceDual] at hm ⊢
-        intro c hc
-        simp only [Submodule.mem_one] at hc
-        obtain ⟨a, rfl⟩ := hc
-        simp at hm ⊢
-        rw [← Algebra.trace_trace (S := L), ← h_loc, mul_comm m, mul_assoc,
+        refine Submodule.sum_smul_mem _ _ fun i _ ↦ Submodule.mem_traceDual.mpr fun c hc ↦ ?_
+        obtain ⟨a, rfl⟩ := Submodule.mem_one.mp hc
+        rw [traceForm_apply, ← Algebra.trace_trace (S := L), ← h_loc, mul_comm m, mul_assoc,
           ← Algebra.smul_def, map_smul]
-        specialize hm a
-        obtain ⟨b, hb⟩ := hm
+        apply (mem_dual (by simp)).mp (hs i.prop)
+        simp only [Submodule.mem_traceDual, Submodule.mem_one, traceForm_apply, RingHom.mem_range,
+          forall_exists_index, forall_apply_eq_imp_iff] at hm
+  
+        obtain ⟨b, hb⟩ := hm a
         rw [← hb]
-        have hi := hs i.prop
-        rw [SetLike.mem_coe, mem_dual (one_ne_zero' (FractionalIdeal B⁰ L))] at hi
-        simp at hi
-        apply hi
         exact coe_mem_one B⁰ b
     | add x _ y _ hx hy => exact Submodule.add_mem _ hx hy
+
+theorem FractionalIdeal.dual_eq_dual_mul_dual'
+    [IsLocalization (Algebra.algebraMapSubmonoid C B⁰) M] :
+    haveI h : B⁰ ≤ Submonoid.comap (algebraMap B C) C⁰ :=
+      nonZeroDivisors_le_comap_nonZeroDivisors_of_injective _ <|
+        FaithfulSMul.algebraMap_injective _ _
+    haveI : Module.Finite L M := Module.Finite.right K L M
+    haveI : Module.Finite K L := Module.Finite.left K L M
+    haveI : Algebra.IsSeparable L M := isSeparable_tower_top_of_isSeparable K L M
+    dual A K (1 : FractionalIdeal C⁰ M) = dual B L (1 : FractionalIdeal C⁰ M) *
+        (dual A K (1 : FractionalIdeal B⁰ L)).extended M h := by
+
+  have : Algebra.IsSeparable L M := isSeparable_tower_top_of_isSeparable K L M
+  have : Module.Finite L M := Module.Finite.right K L M
+  have : Module.Finite K L := Module.Finite.left K L M
+
+  have h : B⁰ ≤ Submonoid.comap (algebraMap B C) C⁰ :=
+    nonZeroDivisors_le_comap_nonZeroDivisors_of_injective _ <| FaithfulSMul.algebraMap_injective _ _
+
+
+  suffices dual B L (1 : FractionalIdeal C⁰ M) = dual A K (1 : FractionalIdeal C⁰ M) *
+      ((dual A K (1 : FractionalIdeal B⁰ L)).extended M h)⁻¹ by
+    sorry
+  ext x
+  calc x ∈ dual B L 1
+    _ ↔ ∀ z ∈ (1 : FractionalIdeal C⁰ M), traceForm L M x z ∈ (algebraMap B L).range := ?_
+    _ ↔ ∀ z ∈ (1 : FractionalIdeal C⁰ M), ∀ y ∈ dual A K (1 : FractionalIdeal B⁰ L),
+        y * traceForm L M x z ∈ (dual A K (1 : FractionalIdeal B⁰ L)) := ?_
+    _ ↔ ∀ y ∈ dual A K (1 : FractionalIdeal B⁰ L), ∀ z ∈ (1 : FractionalIdeal C⁰ M),
+        traceForm K L y (traceForm L M x z) ∈ (algebraMap A K).range := ?_
+    _ ↔ ∀ y ∈ dual A K (1 : FractionalIdeal B⁰ L), ∀ z ∈ (1 : FractionalIdeal C⁰ M),
+        traceForm K M x (algebraMap L M y * z) ∈ (algebraMap A K).range := ?_
+    _ ↔ ∀ y ∈ extended M h (dual A K (1 : FractionalIdeal B⁰ L)),
+        x * y ∈ dual A K (1 : FractionalIdeal C⁰ M) := ?_
+    _ ↔ x ∈ dual A K 1 * (extended M h (dual A K 1))⁻¹ := ?_
+  · rw [mem_dual (by simp)]
+  · have h₁ : ((algebraMap B L).range : Set L) = (1 : FractionalIdeal B⁰ L) := by
+      sorry
+    refine forall₂_congr fun z hz ↦ ⟨?_, ?_⟩
+    · intro h y hy
+      rw [← mem_coe, ← dual_mul_self A K (I := (1 : FractionalIdeal B⁰ L)) (by simp), coe_mul]
+      exact Submodule.mul_mem_mul hy (by simpa [h₁])
+    · intro h
+      have := mem_div_iff_of_nonzero (I := dual A K 1) (J := dual A K 1) (R₁ := B) (K := L)
+        (x := ((traceForm L M) x) z)
+      simp_rw [mul_comm _ (((traceForm L M) x) z)] at h
+      rw [← this] at h
+      simp at h
+      rwa [← SetLike.mem_coe, h₁]
+      simp
+  · conv_lhs =>
+      enter [2, 2, y, hy]
+      rw [mem_dual (by simp)]
+    constructor
+    · intro h y hy z hz
+
+      sorry
+    · intro h _ h' y hy z hz
+      rw [mem_one_iff] at h'
+      obtain ⟨c, rfl⟩ := h'
+      simp_rw [traceForm_apply] at h ⊢
+      specialize h y hy (algebraMap C M c * algebraMap L M z) (by
+        rw [mem_one_iff] at ⊢ hz
+        obtain ⟨b, rfl⟩ := hz
+        use c * algebraMap B C b
+        rw [map_mul]
+        sorry)
+      convert h using 2
+      rw [mul_comm _ (algebraMap L M z), ← mul_assoc x, mul_comm _ (algebraMap L M z),
+        mul_assoc _ x, ← smul_def, map_smul, smul_eq_mul]
+      ring
+  · refine forall₂_congr fun y hy ↦ ?_
+    simp_rw [traceForm_apply, ← smul_eq_mul, ← map_smul, trace_trace, smul_eq_mul, smul_def,
+      mul_comm x, mul_assoc]
+  · sorry
+
+
+
+#exit
+      rw [← smul_def, ← trace_trace (S := L), map_smul] at h ⊢
+      rw [mem_dual (by simp)] at hy
+
+      rw [mem_one_iff] at hz
+--      obtain ⟨c, rfl⟩ := hz
+      specialize hy (trace L M z) sorry
+
+
+      specialize hy (((traceForm L M) x) z) (by
+        rw [mem_one_iff] at hz ⊢
+        obtain ⟨c, rfl⟩ := hz
+        sorry)
+      exact hy
+
+
+#exit
+
+    simp_rw [traceForm_apply, ← smul_eq_mul, ← map_smul, trace_trace, smul_eq_mul, smul_def,
+      mul_comm x]
+    constructor
+    · intro h
+      specialize h 1 (one_mem_one _)
+      rwa [one_mul] at h
+    · intro h z hz
+ --     rw [mem_one_iff] at h'
+--      obtain ⟨c, rfl⟩ := h'
+--      obtain ⟨a, ha⟩ := h
+      rw [mem_dual (by simp)] at hy
+      simp at hy
+      specialize hy (trace L M z)
+      rw [mul_comm _ x, ← mul_assoc, mul_comm]
+
+
+
+      sorry
+  · sorry
+-- Set.forall_mem_image
+
+#exit
+    simp_rw [traceForm_apply]
+    constructor
+    · intro h y hy z hz
+      specialize h z hz
+      rw [← mem_coe, ← dual_mul_self A K (I := (1 : FractionalIdeal B⁰ L)) (by simp), coe_mul]
+      refine Submodule.mul_mem_mul hy (by simpa using h)
+    · intro h z hz
+      specialize h 1 ?_
+      sorry
+      specialize h z hz
+      rw [one_mul, mem_dual (by simp)] at h
+      sorry
+  ·
+
+    sorry
+  · rw [← Set.forall_mem_image (s := dual A K 1)]
+    sorry
+  · simp_rw [traceForm_apply, ← smul_eq_mul, ← map_smul, trace_trace, smul_eq_mul, mul_comm x,
+      ← mul_smul_comm, ← traceForm_apply]
+
+
+    sorry
+  · sorry
+  · sorry
+
+
+
+
+
+
+
+
+#exit
+
+
+  have h₁ : x ∈ dual B L (1 : FractionalIdeal C⁰ M) ↔ ∀ y ∈ dual A K (1 : FractionalIdeal B⁰ L),
+      ∀ z ∈ (1 : FractionalIdeal C⁰ M),
+      traceForm K L y (traceForm L M x z) ∈ (algebraMap A K).range := by
+    rw [mem_dual]
+    constructor
+    · intro h y hy z hz
+      rw [mem_dual] at hy
+      specialize h z hz
+      obtain ⟨s, hs⟩ := h
+      rw [← hs]
+      apply hy
+
+      sorry
+    ·
+      sorry
+  rw [h₁]
+  have h₂ : (∀ y ∈ dual A K (1 : FractionalIdeal B⁰ L), ∀ z ∈ (1 : FractionalIdeal C⁰ M),
+      trace K L (y * trace L M (x * z)) ∈ (algebraMap A K).range) ↔
+      ∀ y ∈ dual A K (1 : FractionalIdeal B⁰ L),
+      trace K M (x * algebraMap L M y) ∈ (algebraMap A K).range := sorry
+  rw [h₂]
+
+
+#exit
 
 end dual
 
@@ -369,9 +549,6 @@ theorem differentIdeal_eq_differentIdeal_mul_differentIdeal :
       (differentIdeal (𝓞 K) (𝓞 L)) : FractionalIdeal (𝓞 M)⁰ M) =
       ((FractionalIdeal.dual (𝓞 K) K (1 : FractionalIdeal (𝓞 L)⁰ L)).extended M h)⁻¹ := by
     rw [← extended_coeIdeal_eq_map L M]
-    -- have := FractionalIdeal.extended_coeIdeal_eq_map (A := 𝓞 L) (K := L) (B := 𝓞 M) (L := M)
-    --   (f := algebraMap (𝓞 L) (𝓞 M)) (M := (𝓞 L)⁰) (N := (𝓞 M)⁰) h
-    -- rw [← this]
     rw [← mul_inv_eq_one₀, inv_inv, ← extended_mul, coeIdeal_differentIdeal (𝓞 K) K,
       inv_mul_cancel₀, extended_one]
     exact h'
@@ -384,10 +561,6 @@ theorem differentIdeal_eq_differentIdeal_mul_differentIdeal :
   rw [this, ← mul_inv, inv_eq_iff_eq_inv, inv_inv]
   apply FractionalIdeal.dual_eq_dual_mul_dual
 
-theorem absNorm_differentIdeal {K : Type*} [Field K] [NumberField K] :
-    Ideal.absNorm (differentIdeal ℤ (𝓞 K)) = |NumberField.discr K| := by
-  sorry
-
 end numberfield
 
 section not_clean
@@ -396,6 +569,30 @@ variable {K M : Type*} [Field K] [NumberField K] [Field M] [NumberField M]
   [Algebra K M] (L₁ L₂ : IntermediateField K M)
   (h : IsCoprime (Ideal.under (𝓞 K) (differentIdeal (𝓞 K) (𝓞 L₁)))
     (Ideal.under (𝓞 K) (differentIdeal (𝓞 K) (𝓞 L₂))))
+
+-- theorem Submodule.traceDual_span_of_basis (A : Type*) {K L B : Type*}
+--     [CommRing A] [Field K] [CommRing B] [Field L] [Algebra A K] [Algebra B L] [Algebra A B]
+--     [Algebra K L] [Algebra A L] [FiniteDimensional K L] [Algebra.IsSeparable K L]
+--     [IsScalarTower A K L] [IsScalarTower A B L] (I : Submodule B L) {ι : Type*} [Finite ι]
+--     [DecidableEq ι] (b : Basis ι K L) (hb : I.restrictScalars A = Submodule.span A (Set.range b)) :
+--     (Submodule.traceDual A K I).restrictScalars A = Submodule.span A (Set.range b.traceDual) := by
+--   rw [traceDual_restrictScalars, hb]
+--   exact (Algebra.traceForm K L).dualSubmodule_span_of_basis (traceForm_nondegenerate K L) b
+
+example (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤) (I : Submodule (𝓞 L₂) L₂) {ι : Type*}
+    [Finite ι] (b : Basis ι K L₂)
+    (hI : I.restrictScalars (𝓞 K) = Submodule.span (𝓞 K) (Set.range b)) : 1 = 0:= by
+  classical
+  have : Nonempty ι := sorry
+  have t₁ := I.traceDual_span_of_basis (b := b) (𝓞 K) hI
+  let B := b.ofLinearDisjoint h₁ h₂
+  have hI' : (Submodule.span (𝓞 M) (algebraMap L₂ M '' I)).restrictScalars (𝓞 L₁) =
+    Submodule.span (𝓞 L₁) (Set.range B) := sorry
+  have t₂ := (Submodule.span (𝓞 M) (algebraMap L₂ M '' I)).traceDual_span_of_basis (b := B)
+    (𝓞 L₁) hI'
+  have := Submodule.span (𝓞 L₁) (Set.range B.traceDual)
+
+  sorry
 
 example : IsCoprime ((differentIdeal (𝓞 K) (𝓞 L₁)).map (algebraMap (𝓞 L₁) (𝓞 M)))
     ((differentIdeal (𝓞 K) (𝓞 L₂)).map (algebraMap (𝓞 L₂) (𝓞 M))) := by
@@ -462,7 +659,7 @@ theorem useful :
 
   -- exact this
 
--- That's true only on `ℚ` because of the norm
+-- That's true only on `ℚ` because of the norm, and in fact probably not
 example : (differentIdeal (𝓞 K) (𝓞 L₁)).map (algebraMap (𝓞 L₁) (𝓞 M)) =
     differentIdeal (𝓞 L₂) (𝓞 M) := by
   have main := (differentIdeal_eq_differentIdeal_mul_differentIdeal K L₁ M).symm.trans
@@ -523,7 +720,7 @@ variable {K M : Type*} [Field K] [NumberField K] [Field M] [NumberField M]
     differentIdeal (𝓞 L₁) (𝓞 M))
   (hb : span (𝓞 K) (Set.range b) = (1 : Submodule (𝓞 L₂) L₂).restrictScalars (𝓞 K))
 
-include hmain in
+include hmain in -- Is only inclusion good enough?
 theorem aux₁ : span (𝓞 M) (algebraMap L₂ M '' ((1 : FractionalIdeal (𝓞 L₂)⁰ L₂).dual (𝓞 K) K)) =
     (1 : FractionalIdeal (𝓞 M)⁰ M).dual (𝓞 L₁) L₁ := by
   rw [← FractionalIdeal.coeIdeal_inj (R := (𝓞 M)) (K := M)] at hmain
@@ -545,6 +742,11 @@ example : span (𝓞 L₁) (Set.range (b.ofLinearDisjoint h₁ h₂)) =
   have h := (1 : FractionalIdeal (𝓞 M)⁰ M).dual_dual (𝓞 L₁) L₁
   rw [← coeToSubmodule_inj, ← restrictScalars_inj (𝓞 L₁), coe_one] at h
   rw [← h, coe_dual _ _ (dual_ne_zero (𝓞 L₁) L₁ (one_ne_zero' (FractionalIdeal (𝓞 M)⁰ M)))]
+  rw [← aux₁]
+
+  have := Submodule.traceDual_span_of_basis (𝓞 K) (1 : Submodule (𝓞 L₂) L₂) b hb.symm
+
+
   have t₁ : (1 : FractionalIdeal (𝓞 M)⁰ M).dual (𝓞 L₁) L₁ =
       span (𝓞 M) (algebraMap L₂ M '' ((1 : FractionalIdeal (𝓞 L₂)⁰ L₂).dual (𝓞 K) K)) := by
 

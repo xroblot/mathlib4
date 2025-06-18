@@ -9,6 +9,15 @@ open nonZeroDivisors NumberField
 --     [IsFractionRing B L] [IsIntegrallyClosed A] [IsDedekindDomain B] :
 --     dual A K (1 : FractionalIdeal B⁰ L) ≠ 0 := by simp
 
+open FractionalIdeal Algebra in
+example (A K : Type*) {L B : Type*} [CommRing A] [Field K] [CommRing B] [Field L] [Algebra A K]
+    [Algebra B L] [Algebra A B] [Algebra K L] [Algebra A L] [IsScalarTower A K L]
+    [IsScalarTower A B L] [IsDomain A] [IsFractionRing A K] [FiniteDimensional K L]
+    [Algebra.IsSeparable K L] [IsIntegralClosure B A L] [IsFractionRing B L] [IsIntegrallyClosed A]
+    [IsDedekindDomain B] :
+    1 ∈ FractionalIdeal.dual A K (1 : FractionalIdeal B⁰ L) :=
+  one_le_dual_one A K (one_mem_one B⁰)
+
 theorem differentIdeal_ne_zero (A K L B: Type*) [CommRing A] [Field K]
     [CommRing B] [Field L] [Algebra A K] [Algebra B L] [Algebra A B] [Algebra K L] [Algebra A L]
     [IsScalarTower A K L] [IsScalarTower A B L] [IsDomain A] [IsFractionRing A K]
