@@ -2,6 +2,18 @@ import Mathlib
 
 open nonZeroDivisors NumberField
 
+theorem differentIdeal_ne_bot' (A K B L : Type*) [CommRing A] [Field K] [Algebra A K]
+    [IsFractionRing A K] [CommRing B] [Field L] [Algebra B L] [IsFractionRing B L]
+    [Algebra A B] [Algebra K L] [Algebra A L] [IsScalarTower A B L] [IsScalarTower A K L]
+    [IsDomain A] [IsIntegrallyClosed A] [IsDedekindDomain B] [NoZeroSMulDivisors A B]
+    [Module.Finite A B] [Algebra.IsSeparable K L] :
+    differentIdeal A B ≠ ⊥ := by
+  have : IsLocalization (Algebra.algebraMapSubmonoid B A⁰) L :=
+    IsIntegralClosure.isLocalization _ K _ _
+  have : FiniteDimensional K L := Module.Finite_of_isLocalization A B _ _ A⁰
+  rw [ne_eq, ← FractionalIdeal.coeIdeal_inj (K := L), coeIdeal_differentIdeal (K := K)]
+  simp
+
 theorem LinearMap.BilinForm.dualBasis_eq_iff {V : Type*} {K : Type*} [Field K] [AddCommGroup V]
     [Module K V] {ι : Type*} [DecidableEq ι] [Finite ι] (B : LinearMap.BilinForm K V)
     (hB : B.Nondegenerate) (b : Basis ι K V) (v : ι → V) :
@@ -68,19 +80,6 @@ theorem Basis.traceDual_eq_iff {K : Type*} {L : Type*} [Field K] [Field L] [Alge
       ∀ i j, Algebra.traceForm K L (v i) (b j) = if j = i then 1 else 0 :=
   (Algebra.traceForm K L).dualBasis_eq_iff (traceForm_nondegenerate K L) b v
 
--- example {K M : Type*} [Field K] [Field M] [Algebra K M] [FiniteDimensional K M]
---     [Algebra.IsSeparable K M] {L₁ L₂ : IntermediateField K M}
---     (h₁ : L₁.toSubalgebra.LinearDisjoint L₂.toSubalgebra)
---     (h₂ : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤) {ι : Type*} [Finite ι] [DecidableEq ι]
---     (b : Basis ι K L₂) :
---     (b.traceDual.ofLinearDisjointLeft h₁ h₂).traceDual =
---       (b.ofLinearDisjointLeft h₁ h₂ : Basis ι L₁ M) := sorry
-
-
-
-
-
-
 @[simp]
 theorem Submodule.traceDual_restrictScalars (A K : Type*) {L B : Type*} [CommRing A] [Field K]
     [CommRing B] [Field L] [Algebra A K] [Algebra B L] [Algebra A B] [Algebra K L] [Algebra A L]
@@ -120,296 +119,106 @@ theorem differentIdeal_eq_differentIdeal_mul_differentIdeal' :
   differentIdeal_eq_differentIdeal_mul_differentIdeal (𝓞 K) K (𝓞 L) L (𝓞 M) M
 
 end numberfield
-
-section general_compositum
-
--- variable (A K B L C M : Type*) [CommRing A] [Field K] [CommRing B] [Field L] [Algebra A K]
---   [Algebra B L] [Algebra A B] [Algebra K L] [Algebra A L] [IsScalarTower A K L]
---   [IsScalarTower A B L] [IsDomain A] [IsFractionRing A K] [Algebra.IsSeparable K L]
---   [IsIntegralClosure B A L] [IsIntegrallyClosed A] [IsDedekindDomain B] [NoZeroSMulDivisors A B]
---   [IsFractionRing B L] [CommRing C] [Field M] [Algebra C M] [IsFractionRing C M] [Algebra B C]
---   [Algebra A C] [Algebra K M] [Algebra L M] [Algebra B M] [Algebra A M] [IsScalarTower K L M]
---   [IsScalarTower A K M] [IsScalarTower A C M] [IsScalarTower B C M] [IsScalarTower B L M]
---   [IsDedekindDomain C] [NoZeroSMulDivisors A C] [Algebra.IsSeparable K M] [FiniteDimensional K M]
---   [IsIntegralClosure C B M] [IsIntegralClosure C A M] [NoZeroSMulDivisors B C]
---   [IsLocalization (algebraMapSubmonoid C B⁰) M]
-
-variable {A K C M : Type*} [CommRing A] [Field K] [Algebra A K] [IsFractionRing A K] [CommRing C]
-  [Field M] [Algebra C M] [IsFractionRing C M] [Algebra K M]
-  (L₁ L₂ : IntermediateField K M) {B₁ B₂ : Type*} [CommRing B₁] [CommRing B₂] [Algebra B₁ L₁]
-  [Algebra B₂ L₂] [IsFractionRing B₁ L₁] [IsFractionRing B₂ L₂]
-  [Algebra A B₁] [Algebra A B₂] [Algebra B₁ C] [Algebra B₁ M] [Algebra B₂ C]
-  [Algebra A L₂] [Algebra B₂ M]
-  [IsDomain A] [IsDedekindDomain B₂] [IsDomain B₁] [IsDedekindDomain C]
-  [NoZeroSMulDivisors A B₂] [NoZeroSMulDivisors B₁ C] [NoZeroSMulDivisors B₂ C]
-  [IsIntegrallyClosed A] [IsIntegrallyClosed B₁]
-  [IsIntegralClosure B₂ A L₂] [IsIntegralClosure C B₁ M]
-  [IsScalarTower A B₂ L₂] [IsScalarTower A K L₂]
-  [IsScalarTower B₁ C M] [IsScalarTower B₁ L₁ M]
-  [IsScalarTower B₂ L₂ M] [IsScalarTower B₂ C M]
-  [IsLocalization (algebraMapSubmonoid C B₂⁰) M]
-  [Algebra.IsSeparable K M] [FiniteDimensional K M]
-  (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤)
+namespace IntermediateField.LinearDisjoint
 
 open Submodule IntermediateField
 
-set_option maxHeartbeats 1000000 in
-example {ι : Type*} (b : Basis ι K L₂)
-    (hb : (1 : Submodule B₂ L₂).restrictScalars A = span A (Set.range b)) :
-    differentIdeal B₁ C ∣ (differentIdeal A B₂).map (algebraMap B₂ C) := by
-  classical
+variable {A K C M : Type*} [CommRing A] [Field K] [CommRing C] [Field M] [Algebra K M]
+  [Algebra A K] [IsFractionRing A K] [Algebra C M]
+  {L₁ L₂ : IntermediateField K M} {B₁ B₂ : Type*} [CommRing B₁] [CommRing B₂]
+  [Algebra B₁ L₁] [Algebra B₂ L₂] [Algebra A B₂] [Algebra A L₂] [Algebra B₁ C] [Algebra B₂ C]
+  [Algebra B₁ M] [Algebra B₂ M] [IsScalarTower A K L₂] [IsScalarTower A B₂ L₂]
+  [IsScalarTower B₁ C M] [IsScalarTower B₂ C M] [IsScalarTower B₁ L₁ M] [IsScalarTower B₂ L₂ M]
+  [Algebra.IsSeparable K M] [FiniteDimensional K M]
 
-  have : Algebra.IsSeparable L₁ M := isSeparable_tower_top_of_isSeparable K L₁ M
-  have : Algebra.IsSeparable K L₂ := isSeparable_tower_bot_of_isSeparable K L₂ M
-  have : FiniteDimensional L₁ M := Module.Finite.right K L₁ M
-  have : FiniteDimensional K L₁ := Module.Finite.left K L₁ M
-  have : FiniteDimensional K L₂ := Module.Finite.left K L₂ M
-  suffices ((differentIdeal A B₂).map (algebraMap B₂ C) : FractionalIdeal C⁰ M) ≤
-      (differentIdeal B₁ C : FractionalIdeal C⁰ M) by
-    rw [← coe_le_coe] at this
-    simp only [coe_coeIdeal, IsFractionRing.coeSubmodule_le_coeSubmodule] at this
-    rwa [Ideal.dvd_iff_le]
-  rw [coeIdeal_differentIdeal B₁ L₁]
-  rw [← extended_coeIdeal_eq_map_algebraMap (K := L₂) M]
-  rw [coeIdeal_differentIdeal A K]
-  rw [extended_inv _ (by simp)]
-  rw [le_inv_comm ( inv_ne_zero <| extended_ne_zero _ _ (FaithfulSMul.algebraMap_injective _ _)
-    (by simp)) (by simp), inv_inv]
-  rw [← coe_le_coe]
-  rw [coe_dual _ _ (by simp), coe_extended_eq_span, coe_one]
-  have := IsLocalization.algebraMap_eq_map_map_submonoid B₂⁰ C L₂ M
-  erw [← this]
-  intro x hx
-  rw [IntermediateField.linearDisjoint_iff'] at h₁
-  have : Fintype ι := by
-    apply FiniteDimensional.fintypeBasisIndex b
-  let b' := b.traceDual
-  replace h₂ : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
-    simpa [sup_toSubalgebra_of_isAlgebraic_right] using congr_arg toSubalgebra h₂
-  let B' : Basis ι L₁ M := b'.ofLinearDisjointLeft h₁ h₂
-  let B₀ := B'.traceDual
-  rw [← B'.sum_repr x]
-  have : ∃ c : ι → B₁, ∀ i, B'.repr x i = algebraMap B₁ L₁ (c i) := by
-    have h_cons₁ (i : ι) : trace L₁ M (x * B₀ i) ∈ (algebraMap B₁ L₁).range := by
-        rw [mem_traceDual] at hx
-        specialize hx (B₀ i) ?_
-        · refine mem_one.mpr ?_
-          have h_cons₂ :  ∃ y, (algebraMap B₂ ↥L₂) y = b i := by
-            rw [← mem_one, ← restrictScalars_mem A, hb]
-            exact Submodule.subset_span (Set.mem_range_self i)
-          refine ⟨?_, ?_⟩
-          · exact algebraMap B₂ C h_cons₂.choose
-          · dsimp
-            have := h_cons₂.choose_spec
-            rw [← IsScalarTower.algebraMap_apply, IsScalarTower.algebraMap_apply B₂ L₂ M, this]
-            erw [← b.ofLinearDisjointLeft_apply h₁ h₂]
-            simp [B₀, B']
-            refine congr_fun ?_ i
-            rw [eq_comm, Basis.traceDual_eq_iff]
-            intro i j
-            simp [b']
-            rw [b.ofLinearDisjointLeft_apply h₁ h₂ i,
-              b.traceDual.ofLinearDisjointLeft_apply h₁ h₂ j, ← map_mul]
-            have := h₁.trace_algebraMap_eq h₂ (b i * b.traceDual j)
-            erw [this]
-            simp
-            rw [mul_comm, Basis.apply_traceDual]
-            simp [eq_comm]
-        · rwa [traceForm_apply] at hx
-    refine ⟨?_, ?_⟩
-    · intro i
-      exact (h_cons₁ i).choose
-    · intro i
-      have := (h_cons₁ i).choose_spec
-      rw [this]
-      nth_rewrite 2 [← B'.sum_repr x]
-      rw [Finset.sum_mul, map_sum]
-      simp_rw [smul_mul_assoc, map_smul, mul_comm (B' _)]
-      simp_rw [B₀, B'.apply_traceDual]
-      simp
-  obtain ⟨c, hc⟩ := this
-  simp_rw [hc, Algebra.smul_def]
-  have {x} : algebraMap L₁ M (algebraMap B₁ L₁ x) =
-      algebraMap C M (algebraMap B₁ C x) := by
-    rw [← IsScalarTower.algebraMap_apply, ← IsScalarTower.algebraMap_apply]
-  simp_rw [this]
-  simp_rw [← Algebra.smul_def]
-  apply Submodule.sum_smul_mem
-  intro i _
-  apply Submodule.subset_span
-  refine ⟨b' i, ?_, ?_⟩
-  · rw [SetLike.mem_coe, ← mem_coe, coe_dual_one]
-    have := Submodule.traceDual_span_of_basis A (K := K) (B := B₂) (1 : Submodule B₂ L₂) b hb
-    change b' i ∈ (traceDual A K 1).restrictScalars A
-    rw [this]
-    apply subset_span
-    exact Set.mem_range_self i
-  · simp [B']
-    have := b'.ofLinearDisjointLeft_apply h₁ h₂ i
-    change algebraMap L₂ M (b' i) = _
-    exact this.symm
-
-example [Module.Free A B₂] [Module.Finite A B₂] [IsLocalization (algebraMapSubmonoid B₂ A⁰) L₂] :
+variable (A B₁ B₂ C) in
+theorem traceDual_le_span_traceDual [IsLocalization (algebraMapSubmonoid B₂ A⁰) L₂]
+    [Module.Free A B₂] [Module.Finite A B₂]
+    (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤) :
     traceDual B₁ L₁ (1 : Submodule C M) ≤
-      span C (algebraMap L₂ M '' (dual A K (1 : FractionalIdeal B₂⁰ L₂))) := by
+      span C (algebraMap L₂ M '' (traceDual A K (1 : Submodule B₂ L₂))) := by
   intro x hx
-  rw [IntermediateField.linearDisjoint_iff'] at h₁
   let b := (Module.Free.chooseBasis A B₂).localizationLocalization K A⁰ L₂
-  replace h₂ : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
+  have h₂' : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
     simpa [sup_toSubalgebra_of_isAlgebraic_right] using congr_arg toSubalgebra h₂
-  let b' : Basis _ L₁ M := b.traceDual.ofLinearDisjointLeft h₁ h₂
+  let b' : Basis _ L₁ M := h₁.basisOfBasisLeft h₂' b.traceDual
   rw [← b'.sum_repr x]
   refine Submodule.sum_mem _ fun i _ ↦ ?_
   rsuffices ⟨c, hc⟩ : b'.repr x i ∈ (algebraMap B₁ L₁).range := by
-    have : (b.ofLinearDisjointLeft h₁ h₂).traceDual = b' := by
-      rw [DFunLike.ext'_iff, Basis.traceDual_eq_iff]
-      intro i j
-      rw [b.ofLinearDisjointLeft_apply, b.traceDual.ofLinearDisjointLeft_apply, traceForm_apply,
-        ← map_mul]
-      change trace L₁.toSubalgebra M _ = _
-      erw [h₁.trace_algebraMap_eq h₂, b.trace_traceDual_mul]
-      simp
-    rw [← this]
-    rw [Basis.traceDual_repr_apply (K := L₁) (b.ofLinearDisjointLeft h₁ h₂) x i]
-    refine mem_traceDual.mp hx (b.ofLinearDisjointLeft h₁ h₂ i) ?_
-    sorry
+    have : (h₁.basisOfBasisLeft h₂' b).traceDual = b' := by
+      refine (DFunLike.ext'_iff.trans Basis.traceDual_eq_iff).mpr fun _ _ ↦ ?_
+      rw [h₁.basisOfBasisLeft_apply, h₁.basisOfBasisLeft_apply, traceForm_apply, ← map_mul,
+        h₁.trace_algebraMap_eq h₂, b.trace_traceDual_mul, MonoidWithZeroHom.map_ite_one_zero]
+    rw [← this, (h₁.basisOfBasisLeft h₂' b).traceDual_repr_apply x i]
+    refine mem_traceDual.mp hx _ ?_
+    rw [mem_one, h₁.basisOfBasisLeft_apply, Basis.localizationLocalization_apply,
+      ← IsScalarTower.algebraMap_apply, IsScalarTower.algebraMap_apply B₂ C M]
+    exact ⟨_, rfl⟩
   rw [← hc, ← algebra_compatible_smul L₁, algebra_compatible_smul C]
   refine Submodule.smul_mem _ _ (Submodule.subset_span ?_)
-  refine ⟨b.traceDual i, ?_, by rw [Basis.ofLinearDisjointLeft_apply]; rfl⟩
-  rw [SetLike.mem_coe, ← mem_coe, coe_dual_one, ← restrictScalars_mem A, traceDual_span_of_basis
-    A _ b (by rw [Basis.localizationLocalization_span K A⁰ L₂]; ext; simp)]
+  refine ⟨b.traceDual i, ?_, by rw [h₁.basisOfBasisLeft_apply]⟩
+  rw [SetLike.mem_coe, ← restrictScalars_mem A, traceDual_span_of_basis A _ b
+    (by rw [Basis.localizationLocalization_span K A⁰ L₂]; ext; simp)]
   exact Submodule.subset_span <| Set.mem_range_self i
 
-set_option maxHeartbeats 1000000 in
-example [Module.Free A B₂] [Module.Finite A B₂] [IsLocalization (algebraMapSubmonoid B₂ A⁰) L₂] :
+variable [IsDomain A] [IsDomain B₁]
+  [IsIntegrallyClosed A] [IsIntegrallyClosed B₁] [IsDedekindDomain B₂] [IsDedekindDomain C]
+  [IsFractionRing B₁ L₁] [IsFractionRing B₂ L₂] [IsFractionRing C M]
+  [IsIntegralClosure B₂ A L₂] [IsIntegralClosure C B₂ M] [IsIntegralClosure C B₁ M]
+  [NoZeroSMulDivisors B₁ C] [NoZeroSMulDivisors B₂ C]
+
+variable (A B₁ B₂ C) in
+theorem differentIdeal_dvd_differentIdeal_map [Module.Free A B₂] [Module.Finite A B₂]
+    (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤) :
     differentIdeal B₁ C ∣ (differentIdeal A B₂).map (algebraMap B₂ C) := by
+  have := IsIntegralClosure.isLocalization A K L₂ B₂
+  have := IsIntegralClosure.isLocalization B₂ L₂ M C
+  rw [Ideal.dvd_iff_le, ← coeIdeal_le_coeIdeal' C⁰ (P := M) le_rfl, coeIdeal_differentIdeal B₁ L₁,
+    le_inv_comm _ (by simp), ← extended_coeIdeal_eq_map_algebraMap (K := L₂) M, ← extended_inv,
+    coeIdeal_differentIdeal A K, inv_inv, ← coe_le_coe, coe_dual_one, coe_extended_eq_span,
+    ← coeToSet_coeToSubmodule, coe_dual_one]
+  · convert traceDual_le_span_traceDual A C B₁ B₂ h₁ h₂
+    exact (IsLocalization.algebraMap_eq_map_map_submonoid B₂⁰ C L₂ M).symm
+  · exact coeIdeal_ne_zero.mpr <| differentIdeal_ne_bot' A K B₂ L₂
+  · exact coeIdeal_ne_zero.mpr <| Ideal.map_ne_bot_of_ne_bot <| differentIdeal_ne_bot' A K B₂ L₂
 
-  let b₀ := Module.Free.chooseBasis A B₂
-  let b := b₀.localizationLocalization K A⁰ L₂
-  have : Algebra.IsSeparable L₁ M := isSeparable_tower_top_of_isSeparable K L₁ M
-  have : Algebra.IsSeparable K L₂ := isSeparable_tower_bot_of_isSeparable K L₂ M
-  have : FiniteDimensional L₁ M := Module.Finite.right K L₁ M
-  have : FiniteDimensional K L₁ := Module.Finite.left K L₁ M
-  have : FiniteDimensional K L₂ := Module.Finite.left K L₂ M
-  suffices ((differentIdeal A B₂).map (algebraMap B₂ C) : FractionalIdeal C⁰ M) ≤
-      (differentIdeal B₁ C : FractionalIdeal C⁰ M) by
-    rw [← coe_le_coe] at this
-    simp only [coe_coeIdeal, IsFractionRing.coeSubmodule_le_coeSubmodule] at this
-    rwa [Ideal.dvd_iff_le]
-  rw [coeIdeal_differentIdeal B₁ L₁]
-  rw [← extended_coeIdeal_eq_map_algebraMap (K := L₂) M]
-  rw [coeIdeal_differentIdeal A K]
-  rw [extended_inv _ (by simp)]
-  rw [le_inv_comm ( inv_ne_zero <| extended_ne_zero _ _ (FaithfulSMul.algebraMap_injective _ _)
-    (by simp)) (by simp), inv_inv]
-  rw [← coe_le_coe]
-  rw [coe_dual _ _ (by simp), coe_extended_eq_span, coe_one]
-  have := IsLocalization.algebraMap_eq_map_map_submonoid B₂⁰ C L₂ M
-  erw [← this]
+variable [Algebra A B₁] [IsDedekindDomain B₁] [NoZeroSMulDivisors A B₁]
+  [Algebra A L₁] [Algebra A C] [Algebra A M] [IsScalarTower A B₁ L₁] [IsScalarTower A K L₁]
+  [IsScalarTower A C M] [IsScalarTower A K M] [IsIntegralClosure B₁ A L₁] [IsIntegralClosure C A M]
+  [NoZeroSMulDivisors A C]
 
-  intro x hx
-  rw [IntermediateField.linearDisjoint_iff'] at h₁
-  let b' := b.traceDual
-  replace h₂ : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
-    simpa [sup_toSubalgebra_of_isAlgebraic_right] using congr_arg toSubalgebra h₂
-  let B' : Basis _ L₁ M := b'.ofLinearDisjointLeft h₁ h₂
-  let B₀ := B'.traceDual
-  rw [← B'.sum_repr x]
-  have : ∃ c : _ → B₁, ∀ i, B'.repr x i = algebraMap B₁ L₁ (c i) := by
-    have h_cons₁ (i) : trace L₁ M (x * B₀ i) ∈ (algebraMap B₁ L₁).range := by
-        rw [mem_traceDual] at hx
-        specialize hx (B₀ i) ?_
-        · refine mem_one.mpr ?_
-          have h_cons₂ :  ∃ y, (algebraMap B₂ ↥L₂) y = b i := by
-            have := b₀.localizationLocalization_span K A⁰ L₂
-            change b i ∈ LinearMap.range (IsScalarTower.toAlgHom A B₂ L₂)
-            rw [← this]
-            exact Submodule.subset_span (Set.mem_range_self i)
-          refine ⟨?_, ?_⟩
-          · exact algebraMap B₂ C h_cons₂.choose
-          · dsimp
-            have := h_cons₂.choose_spec
-            rw [← IsScalarTower.algebraMap_apply, IsScalarTower.algebraMap_apply B₂ L₂ M, this]
-            erw [← b.ofLinearDisjointLeft_apply h₁ h₂]
-            simp [B₀, B']
-            refine congr_fun ?_ i
-            rw [eq_comm, Basis.traceDual_eq_iff]
-            intro i j
-            simp [b']
-            rw [b.ofLinearDisjointLeft_apply h₁ h₂ i,
-              b.traceDual.ofLinearDisjointLeft_apply h₁ h₂ j, ← map_mul]
-            have := h₁.trace_algebraMap_eq h₂ (b i * b.traceDual j)
-            erw [this]
-            simp
-            rw [mul_comm, Basis.apply_traceDual]
-            simp [eq_comm]
-        · rwa [traceForm_apply] at hx
-    refine ⟨?_, ?_⟩
-    · intro i
-      exact (h_cons₁ i).choose
-    · intro i
-      have := (h_cons₁ i).choose_spec
-      rw [this]
-      nth_rewrite 2 [← B'.sum_repr x]
-      rw [Finset.sum_mul, map_sum]
-      simp_rw [smul_mul_assoc, map_smul, mul_comm (B' _)]
-      simp_rw [B₀, B'.apply_traceDual]
-      simp
-  obtain ⟨c, hc⟩ := this
-  simp_rw [hc, Algebra.smul_def]
-  have {x} : algebraMap L₁ M (algebraMap B₁ L₁ x) =
-      algebraMap C M (algebraMap B₁ C x) := by
-    rw [← IsScalarTower.algebraMap_apply, ← IsScalarTower.algebraMap_apply]
-  simp_rw [this]
-  simp_rw [← Algebra.smul_def]
-  apply Submodule.sum_smul_mem
-  intro i _
-  apply Submodule.subset_span
-  refine ⟨b' i, ?_, ?_⟩
-  · rw [SetLike.mem_coe, ← mem_coe, coe_dual_one]
-    have := b₀.localizationLocalization_span K A⁰ L₂
-    have := Submodule.traceDual_span_of_basis A (K := K) (B := B₂) (1 : Submodule B₂ L₂) b
-      (by rw [this]; ext; simp)
-    change b' i ∈ (traceDual A K 1).restrictScalars A
-    rw [this]
-    apply subset_span
-    exact Set.mem_range_self i
-  · simp [B']
-    have := b'.ofLinearDisjointLeft_apply h₁ h₂ i
-    change algebraMap L₂ M (b' i) = _
-    exact this.symm
+theorem differentIdeal_map_eq_differentIdeal [Module.Free A B₁] [Module.Finite A B₁]
+    [Module.Free A B₂] [Module.Finite A B₂] (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤)
+    (h₃ : IsCoprime ((differentIdeal A B₁).map (algebraMap B₁ C))
+      ((differentIdeal A B₂).map (algebraMap B₂ C))) :
+    (differentIdeal A B₁).map (algebraMap B₁ C) = differentIdeal B₂ C := by
+  have := IsIntegralClosure.isLocalization B₁ L₁ M C
+  have := IsIntegralClosure.isLocalization B₂ L₂ M C
+  have main := (differentIdeal_eq_differentIdeal_mul_differentIdeal
+    A K B₁ L₁ C M).symm.trans (differentIdeal_eq_differentIdeal_mul_differentIdeal A K B₂ L₂ C M)
+  apply dvd_antisymm'
+  · have h' : IsCoprime (differentIdeal B₂ C) (differentIdeal B₁ C) := by
+      refine (h₃.of_isCoprime_of_dvd_right ?_).of_isCoprime_of_dvd_left ?_
+      · exact differentIdeal_dvd_differentIdeal_map A C B₁ B₂ h₁ h₂
+      · exact differentIdeal_dvd_differentIdeal_map A C B₂ B₁ h₁.symm (by rwa [sup_comm])
+    exact h'.dvd_of_dvd_mul_left (dvd_of_mul_right_eq _ main.symm)
+  · exact h₃.dvd_of_dvd_mul_right (dvd_of_mul_left_eq _ main)
 
+example [Module.Free A B₁] [Module.Finite A B₁]
+    [Module.Free A B₂] [Module.Finite A B₂] (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤)
+    (h₃ : IsCoprime ((differentIdeal A B₁).map (algebraMap B₁ C))
+      ((differentIdeal A B₂).map (algebraMap B₂ C)))
+    {ι : Type*} (b : Basis ι A B₂) :
+    span B₁ (Set.range (algebraMap B₂ M ∘ b)) =
+      LinearMap.range (IsScalarTower.toAlgHom B₁ C M) := by
+  haveI h₂' : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
+      simpa [sup_toSubalgebra_of_isAlgebraic_right] using congr_arg toSubalgebra h₂
 
-#exit
+--  have : algebraMap L₂ M ∘ b = h₁.basisOfBasisLeft h₂' b := by ext; simp
+--  rw [this]
+  have : IsLocalization (algebraMapSubmonoid C B₁⁰) M := sorry
+  let b₀ : Basis ι B₁ C := sorry
+  have := Basis.localizationLocalization_span (R := B₁) L₁ B₁⁰ (A := C) M b₀
+  sorry
 
-
-
-
-end general_compositum
-
-section numberfield
-
-variable (M : Type*) [Field M] [NumberField M] (L₁ L₂ : IntermediateField ℚ M)
-  (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤)
-
-example :
-    (differentIdeal ℤ (𝓞 L₂)).map (algebraMap (𝓞 L₂) (𝓞 M)) ≤
-      differentIdeal (𝓞 L₁) (𝓞 M) := by
-  rw [← coeIdeal_le_coeIdeal M, coeIdeal_differentIdeal _ L₁,
-    ← extended_coeIdeal_eq_map_algebraMap (K := L₂) M, coeIdeal_differentIdeal _ ℚ,
-    extended_inv _ (by simp), le_inv_comm sorry sorry, inv_inv, ← coe_le_coe, coe_dual,
-    coe_extended_eq_span, coe_one]
-  have :=  IsLocalization.algebraMap_eq_map_map_submonoid (𝓞 L₂)⁰ (𝓞 M) L₂ M
-  erw [← this]
-  rw [show ↑(dual ℤ ℚ (1 :FractionalIdeal (𝓞 L₂)⁰ L₂)) =
-    ((Submodule.traceDual ℤ ℚ (1 : Submodule (𝓞 L₂) L₂)).restrictScalars ℤ : Set L₂)
-    by sorry]
-  let b := integralBasis L₂
-  have := Submodule.traceDual_span_of_basis ℤ (1 : Submodule (𝓞 L₂) L₂) b sorry
-  rw [this]
-  intro x hx
-
-
-
-
-end numberfield
+end IntermediateField.LinearDisjoint
