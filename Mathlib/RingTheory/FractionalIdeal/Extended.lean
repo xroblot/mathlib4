@@ -60,14 +60,13 @@ local notation "map_f" => (IsLocalization.map (S := K) L f hf)
 lemma mem_extended_iff (x : L) : (x ∈ I.extended L hf) ↔ x ∈ span B (map_f '' I) := by
   constructor <;> { intro hx; simpa }
 
-@[simp]
 lemma coe_extended_eq_span : I.extended L hf = span B (map_f '' I) := by
   ext; simp [mem_coe, mem_extended_iff]
 
 @[simp]
 theorem extended_zero : extended L hf (0 : FractionalIdeal M K) = 0 :=
   have : ((0 : FractionalIdeal M K) : Set K) = {0} := by ext; simp
-  coeToSubmodule_injective (by simp [this])
+  coeToSubmodule_injective (by simp [this, coe_extended_eq_span])
 
 variable {I} in
 theorem extended_ne_zero [IsDomain K] [IsDomain L] [NoZeroSMulDivisors A K] [NoZeroSMulDivisors B L]
@@ -146,6 +145,14 @@ open scoped nonZeroDivisors
 variable {A : Type*} [CommRing A] [IsDedekindDomain A] {K : Type*} [Field K] [Algebra A K]
   [IsFractionRing A K] {B : Type*} [CommRing B] [IsDedekindDomain B] (L : Type*) [Field L]
   [Algebra B L] [IsFractionRing B L] [Algebra A B] [NoZeroSMulDivisors A B]
+
+lemma coe_extended_eq_span_algebraMap {I : FractionalIdeal A⁰ K} [Algebra K L] [Algebra A L]
+    [IsScalarTower A B L] [IsScalarTower A K L]
+    [IsLocalization (Algebra.algebraMapSubmonoid B A⁰) L ] :
+    haveI hs : A⁰ ≤ Submonoid.comap (algebraMap A B) B⁰ := fun _ hx ↦ by simpa using hx
+    I.extended L hs = span B (algebraMap K L '' I) := by
+  rw [IsLocalization.algebraMap_eq_map_map_submonoid A⁰ B K L]
+  exact coe_extended_eq_span L _ I
 
 theorem extended_inv {I : FractionalIdeal A⁰ K} (hI : I ≠ 0) :
     haveI hs : A⁰ ≤ Submonoid.comap (algebraMap A B) B⁰ := fun _ hx ↦ by simpa using hx
