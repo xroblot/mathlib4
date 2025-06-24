@@ -154,6 +154,7 @@ theorem extended_inv {I : FractionalIdeal A⁰ K} (hI : I ≠ 0) :
   rw [← mul_eq_one_iff_eq_inv₀, ← extended_mul, inv_mul_cancel₀ hI, extended_one]
   exact extended_ne_zero _ _ (FaithfulSMul.algebraMap_injective _ _) hI
 
+variable (K) in
 theorem extended_coeIdeal_eq_map_algebraMap (I : Ideal A) :
     haveI hs : A⁰ ≤ Submonoid.comap (algebraMap A B) B⁰ := fun _ hx ↦ by simpa using hx
     (I : FractionalIdeal A⁰ K).extended L hs =

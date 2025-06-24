@@ -7,6 +7,13 @@ theorem FractionalIdeal.inv_le_inv_iff {A K : Type*} [CommRing A] [Field K] [IsD
     I⁻¹ ≤ J⁻¹ ↔ J ≤ I := by
   rw [le_inv_comm (inv_ne_zero hI) hJ, inv_inv]
 
+-- instance (K : Type*) [Field K] [NumberField K] (F : Type*) [Field F] [NumberField F] [Algebra F K] :
+--     IsLocalization (Algebra.algebraMapSubmonoid (𝓞 K) (𝓞 F)⁰) K := by
+--   refine IsLocalization.of_le (Algebra.algebraMapSubmonoid (𝓞 K) ℤ⁰) _ ?_ ?_
+--   · rintro _ ⟨a, ha, rfl⟩
+--     exact ⟨a, by simpa using ne_zero ha, by simp⟩
+--   · rintro _ ⟨x, hx, rfl⟩
+--     simpa using ne_zero hx
 
 
 #exit

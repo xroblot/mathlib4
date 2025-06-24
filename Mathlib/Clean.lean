@@ -29,6 +29,11 @@ noncomputable def Basis.traceDual {K : Type*} {L : Type*} [Field K] [Field L] [A
     Basis ι K L :=
   (Algebra.traceForm K L).dualBasis (traceForm_nondegenerate K L) b
 
+theorem Basis.traceDual_def {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
+    [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι]
+    (b : Basis ι K L) :
+    b.traceDual = (Algebra.traceForm K L).dualBasis (traceForm_nondegenerate K L) b := rfl
+
 @[simp]
 theorem Basis.traceDual_repr_apply {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
     [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι]
@@ -80,29 +85,14 @@ theorem Basis.traceDual_eq_iff {K : Type*} {L : Type*} [Field K] [Field L] [Alge
       ∀ i j, Algebra.traceForm K L (v i) (b j) = if j = i then 1 else 0 :=
   (Algebra.traceForm K L).dualBasis_eq_iff (traceForm_nondegenerate K L) b v
 
-@[simp]
-theorem Submodule.traceDual_restrictScalars (A K : Type*) {L B : Type*} [CommRing A] [Field K]
-    [CommRing B] [Field L] [Algebra A K] [Algebra B L] [Algebra A B] [Algebra K L] [Algebra A L]
-    [IsScalarTower A K L] [IsScalarTower A B L] (I : Submodule B L) :
-    (Submodule.traceDual A K I).restrictScalars A =
-      (Algebra.traceForm K L).dualSubmodule (I.restrictScalars A) := rfl
-
 theorem Submodule.traceDual_span_of_basis (A : Type*) {K L B : Type*}
     [CommRing A] [Field K] [CommRing B] [Field L] [Algebra A K] [Algebra B L] [Algebra A B]
     [Algebra K L] [Algebra A L] [FiniteDimensional K L] [Algebra.IsSeparable K L]
     [IsScalarTower A K L] [IsScalarTower A B L] (I : Submodule B L) {ι : Type*} [Finite ι]
     [DecidableEq ι] (b : Basis ι K L) (hb : I.restrictScalars A = Submodule.span A (Set.range b)) :
     (Submodule.traceDual A K I).restrictScalars A = Submodule.span A (Set.range b.traceDual) := by
-  rw [traceDual_restrictScalars, hb]
+  rw [restrictScalars_traceDual, hb]
   exact (Algebra.traceForm K L).dualSubmodule_span_of_basis (traceForm_nondegenerate K L) b
-
-instance (K : Type*) [Field K] [NumberField K] (F : Type*) [Field F] [NumberField F] [Algebra F K] :
-    IsLocalization (Algebra.algebraMapSubmonoid (𝓞 K) (𝓞 F)⁰) K := by
-  refine IsLocalization.of_le (Algebra.algebraMapSubmonoid (𝓞 K) ℤ⁰) _ ?_ ?_
-  · rintro _ ⟨a, ha, rfl⟩
-    exact ⟨a, by simpa using ne_zero ha, by simp⟩
-  · rintro _ ⟨x, hx, rfl⟩
-    simpa using ne_zero hx
 
 open nonZeroDivisors Algebra FractionalIdeal
 section numberfield
@@ -124,12 +114,11 @@ namespace IntermediateField.LinearDisjoint
 open Submodule IntermediateField
 
 variable {A K C M : Type*} [CommRing A] [Field K] [CommRing C] [Field M] [Algebra K M]
-  [Algebra A K] [IsFractionRing A K] [Algebra C M]
-  {L₁ L₂ : IntermediateField K M} {B₁ B₂ : Type*} [CommRing B₁] [CommRing B₂]
-  [Algebra B₁ L₁] [Algebra B₂ L₂] [Algebra A B₂] [Algebra A L₂] [Algebra B₁ C] [Algebra B₂ C]
-  [Algebra B₁ M] [Algebra B₂ M] [IsScalarTower A K L₂] [IsScalarTower A B₂ L₂]
-  [IsScalarTower B₁ C M] [IsScalarTower B₂ C M] [IsScalarTower B₁ L₁ M] [IsScalarTower B₂ L₂ M]
-  [Algebra.IsSeparable K M] [FiniteDimensional K M]
+  [Algebra A K] [IsFractionRing A K] [Algebra C M] [Algebra A M] [IsScalarTower A K M]
+  {L₁ L₂ : IntermediateField K M} {B₁ B₂ : Type*} [CommRing B₁] [CommRing B₂] [Algebra B₁ L₁]
+  [Algebra B₂ L₂] [Algebra A B₂] [Algebra B₁ C] [Algebra B₂ C] [Algebra B₁ M] [Algebra B₂ M]
+  [IsScalarTower A B₂ L₂] [IsScalarTower B₁ C M] [IsScalarTower B₂ C M] [IsScalarTower B₁ L₁ M]
+  [IsScalarTower B₂ L₂ M] [Algebra.IsSeparable K M] [FiniteDimensional K M]
 
 variable (A B₁ B₂ C) in
 theorem traceDual_le_span_traceDual [IsLocalization (algebraMapSubmonoid B₂ A⁰) L₂]
@@ -138,28 +127,76 @@ theorem traceDual_le_span_traceDual [IsLocalization (algebraMapSubmonoid B₂ A�
     traceDual B₁ L₁ (1 : Submodule C M) ≤
       span C (algebraMap L₂ M '' (traceDual A K (1 : Submodule B₂ L₂))) := by
   intro x hx
-  let b := (Module.Free.chooseBasis A B₂).localizationLocalization K A⁰ L₂
+  let b₂ := (Module.Free.chooseBasis A B₂).localizationLocalization K A⁰ L₂
   have h₂' : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
     simpa [sup_toSubalgebra_of_isAlgebraic_right] using congr_arg toSubalgebra h₂
-  let b' : Basis _ L₁ M := h₁.basisOfBasisLeft h₂' b.traceDual
-  rw [← b'.sum_repr x]
+  let bM : Basis _ L₁ M := h₁.basisOfBasisLeft h₂' b₂.traceDual
+  rw [← bM.sum_repr x]
   refine Submodule.sum_mem _ fun i _ ↦ ?_
-  rsuffices ⟨c, hc⟩ : b'.repr x i ∈ (algebraMap B₁ L₁).range := by
-    have : (h₁.basisOfBasisLeft h₂' b).traceDual = b' := by
+  rsuffices ⟨c, hc⟩ : bM.repr x i ∈ (algebraMap B₁ L₁).range := by
+    have : (h₁.basisOfBasisLeft h₂' b₂).traceDual = bM := by
       refine (DFunLike.ext'_iff.trans Basis.traceDual_eq_iff).mpr fun _ _ ↦ ?_
       rw [h₁.basisOfBasisLeft_apply, h₁.basisOfBasisLeft_apply, traceForm_apply, ← map_mul,
-        h₁.trace_algebraMap_eq h₂, b.trace_traceDual_mul, MonoidWithZeroHom.map_ite_one_zero]
-    rw [← this, (h₁.basisOfBasisLeft h₂' b).traceDual_repr_apply x i]
+        h₁.trace_algebraMap_eq h₂, b₂.trace_traceDual_mul, MonoidWithZeroHom.map_ite_one_zero]
+    rw [← this, (h₁.basisOfBasisLeft h₂' b₂).traceDual_repr_apply x i]
     refine mem_traceDual.mp hx _ ?_
     rw [mem_one, h₁.basisOfBasisLeft_apply, Basis.localizationLocalization_apply,
       ← IsScalarTower.algebraMap_apply, IsScalarTower.algebraMap_apply B₂ C M]
     exact ⟨_, rfl⟩
   rw [← hc, ← algebra_compatible_smul L₁, algebra_compatible_smul C]
   refine Submodule.smul_mem _ _ (Submodule.subset_span ?_)
-  refine ⟨b.traceDual i, ?_, by rw [h₁.basisOfBasisLeft_apply]⟩
-  rw [SetLike.mem_coe, ← restrictScalars_mem A, traceDual_span_of_basis A _ b
+  refine ⟨b₂.traceDual i, ?_, by rw [h₁.basisOfBasisLeft_apply]⟩
+  rw [SetLike.mem_coe, ← restrictScalars_mem A, traceDual_span_of_basis A _ b₂
     (by rw [Basis.localizationLocalization_span K A⁰ L₂]; ext; simp)]
   exact Submodule.subset_span <| Set.mem_range_self i
+
+variable (A B₁ B₂ C) in
+theorem traceDual_le_span_traceDual' [IsLocalization (algebraMapSubmonoid B₂ A⁰) L₂]
+    [Module.Free A B₂] [Module.Finite A B₂]
+    (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤) :
+    (traceDual B₁ L₁ (1 : Submodule C M)).restrictScalars B₁ ≤
+      span B₁ (algebraMap L₂ M '' (traceDual A K (1 : Submodule B₂ L₂))) := by
+  intro x hx
+  let b₂ := (Module.Free.chooseBasis A B₂).localizationLocalization K A⁰ L₂
+  have h₂' : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
+    simpa [sup_toSubalgebra_of_isAlgebraic_right] using congr_arg toSubalgebra h₂
+  let bM : Basis _ L₁ M := h₁.basisOfBasisLeft h₂' b₂.traceDual
+  rw [← bM.sum_repr x]
+  refine Submodule.sum_mem _ fun i _ ↦ ?_
+  rsuffices ⟨c, hc⟩ : bM.repr x i ∈ (algebraMap B₁ L₁).range := by
+    have : (h₁.basisOfBasisLeft h₂' b₂).traceDual = bM := by
+      refine (DFunLike.ext'_iff.trans Basis.traceDual_eq_iff).mpr fun _ _ ↦ ?_
+      rw [h₁.basisOfBasisLeft_apply, h₁.basisOfBasisLeft_apply, traceForm_apply, ← map_mul,
+        h₁.trace_algebraMap_eq h₂, b₂.trace_traceDual_mul, MonoidWithZeroHom.map_ite_one_zero]
+    rw [← this, (h₁.basisOfBasisLeft h₂' b₂).traceDual_repr_apply x i]
+    refine mem_traceDual.mp hx _ ?_
+    rw [mem_one, h₁.basisOfBasisLeft_apply, Basis.localizationLocalization_apply,
+      ← IsScalarTower.algebraMap_apply, IsScalarTower.algebraMap_apply B₂ C M]
+    exact ⟨_, rfl⟩
+  rw [← hc, ← algebra_compatible_smul L₁]
+  refine Submodule.smul_mem _ _ (Submodule.subset_span ?_)
+  refine ⟨b₂.traceDual i, ?_, by rw [h₁.basisOfBasisLeft_apply]⟩
+  rw [SetLike.mem_coe, ← restrictScalars_mem A, traceDual_span_of_basis A _ b₂
+    (by rw [Basis.localizationLocalization_span K A⁰ L₂]; ext; simp)]
+  exact Submodule.subset_span <| Set.mem_range_self i
+
+example [IsLocalization (algebraMapSubmonoid B₂ A⁰) L₂] [Module.Free A B₂] [Module.Finite A B₂]
+    (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤) :
+    span B₁ (algebraMap L₂ M '' (traceDual A K (1 : Submodule B₂ L₂))) ≤
+      (traceDual B₁ L₁ (1 : Submodule C M)).restrictScalars B₁ := by
+  intro x hx
+  induction hx using span_induction with
+  | mem x h =>
+      obtain ⟨y, hy, rfl⟩ := h
+      rw [SetLike.mem_coe] at hy
+      rw [Submodule.restrictScalars_mem]
+      rw [mem_traceDual] at hy ⊢
+      intro z hz
+      rw [traceForm_apply, h₁.trace_algebraMap_eq h₂]
+      sorry
+  | zero => sorry
+  | add x y hx hy _ _ => sorry
+  | smul a x hx _ => sorry
 
 variable [IsDomain A] [IsDomain B₁]
   [IsIntegrallyClosed A] [IsIntegrallyClosed B₁] [IsDedekindDomain B₂] [IsDedekindDomain C]
@@ -174,7 +211,7 @@ theorem differentIdeal_dvd_differentIdeal_map [Module.Free A B₂] [Module.Finit
   have := IsIntegralClosure.isLocalization A K L₂ B₂
   have := IsIntegralClosure.isLocalization B₂ L₂ M C
   rw [Ideal.dvd_iff_le, ← coeIdeal_le_coeIdeal' C⁰ (P := M) le_rfl, coeIdeal_differentIdeal B₁ L₁,
-    le_inv_comm _ (by simp), ← extended_coeIdeal_eq_map_algebraMap (K := L₂) M, ← extended_inv,
+    le_inv_comm _ (by simp), ← extended_coeIdeal_eq_map_algebraMap L₂ M, ← extended_inv,
     coeIdeal_differentIdeal A K, inv_inv, ← coe_le_coe, coe_dual_one, coe_extended_eq_span,
     ← coeToSet_coeToSubmodule, coe_dual_one]
   · convert traceDual_le_span_traceDual A C B₁ B₂ h₁ h₂
@@ -183,9 +220,8 @@ theorem differentIdeal_dvd_differentIdeal_map [Module.Free A B₂] [Module.Finit
   · exact coeIdeal_ne_zero.mpr <| Ideal.map_ne_bot_of_ne_bot <| differentIdeal_ne_bot' A K B₂ L₂
 
 variable [Algebra A B₁] [IsDedekindDomain B₁] [NoZeroSMulDivisors A B₁]
-  [Algebra A L₁] [Algebra A C] [Algebra A M] [IsScalarTower A B₁ L₁] [IsScalarTower A K L₁]
-  [IsScalarTower A C M] [IsScalarTower A K M] [IsIntegralClosure B₁ A L₁] [IsIntegralClosure C A M]
-  [NoZeroSMulDivisors A C]
+  [Algebra A C] [IsScalarTower A B₁ L₁] [IsScalarTower A C M] [IsIntegralClosure B₁ A L₁]
+  [IsIntegralClosure C A M] [NoZeroSMulDivisors A C] [IsScalarTower K L₂ M] [IsScalarTower K L₁ M]
 
 theorem differentIdeal_map_eq_differentIdeal [Module.Free A B₁] [Module.Finite A B₁]
     [Module.Free A B₂] [Module.Finite A B₂] (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤)
@@ -204,21 +240,139 @@ theorem differentIdeal_map_eq_differentIdeal [Module.Free A B₁] [Module.Finite
     exact h'.dvd_of_dvd_mul_left (dvd_of_mul_right_eq _ main.symm)
   · exact h₃.dvd_of_dvd_mul_right (dvd_of_mul_left_eq _ main)
 
-example [Module.Free A B₁] [Module.Finite A B₁]
-    [Module.Free A B₂] [Module.Finite A B₂] (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤)
+
+example [FiniteDimensional K L₁] [IsScalarTower A L₁ M] [IsScalarTower A B₂ M]
+    [Module.Free A B₁] [Module.Finite A B₁]
+    [NoZeroSMulDivisors A B₂]
+    (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤)
     (h₃ : IsCoprime ((differentIdeal A B₁).map (algebraMap B₁ C))
       ((differentIdeal A B₂).map (algebraMap B₂ C)))
-    {ι : Type*} (b : Basis ι A B₂) :
-    span B₁ (Set.range (algebraMap B₂ M ∘ b)) =
-      LinearMap.range (IsScalarTower.toAlgHom B₁ C M) := by
-  haveI h₂' : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
-      simpa [sup_toSubalgebra_of_isAlgebraic_right] using congr_arg toSubalgebra h₂
+    {ι : Type*} (b : Basis ι A B₁) :
+    span B₂ (Set.range (algebraMap B₁ M ∘ b)) =
+      LinearMap.range (IsScalarTower.toAlgHom B₂ C M) := by
+  classical
+  have : Finite ι := Module.Finite.finite_basis b
+  have h_main : (traceDual B₂ L₂ (1 : Submodule C M)).restrictScalars B₂ =
+    span B₂ (algebraMap L₁ M '' (traceDual A K (1 : Submodule B₁ L₁))) := sorry
+  convert congr_arg (Submodule.restrictScalars B₂) <|
+    congr_arg coeToSubmodule <| (1 : FractionalIdeal C⁰ M).dual_dual B₂ L₂
+  · rw [coe_dual _ _ (by simp), coe_dual_one]
+    rw [restrictScalars_traceDual, h_main]
+    have : IsLocalization (algebraMapSubmonoid B₁ A⁰) L₁ :=
+      IsIntegralClosure.isLocalization A K L₁ B₁
+    let b₁ := b.localizationLocalization K A⁰ L₁
+    have := Submodule.traceDual_span_of_basis A (1 : Submodule B₁ L₁) b₁ ?_
+    · rw [← Submodule.coe_restrictScalars A, this, ← IsScalarTower.coe_toAlgHom' A L₁ M,
+        ← map_coe, map_span, span_span_of_tower, IsScalarTower.coe_toAlgHom', ← Set.range_comp]
+      have h₂' : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
+        simpa [sup_toSubalgebra_of_isAlgebraic_right] using congr_arg toSubalgebra h₂
+      have : algebraMap L₁ M ∘ b₁.traceDual = (h₁.basisOfBasisRight h₂' b₁).traceDual := by
+        rw [eq_comm, Basis.traceDual_eq_iff]
+        intro i j
+        simp only [Function.comp_apply, basisOfBasisRight_apply, traceForm_apply]
+        rw [← map_mul, h₁.symm.trace_algebraMap_eq (by rwa [sup_comm])]
+        rw [b₁.trace_traceDual_mul i j, MonoidWithZeroHom.map_ite_one_zero]
+      rw [this, (traceForm L₂ M).dualSubmodule_span_of_basis (traceForm_nondegenerate L₂ M),
+        ← Basis.traceDual_def, Basis.traceDual_traceDual]
+      congr!
+      ext
+      rw [Function.comp_apply, basisOfBasisRight_apply, Basis.localizationLocalization_apply,
+        ← IsScalarTower.algebraMap_apply]
+    · rw [b.localizationLocalization_span K A⁰ L₁]
+      ext; simp
+  · ext; simp
 
---  have : algebraMap L₂ M ∘ b = h₁.basisOfBasisLeft h₂' b := by ext; simp
---  rw [this]
-  have : IsLocalization (algebraMapSubmonoid C B₁⁰) M := sorry
-  let b₀ : Basis ι B₁ C := sorry
-  have := Basis.localizationLocalization_span (R := B₁) L₁ B₁⁰ (A := C) M b₀
-  sorry
+#exit
+
+
+    have : IsLocalization (algebraMapSubmonoid B₁ A⁰) L₁ :=
+      IsIntegralClosure.isLocalization A K L₁ B₁
+    have : IsLocalization (algebraMapSubmonoid C B₁⁰) M :=
+      IsIntegralClosure.isLocalization B₁ L₁ M C
+    have h₂' : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
+      simpa [sup_toSubalgebra_of_isAlgebraic_right] using congr_arg toSubalgebra h₂
+    let b₁ := b.localizationLocalization K A⁰ L₁
+    have : algebraMap B₁ M ∘ b = (h₁.basisOfBasisRight h₂' b₁) := by
+      sorry
+    rw [this]
+    have := Submodule.traceDual_span_of_basis (A := B₂) (K := L₂) (B := C) (L := M)
+      (I := span C (Set.range (h₁.basisOfBasisRight h₂' b₁).traceDual)) (ι := ι)
+      (h₁.basisOfBasisRight h₂' b₁).traceDual ?_
+    sorry
+  · ext; simp
+
+
+#exit
+  classical
+  have : Finite ι := sorry
+  convert congr_arg (Submodule.restrictScalars B₂) <|
+    congr_arg coeToSubmodule <| (1 : FractionalIdeal C⁰ M).dual_dual B₂ L₂
+  · have : IsLocalization (algebraMapSubmonoid B₁ A⁰) L₁ :=
+      IsIntegralClosure.isLocalization A K L₁ B₁
+    have : IsLocalization (algebraMapSubmonoid C B₁⁰) M :=
+      IsIntegralClosure.isLocalization B₁ L₁ M C
+    have h₂' : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
+      simpa [sup_toSubalgebra_of_isAlgebraic_right] using congr_arg toSubalgebra h₂
+    let b₁ := b.localizationLocalization K A⁰ L₁
+    have : algebraMap B₁ M ∘ b = (h₁.basisOfBasisRight h₂' b₁) := by
+      sorry
+    rw [this]
+    have := Submodule.traceDual_span_of_basis (A := B₂) (K := L₂) (B := C) (L := M)
+      (I := span C (Set.range (h₁.basisOfBasisRight h₂' b₁).traceDual)) (ι := ι)
+      (h₁.basisOfBasisRight h₂' b₁).traceDual ?_
+    sorry
+
+
+    rw [Basis.traceDual_traceDual] at this
+    rw [← this]
+    congr
+
+    have h := congr_arg ((↑) : Ideal C → FractionalIdeal C⁰ M)
+        (differentIdeal_map_eq_differentIdeal h₁ h₂ h₃)
+    rw [← inv_inj, coeIdeal_differentIdeal B₂ L₂, ← extended_coeIdeal_eq_map_algebraMap L₁ M,
+      ← extended_inv, coeIdeal_differentIdeal A K, inv_inv, inv_inv] at h
+    replace h := congr_arg coeToSubmodule <| h
+    rw [coe_extended_eq_span, coe_dual_one, ← coeToSet_coeToSubmodule, coe_dual_one] at h
+    have := IsLocalization.algebraMap_eq_map_map_submonoid B₁⁰ C L₁ M
+    erw [← this] at h
+    rw [coe_dual, coe_dual_one]
+    rw [← h]
+    congr
+
+#exit
+    let b₁ := b.localizationLocalization K A⁰ L₁
+    have : (traceDual A K (1 : Submodule B₁ L₁) : Set L₁) = span A (Set.range b₁.traceDual) := by
+      rw [← Submodule.traceDual_span_of_basis A (1 : Submodule B₁ L₁),
+        Submodule.coe_restrictScalars]
+      rw [b.localizationLocalization_span K A⁰ L₁]
+      ext; simp
+    rw [this, ← IsScalarTower.coe_toAlgHom' A L₁ M, ← map_coe, map_span, span_span_of_tower]
+    rw [IsScalarTower.coe_toAlgHom', ← Set.range_comp]
+    have h₂' : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
+      simpa [sup_toSubalgebra_of_isAlgebraic_right] using congr_arg toSubalgebra h₂
+    have : algebraMap L₁ M ∘ b₁.traceDual = (h₁.basisOfBasisRight h₂' b₁).traceDual := by
+      rw [eq_comm, Basis.traceDual_eq_iff]
+      intro i j
+      simp only [Function.comp_apply, basisOfBasisRight_apply, traceForm_apply]
+      rw [← map_mul, h₁.symm.trace_algebraMap_eq (by rwa [sup_comm])]
+      rw [b₁.trace_traceDual_mul i j, MonoidWithZeroHom.map_ite_one_zero]
+    rw [this]
+    have := Submodule.traceDual_span_of_basis (A := B₂) (K := L₂) (B := C) (L := M)
+      (I := span C (Set.range (h₁.basisOfBasisRight h₂' b₁).traceDual)) (ι := ι)
+      (h₁.basisOfBasisRight h₂' b₁).traceDual ?_
+    · rw [this]
+      congr
+      simp
+      congr!
+      ext
+      simp
+      sorry
+    · ext
+      simp
+      sorry
+    · simp
+    · sorry
+  · ext
+    simp [mem_one_iff]
 
 end IntermediateField.LinearDisjoint
