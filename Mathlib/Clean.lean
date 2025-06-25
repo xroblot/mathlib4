@@ -20,87 +20,6 @@ theorem differentIdeal_ne_bot' (A K B L : Type*) [CommRing A] [Field K] [Algebra
   rw [ne_eq, ← FractionalIdeal.coeIdeal_inj (K := L), coeIdeal_differentIdeal (K := K)]
   simp
 
-theorem LinearMap.BilinForm.dualBasis_eq_iff {V : Type*} {K : Type*} [Field K] [AddCommGroup V]
-    [Module K V] {ι : Type*} [DecidableEq ι] [Finite ι] (B : LinearMap.BilinForm K V)
-    (hB : B.Nondegenerate) (b : Basis ι K V) (v : ι → V) :
-    B.dualBasis hB b = v ↔ ∀ i j, B (v i) (b j) = if j = i then 1 else 0 :=
-  ⟨fun h _ _ ↦ by rw [← h, apply_dualBasis_left],
-    fun h ↦ funext fun _ ↦ (B.dualBasis hB b).ext_elem_iff.mpr fun _ ↦ by
-      rw [dualBasis_repr_apply, dualBasis_repr_apply, apply_dualBasis_left, h]⟩
-
-/-- Doc -/
-noncomputable def Basis.traceDual {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
-    [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι]
-    (b : Basis ι K L) :
-    Basis ι K L :=
-  (Algebra.traceForm K L).dualBasis (traceForm_nondegenerate K L) b
-
-theorem Basis.traceDual_def {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
-    [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι]
-    (b : Basis ι K L) :
-    b.traceDual = (Algebra.traceForm K L).dualBasis (traceForm_nondegenerate K L) b := rfl
-
-@[simp]
-theorem Basis.traceDual_repr_apply {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
-    [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι]
-    (b : Basis ι K L) (x : L) (i : ι) :
-    (b.traceDual).repr x i = (Algebra.traceForm K L x) (b i) :=
-  (Algebra.traceForm K L).dualBasis_repr_apply _ b _ i
-
-theorem Basis.trace_traceDual_mul {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
-    [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι]
-    (b : Basis ι K L) (i j : ι) :
-    Algebra.trace K L ((b.traceDual i) * (b j)) = if j = i then 1 else 0 :=
-  (Algebra.traceForm K L).apply_dualBasis_left _ _ i j
-
-theorem Basis.trace_mul_traceDual {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
-    [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι]
-    (b : Basis ι K L) (i j : ι) :
-    Algebra.trace K L ((b i) * (b.traceDual j)) = if i = j then 1 else 0 := by
-  refine (Algebra.traceForm K L).apply_dualBasis_right _ (Algebra.traceForm_isSymm K) _ i j
-
-@[simp]
-theorem Basis.traceDual_traceDual {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
-    [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι]
-    (b : Basis ι K L) :
-    b.traceDual.traceDual = b :=
-  (Algebra.traceForm K L).dualBasis_dualBasis _ (Algebra.traceForm_isSymm K) _
-
-@[simp]
-theorem Basis.traceDual_involutive (K L : Type*) [Field K] [Field L] [Algebra K L]
-    [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι] :
-    Function.Involutive (Basis.traceDual : Basis ι K L → Basis ι K L) :=
-  fun b ↦ traceDual_traceDual b
-
-theorem Basis.traceDual_injective (K L : Type*) [Field K] [Field L] [Algebra K L]
-    [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι] :
-    Function.Injective (Basis.traceDual : Basis ι K L → Basis ι K L) :=
-  (traceDual_involutive K L).injective
-
-@[simp]
-theorem Basis.traceDual_inj {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
-    [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι]
-    (b b' : Basis ι K L):
-    b.traceDual = b'.traceDual ↔ b = b' :=
-  (traceDual_injective K L).eq_iff
-
-theorem Basis.traceDual_eq_iff {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
-    [FiniteDimensional K L] [Algebra.IsSeparable K L] {ι : Type*} [Finite ι] [DecidableEq ι]
-    {b : Basis ι K L} {v : ι → L} :
-    b.traceDual = v ↔
-      ∀ i j, Algebra.traceForm K L (v i) (b j) = if j = i then 1 else 0 :=
-  (Algebra.traceForm K L).dualBasis_eq_iff (traceForm_nondegenerate K L) b v
-
--- This doesn't seem right
-theorem Submodule.traceDual_span_of_basis (A : Type*) {K L B : Type*}
-    [CommRing A] [Field K] [CommRing B] [Field L] [Algebra A K] [Algebra B L] [Algebra A B]
-    [Algebra K L] [Algebra A L] [FiniteDimensional K L] [Algebra.IsSeparable K L]
-    [IsScalarTower A K L] [IsScalarTower A B L] (I : Submodule B L) {ι : Type*} [Finite ι]
-    [DecidableEq ι] (b : Basis ι K L) (hb : I.restrictScalars A = Submodule.span A (Set.range b)) :
-    (Submodule.traceDual A K I).restrictScalars A = Submodule.span A (Set.range b.traceDual) := by
-  rw [restrictScalars_traceDual, hb]
-  exact (Algebra.traceForm K L).dualSubmodule_span_of_basis (traceForm_nondegenerate K L) b
-
 open nonZeroDivisors Algebra FractionalIdeal
 section numberfield
 
@@ -279,7 +198,7 @@ example
     have : IsLocalization (algebraMapSubmonoid B₁ A⁰) L₁ :=
       IsIntegralClosure.isLocalization A K L₁ B₁
     let b₁ := b.localizationLocalization K A⁰ L₁
-    have := Submodule.traceDual_span_of_basis A (1 : Submodule B₁ L₁) b₁ ?_
+    have := Submodule.traceDual_span_of_basis (A := A) (1 : Submodule B₁ L₁) b₁ ?_
     · rw [← Submodule.coe_restrictScalars A, this, ← IsScalarTower.coe_toAlgHom' A L₁ M,
         ← map_coe, map_span, span_span_of_tower, IsScalarTower.coe_toAlgHom', ← Set.range_comp]
       have h₂' : L₁.toSubalgebra ⊔ L₂.toSubalgebra = ⊤ := by
