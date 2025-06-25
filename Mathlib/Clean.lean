@@ -255,8 +255,11 @@ theorem traceDual_eq_span_traceDual [Module.Finite A B₂] [Module.Free A B₂]
   · have := IsIntegralClosure.isLocalization A K L₂ B₂
     exact traceDual_le_span_traceDual A C B₁ B₂ h₁ h₂
 
-example [FiniteDimensional K L₁] [IsScalarTower A L₁ M] [IsScalarTower A B₂ M]
-    [Module.Free A B₁] [Module.Finite A B₁]
+example
+    [IsScalarTower A L₁ M]
+    [IsScalarTower A B₂ M]
+    [Module.Free A B₁]
+    [Module.Finite A B₁]
     [NoZeroSMulDivisors A B₂]
     (h₁ : L₁.LinearDisjoint L₂) (h₂ : L₁ ⊔ L₂ = ⊤)
     (h₃ : IsCoprime ((differentIdeal A B₁).map (algebraMap B₁ C))

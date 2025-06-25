@@ -138,28 +138,24 @@ theorem extended_coeIdeal_eq_map {A : Type*} [CommRing A] {B : Type*} [CommRing 
 
 end CommRing
 
-section IsDedekindDomain
+section FractionRing
 
 open scoped nonZeroDivisors
 
-variable {A : Type*} [CommRing A] [IsDedekindDomain A] {K : Type*} [Field K] [Algebra A K]
-  [IsFractionRing A K] {B : Type*} [CommRing B] [IsDedekindDomain B] (L : Type*) [Field L]
+variable {A : Type*} [CommRing A] [IsDomain A] {K : Type*} [Field K] [Algebra A K]
+  [IsFractionRing A K] {B : Type*} [CommRing B] [IsDomain B] (L : Type*) [Field L]
   [Algebra B L] [IsFractionRing B L] [Algebra A B] [NoZeroSMulDivisors A B]
 
-lemma coe_extended_eq_span_algebraMap {I : FractionalIdeal A⁰ K} [Algebra K L] [Algebra A L]
-    [IsScalarTower A B L] [IsScalarTower A K L]
-    [IsLocalization (Algebra.algebraMapSubmonoid B A⁰) L ] :
-    haveI hs : A⁰ ≤ Submonoid.comap (algebraMap A B) B⁰ := fun _ hx ↦ by simpa using hx
+lemma coe_extended_eq_span_algebraMap [Algebra K L] [Algebra A L] [IsScalarTower A B L]
+    [IsScalarTower A K L] [IsLocalization (Algebra.algebraMapSubmonoid B A⁰) L ]
+    {I : FractionalIdeal A⁰ K} :
+    haveI hs : A⁰ ≤ Submonoid.comap (algebraMap A B) B⁰ := fun _ hx ↦ by
+      rw [Submonoid.mem_comap,  mem_nonZeroDivisors_iff_ne_zero, ne_eq,
+          FaithfulSMul.algebraMap_eq_zero_iff]
+      simpa using hx
     I.extended L hs = span B (algebraMap K L '' I) := by
   rw [IsLocalization.algebraMap_eq_map_map_submonoid A⁰ B K L]
   exact coe_extended_eq_span L _ I
-
-theorem extended_inv {I : FractionalIdeal A⁰ K} (hI : I ≠ 0) :
-    haveI hs : A⁰ ≤ Submonoid.comap (algebraMap A B) B⁰ := fun _ hx ↦ by simpa using hx
-    extended L hs (f := algebraMap A B) I⁻¹ =
-       (extended L hs (f := algebraMap A B) I : FractionalIdeal B⁰ L)⁻¹ := by
-  rw [← mul_eq_one_iff_eq_inv₀, ← extended_mul, inv_mul_cancel₀ hI, extended_one]
-  exact extended_ne_zero _ _ (FaithfulSMul.algebraMap_injective _ _) hI
 
 variable (K) in
 theorem extended_coeIdeal_eq_map_algebraMap (I : Ideal A) :
@@ -168,6 +164,14 @@ theorem extended_coeIdeal_eq_map_algebraMap (I : Ideal A) :
       (I.map (algebraMap A B) : FractionalIdeal B⁰ L) :=
   FractionalIdeal.extended_coeIdeal_eq_map _ _ _
 
-end IsDedekindDomain
+theorem extended_inv [IsDedekindDomain A] [IsDedekindDomain B] {I : FractionalIdeal A⁰ K}
+    (hI : I ≠ 0) :
+    haveI hs : A⁰ ≤ Submonoid.comap (algebraMap A B) B⁰ := fun _ hx ↦ by simpa using hx
+    extended L hs (f := algebraMap A B) I⁻¹ =
+       (extended L hs (f := algebraMap A B) I : FractionalIdeal B⁰ L)⁻¹ := by
+  rw [← mul_eq_one_iff_eq_inv₀, ← extended_mul, inv_mul_cancel₀ hI, extended_one]
+  exact extended_ne_zero _ _ (FaithfulSMul.algebraMap_injective _ _) hI
+
+end FractionRing
 
 end FractionalIdeal
