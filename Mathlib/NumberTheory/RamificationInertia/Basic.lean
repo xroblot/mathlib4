@@ -3,10 +3,9 @@ Copyright (c) 2022 Anne Baanen. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anne Baanen
 -/
-import Mathlib.LinearAlgebra.Dimension.DivisionRing
-import Mathlib.RingTheory.DedekindDomain.Ideal
+import Mathlib.RingTheory.DedekindDomain.IntegralClosure
 import Mathlib.RingTheory.Finiteness.Quotient
-import Mathlib.RingTheory.Ideal.Norm.AbsNorm
+import Mathlib.RingTheory.Ideal.Int
 
 /-!
 # Ramification index and inertia degree
@@ -372,7 +371,7 @@ theorem FinrankQuotientMap.span_eq_top [IsDomain R] [IsDomain S] [Algebra K L] [
   let B := A.adjugate
   have A_smul : ∀ i, ∑ j, A i j • a j = 0 := by
     intros
-    simp [A, Matrix.sub_apply, Matrix.of_apply, ne_eq, Matrix.one_apply, sub_smul,
+    simp [A, Matrix.sub_apply, Matrix.of_apply, Matrix.one_apply, sub_smul,
       Finset.sum_sub_distrib, hA', sub_self]
   -- since `span S {det A} / M = 0`.
   have d_smul : ∀ i, A.det • a i = 0 := by
@@ -609,7 +608,7 @@ noncomputable def quotientToQuotientRangePowQuotSucc
       quotientToQuotientRangePowQuotSuccAux_mk]
     refine congr_arg Submodule.Quotient.mk ?_
     ext
-    simp only [mul_assoc, map_mul, Quotient.mk_eq_mk, Submodule.coe_smul_of_tower,
+    simp only [map_mul, Quotient.mk_eq_mk, Submodule.coe_smul_of_tower,
       Algebra.smul_def, Quotient.algebraMap_quotient_pow_ramificationIdx]
     ring
 
@@ -625,7 +624,7 @@ theorem quotientToQuotientRangePowQuotSucc_injective [IsDedekindDomain S] [P.IsP
     Quotient.inductionOn' y fun y h => by
       have Pe_le_Pi1 : P ^ e ≤ P ^ (i + 1) := Ideal.pow_le_pow_right hi
       simp only [Submodule.Quotient.mk''_eq_mk, quotientToQuotientRangePowQuotSucc_mk,
-        Submodule.Quotient.eq, LinearMap.mem_range, Subtype.ext_iff, Subtype.coe_mk,
+        Submodule.Quotient.eq, LinearMap.mem_range, Subtype.ext_iff,
         Submodule.coe_sub] at h ⊢
       rcases h with ⟨⟨⟨z⟩, hz⟩, h⟩
       rw [Submodule.Quotient.quot_mk_eq_mk, Ideal.Quotient.mk_eq_mk, Ideal.mem_quotient_iff_mem_sup,
@@ -650,7 +649,7 @@ theorem quotientToQuotientRangePowQuotSucc_surjective [IsDedekindDomain S]
     obtain ⟨y, rfl⟩ := Ideal.mem_span_singleton.mp hy'
     refine ⟨Submodule.Quotient.mk y, ?_⟩
     simp only [Submodule.Quotient.quot_mk_eq_mk, quotientToQuotientRangePowQuotSucc_mk,
-      Submodule.Quotient.eq, LinearMap.mem_range, Subtype.ext_iff, Subtype.coe_mk,
+      Submodule.Quotient.eq, LinearMap.mem_range, Subtype.ext_iff,
       Submodule.coe_sub]
     refine ⟨⟨_, Ideal.mem_map_of_mem _ (Submodule.neg_mem _ hz)⟩, ?_⟩
     rw [powQuotSuccInclusion_apply_coe, Subtype.coe_mk, Ideal.Quotient.mk_eq_mk, map_add,
@@ -939,5 +938,54 @@ theorem inertiaDeg_algebra_tower (p : Ideal R) (P : Ideal S) (I : Ideal T) [p.Is
 @[deprecated (since := "2024-12-09")] alias inertiaDeg_tower := inertiaDeg_algebra_tower
 
 end tower
+
+theorem absNorm_algebraMap (K L : Type*) [Field K] [Field L] [IsDedekindDomain R] [Algebra R K]
+    [IsFractionRing R K] [Module.Free ℤ R] [Module.Finite ℤ R] [IsDedekindDomain S] [Algebra S L]
+    [IsFractionRing S L] [Module.Free ℤ S] [Module.Finite ℤ S] [Algebra R S] [Algebra K L]
+    [Algebra R L] [IsScalarTower R S L] [IsScalarTower R K L] [NoZeroSMulDivisors R S]
+    [IsIntegralClosure S R L] [Algebra.IsSeparable K L] [FiniteDimensional K L] (I : Ideal R) :
+    absNorm (map (algebraMap R S) I) = absNorm I ^ Module.finrank K L := by
+  classical
+  have : Module.Finite R S := IsIntegralClosure.finite R K L S
+  by_cases hI : I = ⊥
+  · simp [hI, zero_pow, Module.finrank_pos]
+  rw [← prod_normalizedFactors_eq_self hI]
+  refine Multiset.prod_induction
+    (fun I ↦  absNorm (map (algebraMap R S) I) = absNorm I ^ Module.finrank K L) _ ?_ ?_ ?_
+  · intro I J hI hJ
+    rw [map_mul, ← mapHom_apply, map_mul, map_mul, mapHom_apply, mapHom_apply, hI, hJ, mul_pow]
+  · simpa using Ideal.map_top _
+  · intro P hP
+    have hP' : P ≠ ⊥ := by
+      contrapose! hP
+      simpa [hP] using zero_notMem_normalizedFactors _
+    rw [Ideal.mem_normalizedFactors_iff hI] at hP
+    have : P.IsMaximal := Ring.DimensionLEOne.maximalOfPrime hP' hP.1
+    let p := absNorm (under ℤ P)
+    have hp : Prime (p : ℤ) := Int.prime_absNorm_under _ hP.1
+      (Int.absNorm_under_ne_zero (by rwa [ne_eq, Ideal.absNorm_eq_zero_iff]))
+    have : Fact (Nat.Prime p) := ⟨Nat.prime_iff_prime_int.mpr hp⟩
+    have : (span {(p : ℤ)}).IsMaximal := Int.ideal_span_isMaximal_of_prime p
+    have : P.LiesOver (span {(p : ℤ)}) := by simp [liesOver_iff, p]
+    nth_rewrite 1 [← prod_normalizedFactors_eq_self (map_ne_bot_of_ne_bot hP')]
+    simp only [Finset.prod_multiset_count, ← mapHom_apply, map_prod, map_pow]
+    have hQ₁ {Q} (hQ : Q∈ (normalizedFactors ((map (algebraMap R S)) P)).toFinset) :
+        Ideal.absNorm Q = Ideal.absNorm P ^ P.inertiaDeg Q := by
+      rw [Multiset.mem_toFinset, ← mem_primesOver_iff_mem_normalizedFactors _ hP'] at hQ
+      have : Q.LiesOver P := hQ.2
+      have : Q.LiesOver (span {(p : ℤ)}) := LiesOver.trans Q P _
+      rw [absNorm_eq_pow_inertiaDeg P hp, absNorm_eq_pow_inertiaDeg Q hp,
+        inertiaDeg_algebra_tower _ P, pow_mul]
+    have hQ₂ {Q} (hQ : Q∈ (normalizedFactors ((map (algebraMap R S)) P)).toFinset) :
+        Multiset.count Q (normalizedFactors ((map (algebraMap R S)) P)) =
+          ramificationIdx (algebraMap R S) P Q := by
+      rw [IsDedekindDomain.ramificationIdx_eq_normalizedFactors_count (map_ne_bot_of_ne_bot hP')]
+      · rw [Multiset.mem_toFinset, ← mem_primesOver_iff_mem_normalizedFactors _ hP'] at hQ
+        exact hQ.1
+      · contrapose! hQ
+        simpa [hQ] using zero_notMem_normalizedFactors _
+    simp_rw +contextual [mapHom_apply, hQ₁, hQ₂, ← pow_mul, mul_comm (P.inertiaDeg _)]
+    rw [Finset.prod_pow_eq_pow_sum, ← factors_eq_normalizedFactors,
+      sum_ramification_inertia S P K L hP']
 
 end Ideal

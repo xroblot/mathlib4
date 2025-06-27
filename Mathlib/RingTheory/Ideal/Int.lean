@@ -90,6 +90,4 @@ theorem absNorm_under_ne_zero {S : Type*} [CommRing S] [IsDedekindDomain S] [Mod
   contrapose! hI
   exact Nat.eq_zero_of_zero_dvd (hI ▸ absNorm_under_dvd_absNorm I)
 
-
-
 end Int
