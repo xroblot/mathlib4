@@ -1,5 +1,7 @@
 import Mathlib
 
+section cyclotomic
+
 open Algebra
 
 theorem IsPrimitiveRoot.mul_isPrimitiveRoot_of_coprime {M : Type*} [CommMonoid M] {k : ℕ}
@@ -118,7 +120,9 @@ theorem Subalgebra.isCyclotomicExtension_lcm_sup [NeZero n₁] [NeZero n₂] :
     | add _ _ _ _ hx hy => simpa [AddMemClass.mk_add_mk] using Subalgebra.add_mem  _ hx hy
     | mul _ _ _ _ hx hy => simpa [MulMemClass.mk_mul_mk] using Subalgebra.mul_mem  _ hx hy
 
-open nonZeroDivisors NumberField
+end cyclotomic
+
+-- open nonZeroDivisors NumberField
 
 -- theorem Submodule.span_mono_left {R S M : Type*} [Semiring R] [Semiring S] [AddCommMonoid M]
 --     [Module R M] [Module S M] [SMul R S] [IsScalarTower R S M] {s : Set M} :
@@ -138,7 +142,7 @@ open nonZeroDivisors NumberField
 --   rw [ne_eq, ← FractionalIdeal.coeIdeal_inj (K := L), coeIdeal_differentIdeal (K := K)]
 --   simp
 
-open nonZeroDivisors Algebra FractionalIdeal
+-- open nonZeroDivisors Algebra FractionalIdeal
 -- section numberfield
 
 -- open NumberField
@@ -194,6 +198,10 @@ variable {A K C M : Type*} [CommRing A] [Field K] [CommRing C] [Field M] [Algebr
 --   rw [SetLike.mem_coe, ← restrictScalars_mem A, traceDual_span_of_basis A _ b₂
 --     (by rw [Basis.localizationLocalization_span K A⁰ L₂]; ext; simp)]
 --   exact Submodule.subset_span <| Set.mem_range_self i
+
+open Algebra
+
+open scoped nonZeroDivisors
 
 variable (A C B₁ B₂) in
 theorem traceDual_le_span_traceDual [IsLocalization (algebraMapSubmonoid B₂ A⁰) L₂]
@@ -267,6 +275,8 @@ variable [Algebra A B₁] [IsDedekindDomain B₁] [NoZeroSMulDivisors A B₁]
 --       · exact differentIdeal_dvd_differentIdeal_map A C B₂ B₁ h₁.symm (by rwa [sup_comm])
 --     exact h'.dvd_of_dvd_mul_left (dvd_of_mul_right_eq _ main.symm)
 --   · exact h₃.dvd_of_dvd_mul_right (dvd_of_mul_left_eq _ main)
+
+open FractionalIdeal
 
 variable (A C B₁ B₂) in
 theorem traceDual_eq_span_traceDual [Module.Finite A B₂] [Module.Free A B₂]
@@ -370,82 +380,87 @@ end NumberField
 
 end IntermediateField
 
-section cyclotomic
+section misc
 
-open Ideal
+variable {F E : Type*} [Field F] [Field E] [Algebra F E] (K L : IntermediateField F E)
+  [FiniteDimensional F E] [hN : Normal F K] [Algebra.IsSeparable F K] (h : K ⊓ L = ⊥)
 
-open UniqueFactorizationMonoid in
-example {A B : Type*} (K L : Type*) [CommRing A] [CommRing B] [Field K] [Field L]
-    [IsDedekindDomain A] [Algebra A K] [IsFractionRing A K] [Module.Free ℤ A] [Module.Finite ℤ A]
-    [IsDedekindDomain B] [Algebra B L] [IsFractionRing B L] [Module.Free ℤ B] [Module.Finite ℤ B]
-    [Algebra A B] [Algebra K L] [Algebra A L] [IsScalarTower A B L] [IsScalarTower A K L]
-    [NoZeroSMulDivisors A B]
-    [IsIntegralClosure B A L] [Algebra.IsSeparable K L] [FiniteDimensional K L] (I : Ideal A) :
-    absNorm (map (algebraMap A B) I) = absNorm I ^ Module.finrank K L := by
-  classical
-  have : Module.Finite A B := IsIntegralClosure.finite A K L B
-  by_cases hI : I = ⊥
-  · simp [hI, zero_pow, Module.finrank_pos]
-  rw [← prod_normalizedFactors_eq_self hI]
-  refine Multiset.prod_induction
-    (fun I ↦  absNorm (map (algebraMap A B) I) = absNorm I ^ Module.finrank K L) _ ?_ ?_ ?_
-  · intro I J hI hJ
-    rw [map_mul, ← mapHom_apply, map_mul, map_mul, mapHom_apply, mapHom_apply, hI, hJ, mul_pow]
-  · simpa using Ideal.map_top _
-  · intro P hP
-    have hP' : P ≠ ⊥ := by
-      contrapose! hP
-      simpa [hP] using zero_notMem_normalizedFactors _
-    rw [Ideal.mem_normalizedFactors_iff hI] at hP
-    have : P.IsMaximal := Ring.DimensionLEOne.maximalOfPrime hP' hP.1
-    let p := absNorm (under ℤ P)
-    have hp : Prime (p : ℤ) := Int.prime_absNorm_under _ hP.1
-      (Int.absNorm_under_ne_zero (by rwa [ne_eq, Ideal.absNorm_eq_zero_iff]))
-    have : Fact (Nat.Prime p) := ⟨Nat.prime_iff_prime_int.mpr hp⟩
-    have : (span {(p : ℤ)}).IsMaximal := Int.ideal_span_isMaximal_of_prime p
-    have : P.LiesOver (span {(p : ℤ)}) := by simp [liesOver_iff, p]
-    nth_rewrite 1 [← prod_normalizedFactors_eq_self (map_ne_bot_of_ne_bot hP')]
-    simp only [Finset.prod_multiset_count, ← mapHom_apply, map_prod, map_pow]
-    have hQ₁ {Q} (hQ : Q∈ (normalizedFactors ((map (algebraMap A B)) P)).toFinset) :
-        Ideal.absNorm Q = Ideal.absNorm P ^ P.inertiaDeg Q := by
-      rw [Multiset.mem_toFinset, ← mem_primesOver_iff_mem_normalizedFactors _ hP'] at hQ
-      have : Q.LiesOver P := hQ.2
-      have : Q.LiesOver (span {(p : ℤ)}) := LiesOver.trans Q P _
-      rw [absNorm_eq_pow_inertiaDeg P hp, absNorm_eq_pow_inertiaDeg Q hp,
-        inertiaDeg_algebra_tower _ P, pow_mul]
-    have hQ₂ {Q} (hQ : Q∈ (normalizedFactors ((map (algebraMap A B)) P)).toFinset) :
-        Multiset.count Q (normalizedFactors ((map (algebraMap A B)) P)) =
-          ramificationIdx (algebraMap A B) P Q := by
-      rw [IsDedekindDomain.ramificationIdx_eq_normalizedFactors_count (map_ne_bot_of_ne_bot hP')]
-      · rw [Multiset.mem_toFinset, ← mem_primesOver_iff_mem_normalizedFactors _ hP'] at hQ
-        exact hQ.1
-      · contrapose! hQ
-        simpa [hQ] using zero_notMem_normalizedFactors _
-    simp_rw +contextual [mapHom_apply, hQ₁, hQ₂, ← pow_mul, mul_comm (P.inertiaDeg _)]
-    rw [Finset.prod_pow_eq_pow_sum, ← factors_eq_normalizedFactors,
-      sum_ramification_inertia B P K L hP']
+open IntermediateField
 
-#lint
+example : K.LinearDisjoint L := by
+  apply LinearDisjoint.of_finrank_sup
+  let hA : Algebra L ↥(K ⊔ L) := (inclusion le_sup_right).toAlgebra
+  let hM : Module L ↥(K ⊔ L) := hA.toModule
+  rw [← Module.finrank_mul_finrank F L ↥(K ⊔ L), mul_comm, mul_left_inj' sorry]
+  obtain ⟨θ, hθ⟩ := Field.exists_primitive_element F K
+  let T := minpoly F θ
+  have hT : T.IsSplittingField F K := by
+    refine isSplittingField_iff_intermediateField.mpr ⟨?_, ?_⟩
+    · exact Normal.splits hN θ
+    · have : θ ∈ T.rootSet K := by
+        refine Polynomial.mem_rootSet'.mpr ⟨?_, minpoly.aeval F θ⟩
+        · sorry
+      rw [eq_top_iff]
+      refine le_of_eq_of_le hθ.symm ?_
+      apply adjoin.mono
+      exact Set.singleton_subset_iff.mpr this
+  let T' := Polynomial.map (algebraMap F L) T
+  have t₁ : T'.IsSplittingField L ↥(K ⊔ L) := by
+    rw [isSplittingField_iff_intermediateField]
+    refine ⟨?_, ?_⟩
+    · sorry
+    · sorry
+  have : Normal L ↥(K ⊔ L) := Normal.of_isSplittingField (F := L) (E := ↥(K ⊔ L)) T'
+  have : Algebra.IsSeparable L ↥(K ⊔ L) := by
+    exact?
+    sorry
+  let r : (↥(K ⊔ L) ≃ₐ[L] ↥(K ⊔ L)) ≃ (K ≃ₐ[F] K) := sorry
+  have t₂ : IsGalois L ↥(K ⊔ L) := IsGalois.mk
+  have : FiniteDimensional ↥L ↥(K ⊔ L) := sorry
+  have : IsGalois F K := sorry
+  rw [← IsGalois.card_aut_eq_finrank L ↥(K ⊔ L), ← IsGalois.card_aut_eq_finrank F K]
+  exact Fintype.card_congr r
 
 
 
 
-#exit
 
-  sorry
 
-open NumberField Algebra
 
-example {E F : Type*} [Field E] [Field F] [NumberField E] [NumberField F] [Algebra E F] :
-    discr E ∣ discr F := by
+end misc
+
+section discr
+
+open NumberField IntermediateField
+
+theorem NumberField.discr_pow_dvd_discr (E F : Type*) [Field E] [Field F] [NumberField E]
+    [NumberField F] [Algebra E F] :
+    discr E ^ Module.finrank E F ∣ discr F := by
   have := congr_arg Ideal.absNorm
     (differentIdeal_eq_differentIdeal_mul_differentIdeal ℤ ℚ E (𝓞 E) (𝓞 F) F)
-  rw [absNorm_differentIdeal (K := F), map_mul, absNorm_differentIdeal (K := E)] at this
+  rw [absNorm_differentIdeal (K := F), map_mul, Ideal.absNorm_algebraMap E F,
+    absNorm_differentIdeal (K := E)] at this
+  rw [← Int.dvd_natAbs, this, Nat.cast_mul, Nat.cast_pow, ← Int.mul_sign_self, mul_pow,
+    ← mul_assoc, mul_comm _ (discr E ^ _), mul_assoc]
+  exact Int.dvd_mul_right _ _
+
+theorem NumberField.discr_dvd_discr (E F : Type*) [Field E] [Field F] [NumberField E]
+    [NumberField F] [Algebra E F] :
+    discr E ∣ discr F :=
+  dvd_trans (dvd_pow_self _ (Nat.ne_zero_of_lt Module.finrank_pos)) (discr_pow_dvd_discr E F)
+
+example {E : Type*} [Field E] [NumberField E] (F₁ F₂ : IntermediateField ℚ E)
+    (h : IsCoprime (discr F₁) (discr F₂)) :
+    F₁.LinearDisjoint F₂ := by
+  apply LinearDisjoint.of_basis_left (integralBasis F₁)
+
+
+
+
   sorry
 
-example {E F : Type*} [Field E] [Field F] [NumberField F] [Algebra E F]
-    (K₁ K₂ : IntermediateField E F) (h : IsCoprime (discr K₁) (discr K₂)) :
-    K₁.LinearDisjoint K₂ := sorry
+
+end discr
 
 variable (n₁ n₂ : ℕ) {K : Type*} [Field K] [NumberField K] [IsCyclotomicExtension {n₁ * n₂} ℚ K]
   (F₁ F₂ : IntermediateField ℚ K) [IsCyclotomicExtension {n₁} ℚ F₁]
