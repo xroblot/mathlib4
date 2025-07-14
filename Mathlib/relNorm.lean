@@ -1,8 +1,110 @@
-import Mathlib.RingTheory.Ideal.Norm.AbsNorm
-import Mathlib.RingTheory.Ideal.Norm.RelNorm
-import Mathlib.NumberTheory.RamificationInertia.Basic
-import Mathlib.NumberTheory.RamificationInertia.Galois
-import Mathlib.RingTheory.DedekindDomain.Factorization
+import Mathlib
+
+section relNorm
+
+attribute [local instance] FractionRing.liftAlgebra
+
+open Algebra
+
+theorem Algebra.intNorm_intNorm
+    (A B C : Type*) [CommRing A] [IsDomain A] [IsIntegrallyClosed A] [CommRing B]
+    [IsDomain B] [IsIntegrallyClosed B] [CommRing C] [IsDomain C] [IsIntegrallyClosed C] [Algebra A B]
+    [Algebra A C] [Algebra B C] [IsScalarTower A B C] [Module.Finite A B] [Module.Finite A C]
+    [Module.Finite B C] [NoZeroSMulDivisors A B] [NoZeroSMulDivisors A C] [NoZeroSMulDivisors B C]
+    [Algebra.IsSeparable (FractionRing A) (FractionRing B)]
+    [Algebra.IsSeparable (FractionRing A) (FractionRing C)]
+    [Algebra.IsSeparable (FractionRing B) (FractionRing C)]
+    (x : C) :
+    intNorm A B (intNorm B C x) = intNorm A C x := by
+  apply FaithfulSMul.algebraMap_injective A (FractionRing A)
+  have := Module.Free.of_divisionRing (FractionRing A) (FractionRing B)
+  have := Module.Free.of_divisionRing (FractionRing B) (FractionRing C)
+  rw [algebraMap_intNorm_fractionRing, algebraMap_intNorm_fractionRing,
+    algebraMap_intNorm_fractionRing, Algebra.norm_norm]
+
+open Ideal
+
+attribute [local instance] FractionRing.liftAlgebra
+
+variable (R : Type*) [CommRing R] [IsDomain R] {T S : Type*} [CommRing S] [IsDomain S]
+  [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
+  [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
+  [CommRing T] [IsDomain T] [IsIntegrallyClosed T] [Algebra T S] [Algebra T R]
+  [Module.Finite T S] [Module.Finite T R] [NoZeroSMulDivisors T S]
+  [NoZeroSMulDivisors T R] [IsScalarTower T R S]
+  [Algebra.IsSeparable (FractionRing T) (FractionRing S)]
+  [Algebra.IsSeparable (FractionRing T) (FractionRing R)]
+
+theorem Ideal.spanNorm_spanNorm_of_isPrincipal {I : Ideal S} (hI : Submodule.IsPrincipal I) :
+    spanNorm T (spanNorm R I) = spanNorm T I := by
+  obtain ⟨x, rfl⟩ := hI
+  simp [intNorm_intNorm]
+
+open nonZeroDivisors
+
+set_option maxHeartbeats 1000000 in
+theorem Ideal.spanNorm_spanNorm [IsDedekindDomain S] [IsDedekindDomain T] (I : Ideal S) :
+    spanNorm T (spanNorm R I) = spanNorm T I := by
+  refine eq_of_localization_maximal (fun P hP ↦ ?_)
+  let P' := Algebra.algebraMapSubmonoid S P.primeCompl
+  let P'' := Algebra.algebraMapSubmonoid R P.primeCompl
+  let Tₚ := Localization.AtPrime P
+  let Sₚ := Localization P'
+  let Rₚ := Localization P''
+  let _ : Algebra Tₚ Sₚ := localizationAlgebra P.primeCompl S
+  have : IsScalarTower T Tₚ Sₚ := sorry
+    -- IsScalarTower.of_algebraMap_eq (fun x =>
+      -- (IsLocalization.map_eq (T := P') (Q := Localization P') P.primeCompl.le_comap_map x).symm)
+  have h' : P' ≤ S⁰ :=
+    map_le_nonZeroDivisors_of_injective _ (FaithfulSMul.algebraMap_injective _ _)
+      P.primeCompl_le_nonZeroDivisors
+  have h'' : P'' ≤ R⁰ :=
+    map_le_nonZeroDivisors_of_injective _ (FaithfulSMul.algebraMap_injective _ _)
+      P.primeCompl_le_nonZeroDivisors
+  have : IsDomain Sₚ := IsLocalization.isDomain_localization h'
+  have : IsDomain Rₚ := IsLocalization.isDomain_localization h''
+  have : IsDedekindDomain Sₚ := IsLocalization.isDedekindDomain S h' _
+  have : IsPrincipalIdealRing Sₚ :=
+    IsDedekindDomain.isPrincipalIdealRing_localization_over_prime S P ?_
+  have := NoZeroSMulDivisors_of_isLocalization T S Tₚ Sₚ P.primeCompl_le_nonZeroDivisors
+  have := Module.Finite_of_isLocalization T S Tₚ Sₚ P.primeCompl
+  let L := FractionRing S
+  let g : Sₚ →+* L := IsLocalization.map _ (M := P') (T := S⁰) (RingHom.id S) h'
+  algebraize [g]
+  have : IsScalarTower S Sₚ (FractionRing S) := IsScalarTower.of_algebraMap_eq'
+    (by rw [RingHom.algebraMap_toAlgebra, IsLocalization.map_comp, RingHom.comp_id])
+  have := IsFractionRing.isFractionRing_of_isDomain_of_isLocalization P' Sₚ (FractionRing S)
+  have : Algebra.IsSeparable (FractionRing Tₚ) (FractionRing Sₚ) := by
+    apply Algebra.IsSeparable.of_equiv_equiv
+      (FractionRing.algEquiv Tₚ (FractionRing T)).symm.toRingEquiv
+      (FractionRing.algEquiv Sₚ (FractionRing S)).symm.toRingEquiv
+    apply IsLocalization.ringHom_ext T⁰
+    ext
+    simp only [AlgEquiv.toRingEquiv_eq_coe, RingHom.coe_comp,
+      RingHom.coe_coe, Function.comp_apply, ← IsScalarTower.algebraMap_apply]
+    rw [IsScalarTower.algebraMap_apply T Tₚ (FractionRing T), AlgEquiv.coe_ringEquiv,
+      AlgEquiv.commutes, IsScalarTower.algebraMap_apply T S L,
+      IsScalarTower.algebraMap_apply S Sₚ L, AlgEquiv.coe_ringEquiv, AlgEquiv.commutes]
+    simp only [← IsScalarTower.algebraMap_apply]
+  rw [← spanIntNorm_localization (R := T) (S := S)
+    (Rₘ := Localization.AtPrime P) (Sₘ := Localization P') _ _ P.primeCompl_le_nonZeroDivisors]
+
+  have : IsIntegralClosure Rₚ Rₚ (FractionRing Rₚ) := sorry
+  let _ : Algebra Rₚ (Localization P') := sorry
+  have : Module.Finite Rₚ (Localization P') := sorry
+  have : NoZeroSMulDivisors Rₚ (Localization P') := sorry
+  let _ : Algebra (FractionRing Rₚ) (FractionRing (Localization P')) := sorry
+  have : Algebra.IsSeparable (FractionRing Rₚ) (FractionRing (Localization P')) := sorry
+
+  have : Submodule.IsPrincipal (I.map (algebraMap S (Localization P'))) := by
+    exact IsPrincipalIdealRing.principal (map (algebraMap S (Localization P')) I)
+
+  rw [← Ideal.spanNorm_spanNorm_of_isPrincipal Rₚ this]
+
+
+end relNorm
+
+#exit
 
 section associates
 
@@ -31,6 +133,7 @@ section primesplitting
 
 open Ideal
 
+@[simp]
 theorem Ideal.pow_eq_top_iff {R : Type*} [CommSemiring R] (I : Ideal R) (n : ℕ) :
     I ^ n = ⊤ ↔ I = ⊤ ∨ n = 0 := by
   constructor
@@ -44,7 +147,7 @@ theorem Ideal.pow_eq_top_iff {R : Type*} [CommSemiring R] (I : Ideal R) (n : ℕ
     · simp [h]
 
 theorem Ideal.liesOver_iff_dvd_map {A : Type*} [CommSemiring A] {B : Type*} [CommRing B]
-    [IsDedekindDomain B] [Algebra A B] (P : Ideal B) (p : Ideal A) (hP : P ≠ ⊤) [p.IsMaximal] :
+    [IsDedekindDomain B] [Algebra A B] {P : Ideal B} {p : Ideal A} (hP : P ≠ ⊤) [p.IsMaximal] :
     P.LiesOver p ↔ P ∣ Ideal.map (algebraMap A B) p := by
   rw [liesOver_iff, dvd_iff_le, under_def, map_le_iff_le_comap,
     IsCoatom.le_iff_eq (by rwa [← isMaximal_def]) (comap_ne_top _ hP), eq_comm]
@@ -78,6 +181,24 @@ theorem maxPowDividing_eq_pow_multiset_count [IsDedekindDomain S] [DecidableEq (
   classical
   rw [maxPowDividing, Associates.count_mk_factors_eq_multiset_count (irreducible v) hI]
 
+
+
+-- theorem Ideal.prod_heightOneSpectrum_factorization {R : Type*} [CommRing R] [IsDedekindDomain R]
+--     {I : Ideal R} [NeZero I] :
+--     ∏ v : {v : IsDedekindDomain.HeightOneSpectrum R | v.asIdeal ∣ I}, v.val.maxPowDividing I
+--       = I := by
+--   classical
+--   have := finprod_heightOneSpectrum_factorization (NeZero.ne I)
+--   convert this
+--   rw [finprod_eq_finset_prod_of_mulSupport_subset (s := {v | v.asIdeal ∣ I}.toFinset),
+--     ← Finset.prod_set_coe]
+--   intro v hv
+--   simp only [maxPowDividing, Function.mem_mulSupport, one_eq_top, ne_eq, pow_eq_top_iff,
+--     IsPrime.ne_top', false_or] at hv
+--   have := Associates.count_ne_zero_iff_dvd (NeZero.ne I) (irreducible v)
+--   simp only [this] at hv
+--   simp only [Set.coe_toFinset, Set.mem_setOf_eq, hv]
+
 variable (S) in
 def equiv :
     HeightOneSpectrum S ≃ {P : Ideal S // P.IsPrime ∧ P ≠ ⊥} where
@@ -105,19 +226,67 @@ theorem equiv_apply (v : HeightOneSpectrum S) :
 --     x ∈ Set.range (ofPrimesOver S hI) ↔ x.asIdeal ∈ I.primesOver S := by
 --   simp [Set.mem_range, IsDedekindDomain.HeightOneSpectrum.ext_iff]
 
+open IsDedekindDomain HeightOneSpectrum
+
+noncomputable def equivPrimesOver [IsDedekindDomain S] {P : Ideal R}
+    [P.IsMaximal] (hP : P ≠ 0) :
+    {v : HeightOneSpectrum S // v.asIdeal ∣ map (algebraMap R S) P} ≃ (P.primesOver S) :=
+  Set.BijOn.equiv asIdeal
+    ⟨fun v hv ↦ ⟨v.isPrime, by rwa [liesOver_iff_dvd_map v.isPrime.ne_top]⟩,
+    fun _ _ _ _ h ↦ HeightOneSpectrum.ext_iff.mpr h,
+    fun Q hQ ↦ ⟨⟨Q, hQ.1, ne_bot_of_mem_primesOver hP hQ⟩,
+      (liesOver_iff_dvd_map hQ.1.ne_top).mp hQ.2, rfl⟩⟩
+
+@[simp]
+theorem equivPrimesOver_apply [IsDedekindDomain S] {P : Ideal R} [P.IsMaximal] (hP : P ≠ 0)
+    (v : {v : HeightOneSpectrum S // v.asIdeal ∣ map (algebraMap R S) P}) :
+    equivPrimesOver hP v = v.1.asIdeal := rfl
+
+
 
 end IsDedekindDomain.HeightOneSpectrum
 
-variable [IsDedekindDomain R] [IsDedekindDomain S] [Algebra.IsIntegral R S]
+variable [IsDedekindDomain S] [Algebra.IsIntegral R S]
 
-open IsDedekindDomain.HeightOneSpectrum
+open IsDedekindDomain HeightOneSpectrum
 
 theorem Ideal.map_algebraMap_eq_finset_prod_pow (P : Ideal R) [P.IsMaximal] (hP : P ≠ 0) :
-    Ideal.map (algebraMap R S) P =
-      ∏ Q ∈ P.primesOver S, Q ^ P.ramificationIdx (algebraMap R S) Q := by
+    map (algebraMap R S) P = ∏ Q ∈ P.primesOver S, Q ^ P.ramificationIdx (algebraMap R S) Q := by
   classical
-  have h₁ : map (algebraMap R S) P ≠ 0 := map_ne_bot_of_ne_bot hP
-  rw [← finprod_heightOneSpectrum_factorization (I := P.map (algebraMap R S)) h₁]
+  have h : map (algebraMap R S) P ≠ 0 := map_ne_bot_of_ne_bot hP
+  rw [← finprod_heightOneSpectrum_factorization (I := P.map (algebraMap R S)) h]
+  let hF : Fintype {v : HeightOneSpectrum S | v.asIdeal ∣ map (algebraMap R S) P} :=
+    (finite_factors h).fintype
+  rw [finprod_eq_finset_prod_of_mulSupport_subset
+    (s := {v | v.asIdeal ∣ P.map (algebraMap R S)}.toFinset), ← Finset.prod_set_coe,
+    ← Finset.prod_set_coe]
+  · let _ : Fintype {v : HeightOneSpectrum S // v.asIdeal ∣ map (algebraMap R S) P} := hF
+    refine Fintype.prod_equiv (equivPrimesOver hP) _ _ ?_
+    intro ⟨v, hv⟩
+    simp [maxPowDividing_eq_pow_multiset_count _ h,
+      ramificationIdx_eq_factors_count h v.isPrime v.ne_bot]
+  · intro v hv
+    simpa? [maxPowDividing, Function.mem_mulSupport, IsPrime.ne_top _,
+      Associates.count_ne_zero_iff_dvd h (irreducible v)] using hv
+
+
+
+
+#exit
+    refine Finset.prod_nbij asIdeal ?_ ?_ ?_ ?_
+    · intro v hv
+
+      sorry
+    · exact fun _ _ _ _ h ↦ HeightOneSpectrum.ext_iff.mpr h
+    · intro v hv
+      sorry
+    · sorry
+
+
+#exit
+
+
+
   let T := {v : IsDedekindDomain.HeightOneSpectrum S | v.asIdeal ∣ P.map (algebraMap R S)}
   have : Fintype T := by
     refine Set.Finite.fintype ?_
