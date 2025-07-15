@@ -9,11 +9,16 @@ variable (R : Type*) [CommRing R] [IsDomain R] {S : Type*} [CommRing S] [IsDomai
   [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
   [IsDedekindDomain R] [IsDedekindDomain S]
 
-theorem lemm1 (Q : Ideal S) (hQ : IsMaximal Q) (P : Ideal R) [Q.LiesOver P]
-    (h₁ : IsPrincipal Q) (h₂ : IsPrincipal P) [IsGalois (FractionRing R) (FractionRing S)] :
-    relNorm R Q = P ^ P.inertiaDeg Q := by
-  obtain ⟨a, rfl⟩ := h₁
+open Pointwise
+
+set_option maxHeartbeats 1000000 in
+theorem lemm1 (P : Ideal S) [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [P.LiesOver p]
+    (h₁ : IsPrincipal P) (h₂ : IsPrincipal p) [IsGalois (FractionRing R) (FractionRing S)] :
+    relNorm R P = p ^ p.inertiaDeg P := by
+  classical
+  obtain ⟨a, ha⟩ := h₁
   --obtain ⟨b, rfl⟩ := h₂
+  nth_rewrite 1 [ha]
   simp only [submodule_span_eq, relNorm_singleton]
   have : Function.Injective (map (algebraMap R S)) := sorry
   apply this
@@ -21,7 +26,27 @@ theorem lemm1 (Q : Ideal S) (hQ : IsMaximal Q) (P : Ideal R) [Q.LiesOver P]
   rw [Algebra.algebraMap_intNorm_of_isGalois]
   rw [← Ideal.prod_span_singleton]
   rw [← Ideal.mapHom_apply, map_pow]
-  simp
+  simp only [Ideal.mapHom_apply]
+  have hp : p ≠ 0 := sorry
+  have := Ideal.map_algebraMap_eq_finset_prod_pow S hp
+  rw [this]
+  have : ∀ P ∈ (p.primesOver S).toFinset,
+    ramificationIdx (algebraMap R S) p P = p.ramificationIdxIn S := sorry
+  simp_rw +contextual [this]
+  rw [Finset.prod_pow, ← pow_mul,
+    ← inertiaDegIn_eq_inertiaDeg p P (FractionRing R) (FractionRing S)]
+  lift P to ↑(p.primesOver S) using sorry with P
+  have : ∀ g : S ≃ₐ[R] S, Ideal.span {g a} = g • P := sorry
+  simp_rw [this]
+  rw [Finset.prod_eq_multiset_prod]
+  rw?
+  rw [Finset.prod_multiset_map_count]
+
+
+
+
+
+
 
 
 
