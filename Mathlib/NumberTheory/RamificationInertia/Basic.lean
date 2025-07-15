@@ -948,7 +948,7 @@ theorem absNorm_algebraMap (K L : Type*) [Field K] [Field L] [IsDedekindDomain R
   classical
   have : Module.Finite R S := IsIntegralClosure.finite R K L S
   by_cases hI : I = ⊥
-  · simp [hI, zero_pow, Module.finrank_pos]
+  · simp [hI, Module.finrank_pos]
   rw [← prod_normalizedFactors_eq_self hI]
   refine Multiset.prod_induction
     (fun I ↦  absNorm (map (algebraMap R S) I) = absNorm I ^ Module.finrank K L) _ ?_ ?_ ?_

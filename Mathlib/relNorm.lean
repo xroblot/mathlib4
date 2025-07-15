@@ -1,5 +1,38 @@
 import Mathlib
 
+section Ideal.primeCompl
+
+theorem Ideal.zero_notMem_primeCompl {R : Type*} [CommSemiring R] [Nontrivial R] [NoZeroDivisors R]
+    (P : Ideal R) [P.IsPrime] : 0 ∉ P.primeCompl := by
+    by_contra!
+    exact zero_notMem_nonZeroDivisors <| primeCompl_le_nonZeroDivisors P this
+
+theorem Localization.AtPrime.FaithfulSMul {R : Type*} [CommRing R] [Nontrivial R]
+    [NoZeroDivisors R] (S : Type*) [CommSemiring S] [Algebra R S] (P : Ideal R) [hp : P.IsPrime]
+    [IsLocalization.AtPrime S P] : FaithfulSMul R S := by
+  refine (faithfulSMul_iff_algebraMap_injective R S).mpr ?_
+  rw [IsLocalization.injective_iff_isRegular P.primeCompl]
+  intro ⟨c, hc⟩
+  dsimp
+  refine isRegular_of_ne_zero ?_
+  contrapose! hc
+  rw [hc]
+  exact Ideal.zero_notMem_primeCompl P
+
+instance {R : Type*} [CommRing R] [NoZeroDivisors R] (P : Ideal R) [hp : P.IsPrime] :
+    FaithfulSMul R (Localization.AtPrime P) := by
+  nontriviality R
+  apply Localization.AtPrime.FaithfulSMul _ P
+
+end Ideal.primeCompl
+
+@[simp]
+theorem Algebra.algebraMapSubmonoid_map_map {R A : Type*} [CommSemiring R] [CommSemiring A]
+    [Algebra R A] (M : Submonoid R) {B : Type*} [CommRing B] [Algebra R B] [Algebra A B]
+    [IsScalarTower R A B] :
+    algebraMapSubmonoid B (algebraMapSubmonoid A M) = algebraMapSubmonoid B M :=
+  algebraMapSubmonoid_map_eq _ (IsScalarTower.toAlgHom R A B)
+
 section relNorm
 
 attribute [local instance] FractionRing.liftAlgebra
@@ -8,7 +41,8 @@ open Algebra
 
 theorem Algebra.intNorm_intNorm
     (A B C : Type*) [CommRing A] [IsDomain A] [IsIntegrallyClosed A] [CommRing B]
-    [IsDomain B] [IsIntegrallyClosed B] [CommRing C] [IsDomain C] [IsIntegrallyClosed C] [Algebra A B]
+    [IsDomain B] [IsIntegrallyClosed B] [CommRing C] [IsDomain C] [IsIntegrallyClosed C]
+    [Algebra A B]
     [Algebra A C] [Algebra B C] [IsScalarTower A B C] [Module.Finite A B] [Module.Finite A C]
     [Module.Finite B C] [NoZeroSMulDivisors A B] [NoZeroSMulDivisors A C] [NoZeroSMulDivisors B C]
     [Algebra.IsSeparable (FractionRing A) (FractionRing B)]
@@ -26,31 +60,122 @@ open Ideal
 
 attribute [local instance] FractionRing.liftAlgebra
 
-variable (R : Type*) [CommRing R] [IsDomain R] {T S : Type*} [CommRing S] [IsDomain S]
-  [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
-  [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-  [CommRing T] [IsDomain T] [IsIntegrallyClosed T] [Algebra T S] [Algebra T R]
-  [Module.Finite T S] [Module.Finite T R] [NoZeroSMulDivisors T S]
-  [NoZeroSMulDivisors T R] [IsScalarTower T R S]
-  [Algebra.IsSeparable (FractionRing T) (FractionRing S)]
-  [Algebra.IsSeparable (FractionRing T) (FractionRing R)]
+variable (A B : Type*) [CommRing B] [IsDomain B] {C : Type*} [CommRing C] [IsDomain C]
+  [IsIntegrallyClosed B] [IsIntegrallyClosed C] [Algebra B C] [Module.Finite B C]
+  [NoZeroSMulDivisors B C] [Algebra.IsSeparable (FractionRing B) (FractionRing C)]
+  [CommRing A] [IsDomain A] [IsIntegrallyClosed A] [Algebra A C] [Algebra A B]
+  [Module.Finite A C] [Module.Finite A B] [NoZeroSMulDivisors A C]
+  [NoZeroSMulDivisors A B] [IsScalarTower A B C]
+  [Algebra.IsSeparable (FractionRing A) (FractionRing C)]
+  [Algebra.IsSeparable (FractionRing A) (FractionRing B)]
 
-theorem Ideal.spanNorm_spanNorm_of_isPrincipal {I : Ideal S} (hI : Submodule.IsPrincipal I) :
-    spanNorm T (spanNorm R I) = spanNorm T I := by
-  obtain ⟨x, rfl⟩ := hI
-  simp [intNorm_intNorm]
+theorem Ideal.le_spanNorm_spanNorm (I : Ideal C) :
+    spanNorm A I ≤ spanNorm A (spanNorm B I) := by
+  simp_rw [spanNorm, map]
+  refine span_mono ?_
+  rintro _ ⟨c, hc, rfl⟩
+  exact ⟨intNorm B C c, subset_span <| Set.mem_image_of_mem _ hc, by rw [intNorm_intNorm]⟩
+
+theorem Ideal.spanNorm_spanNorm_of_bot_or_top
+    (eq_bot_or_top : ∀ I : Ideal A, I = ⊥ ∨ I = ⊤) (I : Ideal C) :
+    spanNorm A (spanNorm B I) = spanNorm A I := by
+  obtain h | h := eq_bot_or_top (spanNorm A I)
+  · rw [h, spanNorm_eq_bot_iff, spanNorm_eq_bot_iff, spanNorm_eq_bot_iff.mp h]
+  · exact h ▸ (eq_top_iff_one _).mpr <| le_spanNorm_spanNorm A B I <| (eq_top_iff_one _).mp h
 
 open nonZeroDivisors
 
-set_option maxHeartbeats 1000000 in
-theorem Ideal.spanNorm_spanNorm [IsDedekindDomain S] [IsDedekindDomain T] (I : Ideal S) :
-    spanNorm T (spanNorm R I) = spanNorm T I := by
+set_option maxHeartbeats 300000 in
+-- Some instances cannot be found if maxHeartbeats is too low
+theorem Ideal.spanNorm_spanNorm [NoZeroSMulDivisors B C] [IsDedekindDomain A]
+    [IsDedekindDomain B] [IsDedekindDomain C] (I : Ideal C) :
+    spanNorm A (spanNorm B I) = spanNorm A I := by
   refine eq_of_localization_maximal (fun P hP ↦ ?_)
-  let P' := Algebra.algebraMapSubmonoid S P.primeCompl
-  let P'' := Algebra.algebraMapSubmonoid R P.primeCompl
-  let Tₚ := Localization.AtPrime P
-  let Sₚ := Localization P'
-  let Rₚ := Localization P''
+  by_cases hP : P = ⊥
+  · subst hP
+    rw [spanNorm_spanNorm_of_bot_or_top]
+    exact fun I ↦ or_iff_not_imp_right.mpr fun hI ↦ (hP.eq_of_le hI bot_le).symm
+  let Mb := Algebra.algebraMapSubmonoid B P.primeCompl
+  let Mc := Algebra.algebraMapSubmonoid C P.primeCompl
+  let Aₚ := Localization.AtPrime P
+  let Bₚ := Localization Mb
+  let Cₚ := Localization Mc
+  have h : Mb ≤ B⁰ :=
+    algebraMapSubmonoid_le_nonZeroDivisors_of_faithfulSMul _ (primeCompl_le_nonZeroDivisors P)
+  -- We need to register some instances
+  have : IsLocalization (algebraMapSubmonoid C Mb) Cₚ := by
+    rw [show algebraMapSubmonoid C Mb = Mc by simp [Mb, Mc]]
+    exact Localization.isLocalization
+  let _ : Algebra Bₚ Cₚ := localizationAlgebra Mb C
+  have : IsScalarTower B Bₚ Cₚ := by
+    refine IsScalarTower.of_algebraMap_eq' ?_
+    rw [RingHom.algebraMap_toAlgebra, IsLocalization.map_comp, ← IsScalarTower.algebraMap_eq]
+  have : NoZeroSMulDivisors Bₚ Cₚ := NoZeroSMulDivisors_of_isLocalization B C Bₚ Cₚ h
+  have : FaithfulSMul Bₚ Cₚ := NoZeroSMulDivisors.iff_faithfulSMul.mp this
+  have : Module.Finite Bₚ Cₚ := Module.Finite.of_isLocalization B C Mb
+  have : Algebra.IsSeparable (FractionRing Bₚ) (FractionRing Cₚ) :=
+    FractionRing.isSeparable_of_isLocalization C Bₚ Cₚ h
+  have : NoZeroSMulDivisors A Cₚ := NoZeroSMulDivisors.trans_faithfulSMul A Aₚ _
+  have : IsScalarTower A Bₚ Cₚ := by
+    refine IsScalarTower.of_algebraMap_eq' ?_
+    rw [IsScalarTower.algebraMap_eq A B Bₚ, ← RingHom.comp_assoc,
+      ← IsScalarTower.algebraMap_eq B Bₚ Cₚ, ← IsScalarTower.algebraMap_eq]
+  have : IsScalarTower Aₚ Bₚ Cₚ := by
+    refine ⟨fun a b c ↦ a.ind fun ⟨a₁, a₂⟩ ↦ ?_⟩
+    have : a₂.val ≠ 0 := nonZeroDivisors.ne_zero <| primeCompl_le_nonZeroDivisors P <| a₂.prop
+    rw [← smul_right_inj this, ← smul_assoc (M := A) (N := Bₚ), ← smul_assoc (M := A) (α := Bₚ),
+      ← smul_assoc (M := A) (α := Cₚ), Localization.smul_mk, smul_eq_mul, Localization.mk_eq_mk',
+      IsLocalization.mk'_mul_cancel_left, algebraMap_smul, algebraMap_smul, smul_assoc]
+  have : Submodule.IsPrincipal (map (algebraMap C Cₚ) I) := by
+    have : IsPrincipalIdealRing Cₚ :=
+      IsDedekindDomain.isPrincipalIdealRing_localization_over_prime C P hP
+    exact IsPrincipalIdealRing.principal _
+  rw [← spanIntNorm_localization A (spanNorm B I) _ (primeCompl_le_nonZeroDivisors P) Bₚ,
+    ← spanIntNorm_localization B (Rₘ := Bₚ) I _ h Cₚ, ← spanIntNorm_localization A (Rₘ := Aₚ) I _
+    (primeCompl_le_nonZeroDivisors P) Cₚ, ← (I.map _).span_singleton_generator, spanNorm_singleton,
+    spanNorm_singleton, intNorm_intNorm, spanNorm_singleton]
+
+#exit
+
+  have := spanIntNorm_localization (R := R) (Rₘ := Rₚ) (S := S) (Sₘ := Sₚ) I
+    ?_ ?_
+--  have h₃ : @Algebra.IsSeparable (FractionRing Rₚ) (FractionRing Sₚ) _ _ h₂ := sorry
+--  have := @spanIntNorm_localization R _ _ S _ _ _ _ _ _ _ _ I P'' ?_ Rₚ Sₚ _ _ _ _ h₁ _ _ _ _ _
+--    _ _ _ _ _ _ h₃
+
+#exit
+
+  [Algebra.IsSeparable (FractionRing R) (FractionRing S)] (I : Ideal S) (M : Submonoid R) (hM : M ≤ R⁰) {Rₘ : Type u_4}
+  (Sₘ : Type u_5) [CommRing Rₘ] [Algebra R Rₘ] [CommRing Sₘ] [Algebra S Sₘ] [Algebra Rₘ Sₘ] [Algebra R Sₘ]
+  [IsScalarTower R Rₘ Sₘ] [IsScalarTower R S Sₘ] [IsLocalization M Rₘ] [IsLocalization (algebraMapSubmonoid S M) Sₘ]
+  [IsIntegrallyClosed Rₘ] [IsDomain Rₘ] [IsDomain Sₘ] [NoZeroSMulDivisors Rₘ Sₘ] [Module.Finite Rₘ Sₘ]
+  [IsIntegrallyClosed Sₘ] [Algebra.IsSeparable (FractionRing Rₘ) (FractionRing Sₘ)]
+
+
+
+
+
+
+  -- (R := R) (Rₘ := Rₚ) (S := S) (Sₘ := Sₚ) I P'' ?_
+
+#exit
+  rw [← spanIntNorm_localization (R := T) (S := R)
+    (Rₘ := Tₚ) (Sₘ := Rₚ) _ _ P.primeCompl_le_nonZeroDivisors]
+--    exact IsPrincipalIdealRing.principal _
+
+  have : IsIntegrallyClosed Rₚ := sorry
+  let _ : Algebra Rₚ Sₚ := sorry
+  have : Module.Finite Rₚ Sₚ := sorry
+  let _ : Algebra (FractionRing Rₚ) (FractionRing Sₚ) := sorry
+  have : Algebra.IsSeparable (FractionRing Rₚ) (FractionRing Sₚ) := sorry
+  have : NoZeroSMulDivisors Rₚ Sₚ := sorry
+
+  have : Submodule.IsPrincipal (I.map (algebraMap S Sₚ)) := sorry
+  obtain ⟨x, rfl⟩ := this
+--  have := Ideal.spanNorm_spanNorm_of_isPrincipal (R := Rₚ) (S := Sₚ) (T := Tₚ) this
+
+#exit
+
   let _ : Algebra Tₚ Sₚ := localizationAlgebra P.primeCompl S
   have : IsScalarTower T Tₚ Sₚ := sorry
     -- IsScalarTower.of_algebraMap_eq (fun x =>
