@@ -898,6 +898,15 @@ variable (R) in
 theorem top_pow (n : ℕ) : (⊤ ^ n : Ideal R) = ⊤ :=
   Nat.recOn n one_eq_top fun n ih => by rw [pow_succ, ih, top_mul]
 
+@[simp]
+theorem pow_eq_top_iff {n : ℕ} :
+    I ^ n = ⊤ ↔ I = ⊤ ∨ n = 0 := by
+  refine ⟨fun h ↦ or_iff_not_imp_right.mpr
+      fun hn ↦ (eq_top_iff_one _).mpr <| pow_le_self hn <| (eq_top_iff_one _).mp h, ?_⟩
+  rintro (h | h)
+  · rw [h, top_pow]
+  · rw [h, pow_zero, one_eq_top]
+
 theorem natCast_eq_top {n : ℕ} (hn : n ≠ 0) : (n : Ideal R) = ⊤ :=
   natCast_eq_one hn |>.trans one_eq_top
 
@@ -1273,8 +1282,8 @@ theorem set_smul_top_eq_span (s : Set R) :
     s • ⊤ = Ideal.span s :=
   (span_smul_eq s ⊤).symm.trans (Ideal.span s).mul_top
 
-lemma smul_le_span (s : Set R) (I : Ideal R) : s • I ≤ Ideal.span s :=
-  by simp [← Submodule.set_smul_top_eq_span, smul_le_smul_left]
+lemma smul_le_span (s : Set R) (I : Ideal R) : s • I ≤ Ideal.span s := by
+  simp [← Submodule.set_smul_top_eq_span, smul_le_smul_left]
 
 variable {A B} [Semiring A] [Semiring B] [Algebra R A] [Algebra R B]
 
