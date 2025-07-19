@@ -1434,6 +1434,7 @@ import Mathlib.Analysis.Calculus.FDeriv.Measurable
 import Mathlib.Analysis.Calculus.FDeriv.Mul
 import Mathlib.Analysis.Calculus.FDeriv.Norm
 import Mathlib.Analysis.Calculus.FDeriv.Pi
+import Mathlib.Analysis.Calculus.FDeriv.Pow
 import Mathlib.Analysis.Calculus.FDeriv.Prod
 import Mathlib.Analysis.Calculus.FDeriv.RestrictScalars
 import Mathlib.Analysis.Calculus.FDeriv.Star
@@ -6477,6 +6478,7 @@ import Mathlib.Topology.Order.ExtrClosure
 import Mathlib.Topology.Order.Filter
 import Mathlib.Topology.Order.Hom.Basic
 import Mathlib.Topology.Order.Hom.Esakia
+import Mathlib.Topology.Order.HullKernel
 import Mathlib.Topology.Order.IntermediateValue
 import Mathlib.Topology.Order.IsLUB
 import Mathlib.Topology.Order.IsLocallyClosed
