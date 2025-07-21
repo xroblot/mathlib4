@@ -251,6 +251,7 @@ theorem extended_injective :
     ← extended_inv _ hJ, ← extended_mul, extended_eq_one_iff _  _ (mul_ne_zero hI (inv_ne_zero hJ)),
     mul_inv_eq_one₀ hJ] at h
 
+variable (A) in
 theorem _root_.Ideal.map_algebraMap_injective :
     Function.Injective (fun I : Ideal A ↦ I.map (algebraMap A B)) := by
   let _ : Algebra (FractionRing A) (FractionRing B) := FractionRing.liftAlgebra A (FractionRing B)
