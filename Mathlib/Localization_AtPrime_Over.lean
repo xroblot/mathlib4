@@ -6,8 +6,6 @@ theorem RingEquiv.symm_apply_eq {R S : Type*} [Mul R] [Mul S] [Add R] [Add S] (e
 theorem RingEquiv.eq_symm_apply {R S : Type*} [Mul R] [Mul S] [Add R] [Add S] (e : R ≃+* S)
     {x : S} {y : R} : y = e.symm x ↔ e y = x := Equiv.eq_symm_apply _
 
-
-
 open Ideal
 
 attribute [local instance] Ideal.Quotient.field
@@ -329,12 +327,12 @@ theorem Localization.AtPrime.exists_primesOver_of_primesOver
       apply Ideal.mul_mem_left
       exact this
 
+variable (S)
+
 /-- Doc. -/
-noncomputable def Localization.AtPrime.equivPrimesOver [Nontrivial S] [NoZeroSMulDivisors R S]
-    (hp : p ≠ 0)
-    [IsDedekindRing S] :
+noncomputable def Localization.AtPrime.primesOverEquivPrimesOver [Nontrivial S] [IsDedekindRing S]
+    [NoZeroSMulDivisors R S] [NeZero p] :
     p.primesOver S ≃ (IsLocalRing.maximalIdeal Rₚ).primesOver Sₚ := by
-  have : NeZero p := ⟨hp⟩
   refine Equiv.ofBijective ?_ ⟨?_, ?_⟩
   · intro Q
     exact ⟨map (algebraMap S Sₚ) Q, inferInstance, inferInstance⟩
@@ -362,7 +360,41 @@ noncomputable def Localization.AtPrime.equivPrimesOver [Nontrivial S] [NoZeroSMu
     simp only [Subtype.ext_val_iff]
     exact Localization.AtPrime.exists_primesOver_of_primesOver p Q
 
+@[simp]
+theorem Localization.AtPrime.primesOverEquivPrimesOver_apply [Nontrivial S] [IsDedekindRing S]
+    [NoZeroSMulDivisors R S] [NeZero p] (P : p.primesOver S) :
+    Localization.AtPrime.primesOverEquivPrimesOver p S P = map (algebraMap S Sₚ) P := rfl
+
+theorem Localization.AtPrime.primesOverEquivPrimesOver_inertiagDeg_eq [Nontrivial S]
+    [IsDedekindRing S] [NoZeroSMulDivisors R S] [NeZero p] [p.IsMaximal] (P : p.primesOver S) :
+    (IsLocalRing.maximalIdeal Rₚ).inertiaDeg
+      (Localization.AtPrime.primesOverEquivPrimesOver p S P).val = p.inertiaDeg P.val := by
+  convert Localization.AtPrime.inertiaDeg_map_eq_inertiaDeg p P.val
+  apply Ring.DimensionLEOne.maximalOfPrime
+  · have := P.prop.2
+    apply ne_bot_of_liesOver_of_ne_bot (NeZero.ne p)
+  · exact P.prop.1
+
+theorem Localization.AtPrime.primesOverEquivPrimesOver_ramificationIdx_eq [IsDedekindDomain R]
+    [Nontrivial S] [IsDedekindDomain S] [NoZeroSMulDivisors R S] [Module.Finite R S] [NeZero p]
+    (P : p.primesOver S) :
+    (IsLocalRing.maximalIdeal Rₚ).ramificationIdx (algebraMap Rₚ Sₚ)
+      (Localization.AtPrime.primesOverEquivPrimesOver p S P).val =
+        p.ramificationIdx (algebraMap R S) P.val := by
+  convert Localization.AtPrime.ramificationIdx_map_eq_ramificationIdx p P.val ?_
+  have := P.prop.2
+  apply ne_bot_of_liesOver_of_ne_bot (NeZero.ne p)
+
+-- theorem Localization.AtPrime.inertiaDeg_map_eq_inertiaDeg [p.IsMaximal] [P.IsMaximal] :
+    -- (IsLocalRing.maximalIdeal Rₚ).inertiaDeg (map (algebraMap S Sₚ) P) = p. := by
+
 #exit
+
+theorem Localization.AtPrime.ramificationIdx_map_eq_ramificationIdx
+    [Module.Finite R S] [NeZero p] [IsDedekindDomain R] [P.IsPrime] (hP : P ≠ ⊥)
+    [IsDedekindDomain S] [FaithfulSMul R S] :
+    (IsLocalRing.maximalIdeal Rₚ).ramificationIdx (algebraMap Rₚ Sₚ) (P.map (algebraMap S Sₚ)) =
+      p.ramificationIdx (algebraMap R S) P := by
 
   refine Set.BijOn.equiv ?_ ⟨?_, ?_, ?_⟩
   · intro I
