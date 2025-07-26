@@ -15,9 +15,9 @@ open Ideal Submodule Pointwise
 --   obtain ⟨x, hx₁, hx₂⟩ := SetLike.not_le_iff_exists.mp hJ
 --   exact eq_top_of_isUnit_mem _ (mem_map_of_mem _ hx₁) <| (isUnit_to_map_iff S I _).mpr hx₂
 
-@[simp]
-theorem Ideal.mem_primeCompl_iff {α : Type*} [Semiring α] {P : Ideal α} [hp : P.IsPrime] {x : α} :
-    x ∈ P.primeCompl ↔ x ∉ P := Iff.rfl
+-- @[simp]
+-- theorem Ideal.mem_primeCompl_iff {α : Type*} [Semiring α] {P : Ideal α} [hp : P.IsPrime] {x : α} :
+--     x ∈ P.primeCompl ↔ x ∉ P := Iff.rfl
 
 theorem Ideal.comap_map_eq_of_isMaximal (A : Type*) [CommSemiring A] (B : Type*)
     [Semiring B] [Algebra A B] {P : Ideal A} [hP' : P.IsMaximal]
@@ -128,6 +128,7 @@ theorem relNorm_eq_pow_of_isMaximal_aux₂ [IsGalois (FractionRing R) (FractionR
   let Rₚ := Localization.AtPrime q
   let Mₛ := Algebra.algebraMapSubmonoid S q.primeCompl
   let Sₚ := Localization Mₛ
+
   by_cases hq : p = q
   · subst hq
     have : NeZero p := ⟨hp⟩
@@ -151,6 +152,8 @@ theorem relNorm_eq_pow_of_isMaximal_aux₂ [IsGalois (FractionRing R) (FractionR
 
 
       sorry
+    have : IsDedekindDomain Sₚ := by exact
+      instIsDedekindDomainLocalizationAlgebraMapSubmonoidPrimeCompl S
     have h₁ : (Ideal.map (algebraMap R Rₚ) p).IsMaximal := by
       rw [Localization.AtPrime.map_eq_maximalIdeal]
       exact IsLocalRing.maximalIdeal.isMaximal Rₚ
@@ -214,6 +217,8 @@ theorem relNorm_eq_pow_of_isMaximal_aux₂ [IsGalois (FractionRing R) (FractionR
           simp only [IsScalarTower.algebraMap_eq S Sₚ (Sₚ ⧸ _),
             Ideal.Quotient.algebraMap_eq, RingHom.comp_apply]
           use x * s'
+          let _ : AddGroup (Sₚ ⧸ map (algebraMap S Sₚ) P) := by exact
+            (Quotient.addCommGroup (Ideal.map (algebraMap S Sₚ) P)).toAddGroup
           rw [← sub_eq_zero, ← map_sub, Ideal.Quotient.eq_zero_iff_mem]
           have : algebraMap S Sₚ s ∉ Ideal.map (algebraMap S Sₚ) P := by
 --            rw [← Ideal.mem_comap, IsLocalization.AtPrime.comap_maximalIdeal Rₚ p]
@@ -235,7 +240,9 @@ theorem relNorm_eq_pow_of_isMaximal_aux₂ [IsGalois (FractionRing R) (FractionR
 
     rw [this]
     · exact map_ne_bot_of_ne_bot hp
-    · exact IsPrincipalIdealRing.principal _
+    · have : IsPrincipalIdealRing Sₚ :=
+        instIsPrincipalIdealRingLocalizationAlgebraMapSubmonoidPrimeComplOfIsDedekindDomainOfFiniteOfNeZeroIdeal S
+      exact IsPrincipalIdealRing.principal _
   · obtain ⟨x, hx₁, hx₂⟩ : ∃ x ∈ p, x ∈ q.primeCompl :=
       SetLike.not_le_iff_exists.mp <|
         (Ring.DimensionLeOne.prime_le_prime_iff_eq hp).not.mpr <| hq
