@@ -5,8 +5,94 @@ import Mathlib.RingTheory.FractionalIdeal.Extended
 import Mathlib.RingTheory.Ideal.Norm.RelNorm
 import Mathlib.RingTheory.DedekindDomain.Instances
 import Mathlib.RingTheory.Trace.Quotient
+import Mathlib.Localization_AtPrime_Over
+import Mathlib.Algebra.Polynomial.Eval.Irreducible
 
 open Ideal Submodule Pointwise
+
+theorem Polynomial.eval_map_map_eq_map_eval {S T : Type*} [Semiring S] [Semiring T] (f : S →+* T)
+    (p : Polynomial S) (a : S) :
+    (eval (f a)) (map (f : S →+* T) p) = f (eval a p) := by
+  rw [eval_map, ← Polynomial.eval₂_at_apply]
+
+open Polynomial in
+example {R A B : Type*} [CommRing R] [Field A] [Field B] [Nontrivial B] [Algebra R A]
+    [Algebra R B] (f : A ≃ₐ[R] B) (x : A) :
+    (Polynomial.mapAlgEquiv f) (minpoly A x) = minpoly B (f x) := by
+  refine minpoly.eq_of_irreducible_of_monic (A := B) ?_ ?_ ?_
+  · apply Polynomial.Monic.irreducible_of_irreducible_map (f.symm : B →+* A)
+    refine Polynomial.Monic.map f.toRingHom (minpoly.monic (x := x) ?_)
+    exact Algebra.IsIntegral.isIntegral x
+    rw [← Polynomial.coe_mapAlgEquiv]
+    rw [← AlgEquiv.trans_apply, mapAlgEquiv_comp]
+    rw [show f.trans f.symm = 1 by ext; simp]
+    simp
+    change Irreducible (Polynomial.map (RingHom.id A) (minpoly A x))
+    simp
+    refine minpoly.irreducible ?_
+    exact Algebra.IsIntegral.isIntegral x
+  · rw [coe_mapAlgEquiv]
+    rw [coe_aeval_eq_eval]
+    have := eval_map_map_eq_map_eval (f : A →+* B) (minpoly A x) x
+    simp at this
+    rw [this]
+    have := minpoly.aeval A x
+    rw [coe_aeval_eq_eval] at this
+    rw [this, map_zero]
+  · simp
+    apply Polynomial.Monic.map
+    refine minpoly.monic ?_
+    exact Algebra.IsIntegral.isIntegral x
+
+open Polynomial in
+theorem toto {A B : Type*} [CommRing A] [IsDomain A] [Field B] (f : A ≃+* B) (x : A) :
+    (Polynomial.map f) (minpoly A x) = minpoly B (f x) := by
+  refine minpoly.eq_of_irreducible_of_monic (A := B) ?_ ?_ ?_
+  · apply Polynomial.Monic.irreducible_of_irreducible_map (f.symm : B →+* A)
+    refine Polynomial.Monic.map f.toRingHom (minpoly.monic (x := x) ?_)
+    exact Algebra.IsIntegral.isIntegral x
+    rw [Polynomial.map_map]
+    simp
+    refine minpoly.irreducible ?_
+    exact Algebra.IsIntegral.isIntegral x
+  · rw [coe_aeval_eq_eval]
+    have := eval_map_map_eq_map_eval (f : A →+* B) (minpoly A x) x
+    simp at this
+    rw [this]
+    have := minpoly.aeval A x
+    rw [coe_aeval_eq_eval] at this
+    rw [this, map_zero]
+  · apply Polynomial.Monic.map
+    refine minpoly.monic ?_
+    exact Algebra.IsIntegral.isIntegral x
+
+example {F E F' E' : Type*} [Field F] [Field E] [Field F'] [Field E'] [Algebra F E] [Algebra F' E']
+    [h : Normal F E] (f : F ≃+* F') (g : E ≃+* E')
+    (hcomp : (algebraMap F' E').comp f = g.toRingHom.comp (algebraMap F E)) :
+    Normal F' E' := by
+  rw [normal_iff] at h ⊢
+  intro x
+  refine ⟨?_, ?_⟩
+  · specialize h (g.symm x)
+    simpa using h.1.map_of_comp_eq f.toRingHom g.toRingHom hcomp
+  · specialize h (g.symm x)
+    replace h := h.2
+    have := Polynomial.splits_comp_of_splits (algebraMap F E) g.toRingHom h
+    rw [← hcomp, ← Polynomial.splits_map_iff] at this
+    convert this
+    have := toto f
+    
+
+    sorry
+
+
+attribute [local instance] FractionRing.liftAlgebra
+
+-- example {R S L : Type*} [CommRing R] [CommRing S] [Field L] (M : Submonoid R) [Algebra R S]
+--     [IsLocalization M S] [Algebra S L] [IsFractionRing S L] [Algebra R L] [IsScalarTower R S L] :
+--     FractionRing R ≃ₐ[R] L := by
+
+--   have := IsFractionRing.isFractionRing_of_isLocalization M (FractionRing R) L
 
 -- theorem IsLocalization.AtPrime.map_ideal_eq_top {R : Type*} [CommSemiring R] (S : Type*)
 --     [CommSemiring S] [Algebra R S] (I : Ideal R) [hI : I.IsPrime] [IsLocalization.AtPrime S I]
@@ -25,25 +111,25 @@ theorem Ideal.comap_map_eq_of_isMaximal (A : Type*) [CommSemiring A] (B : Type*)
     Ideal.comap (algebraMap A B) (Ideal.map (algebraMap A B) P) = P :=
   (IsCoatom.le_iff_eq hP'.out (comap_ne_top _ hP)).mp <| Ideal.le_comap_map
 
-set_option maxHeartbeats 1000000 in
-theorem Ideal.under_map (A : Type*) [CommSemiring A] (B : Type*) [CommSemiring B] [Algebra A B]
-    (P : Ideal B) (C D : Type*) [CommSemiring C] [Semiring D] [Algebra A C] [Algebra C D]
-    [Algebra A D] [Algebra B D] [IsScalarTower A C D] [IsScalarTower A B D]
-    (h₁ : (map (algebraMap A C) (under A P)).IsMaximal)
-    (h₂ : map (algebraMap B D) P ≠ ⊤) :
-    under C (map (algebraMap B D) P) = map (algebraMap A C) (under A P) := by
-  rw [← IsCoatom.le_iff_eq]
-  simp [under_def]
-  · apply Ideal.le_comap_of_map_le
-    rw [map_map]
-    rw [← IsScalarTower.algebraMap_eq]
-    rw [map_le_iff_le_comap]
-    rw [IsScalarTower.algebraMap_eq A B D]
-    rw [← Ideal.comap_comap]
-    apply Ideal.comap_mono
-    exact le_comap_map
-  exact isMaximal_def.mp h₁
-  refine comap_ne_top (algebraMap C D) h₂
+-- set_option maxHeartbeats 1000000 in
+-- theorem Ideal.under_map (A : Type*) [CommSemiring A] (B : Type*) [CommSemiring B] [Algebra A B]
+--     (P : Ideal B) (C D : Type*) [CommSemiring C] [Semiring D] [Algebra A C] [Algebra C D]
+--     [Algebra A D] [Algebra B D] [IsScalarTower A C D] [IsScalarTower A B D]
+--     (h₁ : (map (algebraMap A C) (under A P)).IsMaximal)
+--     (h₂ : map (algebraMap B D) P ≠ ⊤) :
+--     under C (map (algebraMap B D) P) = map (algebraMap A C) (under A P) := by
+--   rw [← IsCoatom.le_iff_eq]
+--   simp [under_def]
+--   · apply Ideal.le_comap_of_map_le
+--     rw [map_map]
+--     rw [← IsScalarTower.algebraMap_eq]
+--     rw [map_le_iff_le_comap]
+--     rw [IsScalarTower.algebraMap_eq A B D]
+--     rw [← Ideal.comap_comap]
+--     apply Ideal.comap_mono
+--     exact le_comap_map
+--   exact isMaximal_def.mp h₁
+--   refine comap_ne_top (algebraMap C D) h₂
 
 
 
@@ -132,6 +218,31 @@ theorem relNorm_eq_pow_of_isMaximal_aux₂ [IsGalois (FractionRing R) (FractionR
   by_cases hq : p = q
   · subst hq
     have : NeZero p := ⟨hp⟩
+    have : IsGalois (FractionRing Rₚ) (FractionRing Sₚ) := by
+      have : IsFractionRing Sₚ (FractionRing S) := by exact
+        instIsFractionRingLocalizationAlgebraMapSubmonoidPrimeComplFractionRing S
+      have : IsFractionRing Rₚ (FractionRing R) := inferInstance
+      let e := FractionRing.algEquiv Sₚ (FractionRing S)
+      have := IsGalois.of_algEquiv e (F := Sₚ)
+
+      have := IsGalois.of_algEquiv (F := FractionRing R) (E := FractionRing S)
+        (E' := FractionRing Sₚ)
+
+
+    have : (Ideal.map (algebraMap S Sₚ) P).IsMaximal := sorry
+    have : (Ideal.map (algebraMap R Rₚ) p).IsMaximal := sorry
+    have : (Ideal.map (algebraMap S Sₚ) P).LiesOver (Ideal.map (algebraMap R Rₚ) p) := sorry
+    rw [← spanNorm_eq, ← spanIntNorm_localization (R := R) (Sₘ := Sₚ) (M := p.primeCompl) _ sorry,
+      spanNorm_eq, Ideal.map_pow]
+    rw [relNorm_eq_pow_of_isMaximal_aux₁ _ (Ideal.map (algebraMap S Sₚ) P)
+     (p := Ideal.map (algebraMap R Rₚ) p)]
+    rw [Localization.AtPrime.map_eq_maximalIdeal]
+    rw [Localization.AtPrime.inertiaDeg_map_eq_inertiaDeg]
+    exact map_ne_bot_of_ne_bot hp
+    exact IsPrincipalIdealRing.principal _
+
+#exit
+
     have hP : P ≠ 0 := by
       apply Ideal.ne_bot_of_liesOver_of_ne_bot hp _
     let _ : Algebra (FractionRing Rₚ) (FractionRing Sₚ) :=

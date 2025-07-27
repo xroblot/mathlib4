@@ -1,4 +1,10 @@
-import Mathlib
+import Mathlib.Algebra.Category.Grp.Images
+import Mathlib.Algebra.Order.Ring.Star
+import Mathlib.Analysis.Normed.Ring.Lemmas
+import Mathlib.Data.Int.Star
+import Mathlib.NumberTheory.RamificationInertia.Basic
+import Mathlib.RingTheory.DedekindDomain.Instances
+import Mathlib.RingTheory.Trace.Quotient
 
 theorem RingEquiv.symm_apply_eq {R S : Type*} [Mul R] [Mul S] [Add R] [Add S] (e : R ≃+* S)
     {x : S} {y : R} : e.symm x = y ↔ x = e y := Equiv.symm_apply_eq _
