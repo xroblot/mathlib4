@@ -137,6 +137,11 @@ local notation3 "Sₚ" => Localization Mₛ
 
 attribute [local instance] Ideal.Quotient.field
 
+variable [IsDomain R] [IsDomain S] [FaithfulSMul R S] in
+#synth FaithfulSMul R Rₚ
+
+
+
 instance [IsDomain R] [IsDomain S] [FaithfulSMul R S] : NoZeroSMulDivisors S Sₚ := by
   rw [NoZeroSMulDivisors.iff_algebraMap_injective]
   rw [IsLocalization.injective_iff_isRegular Mₛ]
@@ -151,6 +156,8 @@ instance [IsDomain R] [IsDomain S] [FaithfulSMul R S] : NoZeroSMulDivisors S S�
 
 theorem Localization.AtPrime.not_isField [NoZeroDivisors R] [NeZero p] :
     ¬ IsField Rₚ := by
+  have : FaithfulSMul R (Localization.AtPrime p) := by
+    exact instFaithfulSMulAtPrimeOfNoZeroDivisors p
   rw [IsLocalRing.isField_iff_maximalIdeal_eq, ← Localization.AtPrime.map_eq_maximalIdeal,
     map_eq_bot_iff_of_injective (FaithfulSMul.algebraMap_injective R Rₚ)]
   exact NeZero.ne _
@@ -231,6 +238,9 @@ theorem quotEquivLocalizationQuotMapOfIsMaximal_symm_apply_mk [hP : P.IsMaximal]
     ← map_mul, IsLocalization.mk'_spec, Quotient.mk_algebraMap,
     quotEquivLocalizationQuotMapOfIsMaximal_apply_mk, Quotient.mk_algebraMap]
 
+variable [p.IsMaximal] [P.IsMaximal] in
+#synth Algebra (Rₚ ⧸ IsLocalRing.maximalIdeal Rₚ) (Sₚ ⧸ Ideal.map (algebraMap S Sₚ) P)
+
 theorem Localization.AtPrime.inertiaDeg_map_eq_inertiaDeg [p.IsMaximal] [P.IsMaximal] :
     (IsLocalRing.maximalIdeal Rₚ).inertiaDeg (map (algebraMap S Sₚ) P) = p.inertiaDeg P := by
   rw [inertiaDeg_algebraMap, inertiaDeg_algebraMap]
@@ -242,7 +252,7 @@ theorem Localization.AtPrime.inertiaDeg_map_eq_inertiaDeg [p.IsMaximal] [P.IsMax
     simp only [RingEquiv.toRingHom_eq_coe, RingHom.coe_comp, RingHom.coe_coe, Function.comp_apply,
       Quotient.algebraMap_mk_of_liesOver, Quotient.mk_algebraMap]
     rw [← Quotient.mk_algebraMap, Localization.mk_eq_mk', IsLocalization.algebraMap_mk' S]
-    simp only [equivQuotMaximalIdealOfIsLocalization_symm_apply_mk, map_mul,
+    simp_rw [equivQuotMaximalIdealOfIsLocalization_symm_apply_mk, map_mul,
       Quotient.algebraMap_mk_of_liesOver, Quotient.mk_algebraMap, map_inv₀,
       quotEquivLocalizationQuotMapOfIsMaximal_symm_apply_mk]
 
@@ -264,6 +274,11 @@ theorem aux {R S : Type*} [CommRing R] [CommRing S] [IsPrincipalIdealRing S] [Is
       rw [hx, h₁, submodule_span_eq, span_singleton_eq_bot]
     · contrapose! h₂
       rwa [hx, submodule_span_eq, span_singleton_eq_top]
+
+variable [Module.Finite R S] [NeZero p] [IsDedekindDomain R] [P.IsPrime] (hP : P ≠ ⊥)
+    [IsDedekindDomain S] [FaithfulSMul R S] in
+#synth IsPrincipalIdealRing Sₚ
+
 
 theorem Localization.AtPrime.ramificationIdx_map_eq_ramificationIdx
     [Module.Finite R S] [NeZero p] [IsDedekindDomain R] [P.IsPrime] (hP : P ≠ ⊥)
