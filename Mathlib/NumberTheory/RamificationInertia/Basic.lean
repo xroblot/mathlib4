@@ -7,6 +7,7 @@ import Mathlib.LinearAlgebra.Dimension.DivisionRing
 import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
 import Mathlib.RingTheory.Finiteness.Quotient
 import Mathlib.RingTheory.Ideal.Int
+import Mathlib.RingTheory.DedekindDomain.IntegralClosure
 
 /-!
 # Ramification index and inertia degree

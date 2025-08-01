@@ -5,7 +5,6 @@ import Mathlib.RingTheory.FractionalIdeal.Extended
 import Mathlib.RingTheory.Ideal.Norm.RelNorm
 import Mathlib.RingTheory.DedekindDomain.Instances
 import Mathlib.RingTheory.Trace.Quotient
-import Mathlib.Localization_AtPrime_Over
 import Mathlib.Algebra.Polynomial.Eval.Irreducible
 
 open Ideal Submodule Pointwise
@@ -81,7 +80,7 @@ example {F E F' E' : Type*} [Field F] [Field E] [Field F'] [Field E'] [Algebra F
     rw [← hcomp, ← Polynomial.splits_map_iff] at this
     convert this
     have := toto f
-    
+
 
     sorry
 

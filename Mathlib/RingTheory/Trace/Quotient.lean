@@ -62,8 +62,6 @@ local notation "pSₚ" => Ideal.map (algebraMap Rₚ Sₚ) (maximalIdeal Rₚ)
 
 open IsLocalization.AtPrime IsLocalRing FiniteDimensional Submodule
 
-#where
-
 lemma trace_quotient_eq_trace_localization_quotient (x) :
     Algebra.trace (R ⧸ p) (S ⧸ pS) (Ideal.Quotient.mk pS x) =
       (equivQuotMaximalIdeal p Rₚ).symm
