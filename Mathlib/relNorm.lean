@@ -7,7 +7,9 @@ import Mathlib.RingTheory.DedekindDomain.Instances
 import Mathlib.RingTheory.Trace.Quotient
 import Mathlib.Algebra.Polynomial.Eval.Irreducible
 
-open Ideal Submodule Pointwise
+set_option linter.style.header false
+
+
 
 theorem Polynomial.eval_map_map_eq_map_eval {S T : Type*} [Semiring S] [Semiring T] (f : S →+* T)
     (p : Polynomial S) (a : S) :
@@ -44,48 +46,72 @@ example {R A B : Type*} [CommRing R] [Field A] [Field B] [Nontrivial B] [Algebra
     exact Algebra.IsIntegral.isIntegral x
 
 open Polynomial in
-theorem toto {A B : Type*} [CommRing A] [IsDomain A] [Field B] (f : A ≃+* B) (x : A) :
-    (Polynomial.map f) (minpoly A x) = minpoly B (f x) := by
-  refine minpoly.eq_of_irreducible_of_monic (A := B) ?_ ?_ ?_
-  · apply Polynomial.Monic.irreducible_of_irreducible_map (f.symm : B →+* A)
-    refine Polynomial.Monic.map f.toRingHom (minpoly.monic (x := x) ?_)
-    exact Algebra.IsIntegral.isIntegral x
-    rw [Polynomial.map_map]
-    simp
-    refine minpoly.irreducible ?_
-    exact Algebra.IsIntegral.isIntegral x
-  · rw [coe_aeval_eq_eval]
-    have := eval_map_map_eq_map_eval (f : A →+* B) (minpoly A x) x
-    simp at this
-    rw [this]
-    have := minpoly.aeval A x
-    rw [coe_aeval_eq_eval] at this
-    rw [this, map_zero]
-  · apply Polynomial.Monic.map
-    refine minpoly.monic ?_
-    exact Algebra.IsIntegral.isIntegral x
+theorem minpoly.map_eq_of_ringEquiv {A B C : Type*} [CommRing A] [IsDomain A] [Field B] [Ring C]
+    [IsDomain C] [Algebra A C] [Algebra.IsIntegral A C] [Algebra B C] {f : A ≃+* B}
+    (hcomp : (algebraMap B C).comp f = algebraMap A C) (x : C) :
+    (map f) (minpoly A x) = minpoly B x := by
+  refine minpoly.eq_of_irreducible_of_monic ?_ ?_ ?_
+  · apply Monic.irreducible_of_irreducible_map (f.symm : B →+* A)
+    · exact (minpoly.monic (Algebra.IsIntegral.isIntegral x)).map f.toRingHom
+    · simpa [map_map] using minpoly.irreducible (Algebra.IsIntegral.isIntegral x)
+  · simpa using
+      (map_aeval_eq_aeval_map (ψ := RingHom.id _) (by simpa using hcomp) (minpoly A x) x).symm
+  · exact (monic (Algebra.IsIntegral.isIntegral x)).map _
 
-example {F E F' E' : Type*} [Field F] [Field E] [Field F'] [Field E'] [Algebra F E] [Algebra F' E']
-    [h : Normal F E] (f : F ≃+* F') (g : E ≃+* E')
-    (hcomp : (algebraMap F' E').comp f = g.toRingHom.comp (algebraMap F E)) :
+open Polynomial in
+theorem minpoly.map_eq_of_equiv_equiv {A B C D : Type*} [CommRing A] [IsDomain A] [Field B]
+    [Ring C] [Ring D] [IsDomain C] [IsDomain D] [Algebra A C] [Algebra B D] [Algebra.IsIntegral A C]
+    {f : A ≃+* B} {g : C ≃+* D}
+    (hcomp : (algebraMap B D).comp f = (g : C →+* D).comp (algebraMap A C)) (x : C) :
+    (map f) (minpoly A x) = minpoly B (g x) := by
+  refine minpoly.eq_of_irreducible_of_monic ?_ ?_ ?_
+  · apply Monic.irreducible_of_irreducible_map (f.symm : B →+* A)
+    · exact (minpoly.monic (Algebra.IsIntegral.isIntegral x)).map f.toRingHom
+    · simpa [map_map] using minpoly.irreducible (Algebra.IsIntegral.isIntegral x)
+  · simpa using (map_aeval_eq_aeval_map hcomp (minpoly A x) x).symm
+  · exact (monic (Algebra.IsIntegral.isIntegral x)).map _
+
+theorem Normal.of_ringEquiv {F F' E : Type*} [Field F] [Field F'] [Field E] [Algebra F E]
+    [Algebra.IsAlgebraic F E] [Algebra F' E] [h : Normal F' E] {f : F ≃+* F'}
+    (hcomp : (algebraMap F' E).comp f = algebraMap F E) :
+    Normal F E := by
+  rw [normal_iff] at h ⊢
+  intro x
+  refine ⟨(f.isIntegral_iff hcomp _).mpr (h x).1, ?_⟩
+  rw [← hcomp, ← Polynomial.splits_map_iff, minpoly.map_eq_of_ringEquiv hcomp]
+  exact (h x).2
+
+theorem Normal.of_equiv_equiv {F F' E E' : Type*} [Field F] [Field F'] [Field E] [Field E']
+    [Algebra F E] [Algebra F' E'] [Algebra.IsAlgebraic F E] [h : Normal F E]
+    {f : F ≃+* F'} {g : E ≃+* E'}
+    (hcomp : (algebraMap F' E').comp f = (g : E →+* E').comp (algebraMap F E)) :
     Normal F' E' := by
   rw [normal_iff] at h ⊢
   intro x
-  refine ⟨?_, ?_⟩
-  · specialize h (g.symm x)
-    simpa using h.1.map_of_comp_eq f.toRingHom g.toRingHom hcomp
-  · specialize h (g.symm x)
-    replace h := h.2
-    have := Polynomial.splits_comp_of_splits (algebraMap F E) g.toRingHom h
-    rw [← hcomp, ← Polynomial.splits_map_iff] at this
-    convert this
-    have := toto f
+  rw [← g.apply_symm_apply x]
+  refine ⟨(h (g.symm x)).1.map_of_comp_eq _ _ hcomp, ?_⟩
+  rw [← minpoly.map_eq_of_equiv_equiv hcomp, Polynomial.splits_map_iff, hcomp]
+  exact Polynomial.splits_comp_of_splits _ _ (h (g.symm x)).2
 
+theorem IsGalois.of_ringEquiv {F F' E : Type*} [Field F] [Field F'] [Field E] [Algebra F E]
+    [Algebra.IsAlgebraic F E] [Algebra F' E] [IsGalois F' E] (f : F ≃+* F')
+    (hcomp : (algebraMap F' E).comp f = algebraMap F E) :
+    IsGalois F E := by
+  refine { to_isSeparable := ?_, to_normal :=  Normal.of_ringEquiv hcomp }
+  · refine Algebra.IsSeparable.of_equiv_equiv f.symm (RingEquiv.refl E) ?_
+    ext x
+    simp [← hcomp]
 
-    sorry
+theorem IsGalois.of_equiv_equiv {F F' E E' : Type*} [Field F] [Field F'] [Field E] [Field E']
+    [Algebra F E] [Algebra F' E'] [Algebra.IsAlgebraic F E] [h : IsGalois F E] {f : F ≃+* F'}
+    {g : E ≃+* E'}
+    (hcomp : (algebraMap F' E').comp f = (g : E →+* E').comp (algebraMap F E)) :
+    IsGalois F' E' :=
+  isGalois_iff.mpr ⟨Algebra.IsSeparable.of_equiv_equiv f g hcomp, Normal.of_equiv_equiv hcomp⟩
 
+open Ideal Submodule Pointwise
 
-attribute [local instance] FractionRing.liftAlgebra
+-- attribute [local instance] FractionRing.liftAlgebra
 
 -- example {R S L : Type*} [CommRing R] [CommRing S] [Field L] (M : Submonoid R) [Algebra R S]
 --     [IsLocalization M S] [Algebra S L] [IsFractionRing S L] [Algebra R L] [IsScalarTower R S L] :
@@ -152,7 +178,7 @@ theorem Ideal.card_stabilizer_eq_ramificationIdxIn_mul_inertiaDegIn [p.IsMaximal
     ncard_primesOver_mul_ramificationIdxIn_mul_inertiaDegIn hp S (FractionRing R) (FractionRing S),
     ← Nat.card_coe_set_eq, ← MulAction.index_stabilizer_of_transitive (S ≃ₐ[R] S) Q,
     ← Nat.card_eq_fintype_card, Subgroup.index_mul_card, Nat.card_eq_fintype_card,
-    ← IsGalois.card_aut_eq_finrank]
+    ← IsGalois.card_aut_eq_finrank, Nat.card_eq_fintype_card]
   exact Fintype.ofEquiv_card (galRestrict R (FractionRing R) (FractionRing S) S).toEquiv
 
 variable [IsIntegrallyClosed S]
@@ -203,11 +229,12 @@ theorem relNorm_eq_pow_of_isMaximal_aux₁ [IsGalois (FractionRing R) (FractionR
 
 attribute [local instance] Ideal.Quotient.field
 
-set_option maxHeartbeats 1000000 in
+attribute [-instance] instAlgebraAtPrimeFractionRing
+
+set_option maxHeartbeats 500000 in
 theorem relNorm_eq_pow_of_isMaximal_aux₂ [IsGalois (FractionRing R) (FractionRing S)] (P : Ideal S)
     [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [hP₁ : P.LiesOver p]
-    [Algebra.IsSeparable (FractionRing R)
-    (FractionRing S)] (hp : p ≠ ⊥) :
+    (hp : p ≠ ⊥) :
     relNorm R P = p ^ p.inertiaDeg P := by
   refine eq_of_localization_maximal (fun q hq ↦ ?_)
   let Rₚ := Localization.AtPrime q
@@ -218,14 +245,57 @@ theorem relNorm_eq_pow_of_isMaximal_aux₂ [IsGalois (FractionRing R) (FractionR
   · subst hq
     have : NeZero p := ⟨hp⟩
     have : IsGalois (FractionRing Rₚ) (FractionRing Sₚ) := by
-      have : IsFractionRing Sₚ (FractionRing S) := by exact
-        instIsFractionRingLocalizationAlgebraMapSubmonoidPrimeComplFractionRing S
-      have : IsFractionRing Rₚ (FractionRing R) := inferInstance
-      let e := FractionRing.algEquiv Sₚ (FractionRing S)
-      have := IsGalois.of_algEquiv e (F := Sₚ)
+      -- let A : Algebra Rₚ (FractionRing Rₚ) := instAlgebraAtPrimeFractionRing Rₚ
+      -- let B : Algebra Rₚ (FractionRing Rₚ) := OreLocalization.instAlgebra
+      -- have : (instAlgebraAtPrimeFractionRing Rₚ : Algebra Rₚ (FractionRing Rₚ)) =
+      --   (OreLocalization.instAlgebra : Algebra Rₚ (FractionRing Rₚ)) := by
+      --   congr
 
-      have := IsGalois.of_algEquiv (F := FractionRing R) (E := FractionRing S)
-        (E' := FractionRing Sₚ)
+
+      let f := FractionRing.algEquiv Rₚ (FractionRing R)
+      let g := FractionRing.algEquiv Sₚ (FractionRing S)
+      apply IsGalois.of_equiv_equiv (F := FractionRing R) (E := FractionRing S)
+        (f := f.symm) (g := g.symm)
+      ext x
+      simp only [AlgEquiv.symm_toRingEquiv, RingHom.coe_comp, RingHom.coe_coe, Function.comp_apply,
+        f, g]
+      obtain ⟨x, s, rfl⟩ := IsLocalization.mk'_surjective R⁰ x
+      simp
+      have {x : R} : (FractionRing.algEquiv Rₚ (FractionRing R) : _ ≃+* _).symm
+          (algebraMap R (FractionRing R) x) = algebraMap R (FractionRing Rₚ) x := by
+        have := FractionRing.algEquiv_symm_mk' Rₚ (FractionRing R) (algebraMap R Rₚ x) 1
+        convert this
+        simp
+        rw [← IsScalarTower.algebraMap_apply]
+      simp_rw [this]
+      simp_rw [← IsScalarTower.algebraMap_apply]
+      have {x : R} : (FractionRing.algEquiv Sₚ (FractionRing S) : _ ≃+* _).symm
+          (algebraMap R (FractionRing S) x) = algebraMap R (FractionRing Sₚ) x := by
+        have := FractionRing.algEquiv_symm_mk' Sₚ (FractionRing S) (algebraMap R Sₚ x) 1
+        convert this
+        simp
+
+        have : IsScalarTower R Sₚ (FractionRing S) := by
+          sorry
+        rw [← IsScalarTower.algebraMap_apply]
+      simp_rw [this]
+
+
+--      dsimp only
+--      have := FractionRing.algEquiv_mk Rₚ (FractionRing R) x s
+
+
+      -- have : Algebra (FractionRing R) (FractionRing Sₚ) := by
+      --   have : FaithfulSMul R Sₚ := sorry
+      --   apply FractionRing.liftAlgebra
+      -- have : IsFractionRing Sₚ (FractionRing S) := by exact
+      --   instIsFractionRingLocalizationAlgebraMapSubmonoidPrimeComplFractionRing S
+      -- have : IsFractionRing Rₚ (FractionRing R) := inferInstance
+      -- let e := FractionRing.algEquiv Sₚ (FractionRing S)
+      -- have := IsGalois.of_algEquiv e (F := Sₚ)
+
+      -- have := IsGalois.of_algEquiv (F := FractionRing R) (E := FractionRing S)
+      --   (E' := FractionRing Sₚ)
 
 
     have : (Ideal.map (algebraMap S Sₚ) P).IsMaximal := sorry
@@ -236,9 +306,26 @@ theorem relNorm_eq_pow_of_isMaximal_aux₂ [IsGalois (FractionRing R) (FractionR
     rw [relNorm_eq_pow_of_isMaximal_aux₁ _ (Ideal.map (algebraMap S Sₚ) P)
      (p := Ideal.map (algebraMap R Rₚ) p)]
     rw [Localization.AtPrime.map_eq_maximalIdeal]
-    rw [Localization.AtPrime.inertiaDeg_map_eq_inertiaDeg]
+    have : (Ideal.map (algebraMap S Sₚ) P).LiesOver (IsLocalRing.maximalIdeal Rₚ) := sorry
+    rw [IsLocalization.AtPrime.inertiaDeg_map_eq_inertiaDeg p]
     exact map_ne_bot_of_ne_bot hp
     exact IsPrincipalIdealRing.principal _
+    -- case q ≠ p
+  · let Mₛ := Algebra.algebraMapSubmonoid S q.primeCompl
+    let Sₚ := Localization Mₛ
+    obtain ⟨x, hx₁, hx₂⟩ : ∃ x ∈ p, x ∈ q.primeCompl :=
+      SetLike.not_le_iff_exists.mp <|
+        (Ring.DimensionLeOne.prime_le_prime_iff_eq hp).not.mpr <| ne_comm.mp (Ne.symm hq)
+    have h₁ : Ideal.map (algebraMap R Rₚ) p = ⊤ :=
+      eq_top_of_isUnit_mem _ (mem_map_of_mem _ hx₁) <|
+        (IsLocalization.AtPrime.isUnit_to_map_iff _ _ _).mpr hx₂
+    have h₂ : Ideal.map (algebraMap S Sₚ) P = ⊤ := by
+      have : algebraMap R S x ∈ Mₛ := Algebra.mem_algebraMapSubmonoid_of_mem ⟨_, hx₂⟩
+      refine eq_top_of_isUnit_mem _ ?_ <| IsLocalization.map_units _ ⟨_, this⟩
+      rw [← IsScalarTower.algebraMap_apply]
+      exact mem_map_of_mem _ (by simpa [← Ideal.mem_of_liesOver P p])
+    rw [← spanNorm_eq, ← spanIntNorm_localization R (Sₘ := Sₚ) _ _
+      (primeCompl_le_nonZeroDivisors q), spanNorm_eq, Ideal.map_pow, h₁, h₂, relNorm_top, top_pow]
 
 #exit
 
