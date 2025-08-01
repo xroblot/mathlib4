@@ -58,6 +58,11 @@ theorem minpoly.map_eq_of_ringEquiv {A B C : Type*} [CommRing A] [IsDomain A] [F
       (map_aeval_eq_aeval_map (ψ := RingHom.id _) (by simpa using hcomp) (minpoly A x) x).symm
   · exact (monic (Algebra.IsIntegral.isIntegral x)).map _
 
+@[simp]
+example {R S : Type*} [Semiring R] [Semiring S] (e : R ≃+* S) (p : Polynomial R) :
+    Irreducible (Polynomial.mapEquiv e p) ↔ Irreducible p :=
+  MulEquiv.irreducible_iff (Polynomial.mapEquiv e)
+
 open Polynomial in
 theorem minpoly.map_eq_of_equiv_equiv {A B C D : Type*} [CommRing A] [IsDomain A] [Field B]
     [Ring C] [Ring D] [IsDomain C] [IsDomain D] [Algebra A C] [Algebra B D] [Algebra.IsIntegral A C]
