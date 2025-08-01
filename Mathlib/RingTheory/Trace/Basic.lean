@@ -557,7 +557,6 @@ noncomputable def Basis.traceDual :
     Basis ι K L :=
   (traceForm K L).dualBasis (traceForm_nondegenerate K L) b
 
-
 theorem Basis.traceDual_def :
     b.traceDual = (traceForm K L).dualBasis (traceForm_nondegenerate K L) b := rfl
 
