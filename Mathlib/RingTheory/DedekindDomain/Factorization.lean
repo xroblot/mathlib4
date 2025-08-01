@@ -5,6 +5,8 @@ Authors: María Inés de Frutos-Fernández
 -/
 import Mathlib.NumberTheory.RamificationInertia.Basic
 import Mathlib.Order.Filter.Cofinite
+import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
+import Mathlib.RingTheory.UniqueFactorizationDomain.Finite
 
 /-!
 # Factorization of ideals and fractional ideals of Dedekind domains
