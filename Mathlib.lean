@@ -2707,7 +2707,6 @@ import Mathlib.CategoryTheory.WithTerminal.Basic
 import Mathlib.CategoryTheory.WithTerminal.Cone
 import Mathlib.CategoryTheory.WithTerminal.FinCategory
 import Mathlib.CategoryTheory.Yoneda
-import Mathlib.Clean
 import Mathlib.Combinatorics.Additive.AP.Three.Behrend
 import Mathlib.Combinatorics.Additive.AP.Three.Defs
 import Mathlib.Combinatorics.Additive.ApproximateSubgroup
@@ -4564,6 +4563,7 @@ import Mathlib.MeasureTheory.VectorMeasure.Decomposition.JordanSub
 import Mathlib.MeasureTheory.VectorMeasure.Decomposition.Lebesgue
 import Mathlib.MeasureTheory.VectorMeasure.Decomposition.RadonNikodym
 import Mathlib.MeasureTheory.VectorMeasure.WithDensity
+import Mathlib.Misc
 import Mathlib.ModelTheory.Algebra.Field.Basic
 import Mathlib.ModelTheory.Algebra.Field.CharP
 import Mathlib.ModelTheory.Algebra.Field.IsAlgClosed
