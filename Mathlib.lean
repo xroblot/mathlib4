@@ -4563,7 +4563,6 @@ import Mathlib.MeasureTheory.VectorMeasure.Decomposition.JordanSub
 import Mathlib.MeasureTheory.VectorMeasure.Decomposition.Lebesgue
 import Mathlib.MeasureTheory.VectorMeasure.Decomposition.RadonNikodym
 import Mathlib.MeasureTheory.VectorMeasure.WithDensity
-import Mathlib.Misc
 import Mathlib.ModelTheory.Algebra.Field.Basic
 import Mathlib.ModelTheory.Algebra.Field.CharP
 import Mathlib.ModelTheory.Algebra.Field.IsAlgClosed
@@ -5721,7 +5720,6 @@ import Mathlib.RingTheory.WittVector.Verschiebung
 import Mathlib.RingTheory.WittVector.WittPolynomial
 import Mathlib.RingTheory.ZMod
 import Mathlib.RingTheory.ZMod.UnitsCyclic
-import Mathlib.Sandbox
 import Mathlib.SetTheory.Cardinal.Aleph
 import Mathlib.SetTheory.Cardinal.Arithmetic
 import Mathlib.SetTheory.Cardinal.Basic
@@ -6672,4 +6670,3 @@ import Mathlib.Util.TermReduce
 import Mathlib.Util.TransImports
 import Mathlib.Util.WhatsNew
 import Mathlib.Util.WithWeakNamespace
-import Mathlib.relNorm

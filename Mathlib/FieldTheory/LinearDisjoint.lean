@@ -381,7 +381,8 @@ theorem of_inf_eq_bot' [IsGalois F A] [FiniteDimensional F E] (h₁ : A ⊔ B = 
   rw [h₁, finrank_top', ← Module.finrank_mul_finrank F B E, mul_comm, mul_left_inj'
     Module.finrank_pos.ne']
   have : IsGalois B E := IsGalois.sup A B h₁
-  rw [← IsGalois.card_aut_eq_finrank, ← IsGalois.card_aut_eq_finrank]
+  rw [← IsGalois.card_aut_eq_finrank, ← IsGalois.card_aut_eq_finrank, Nat.card_eq_fintype_card,
+    Nat.card_eq_fintype_card]
   exact Fintype.card_congr <| Equiv.ofBijective (restrictRestrictAlgEquivMapHom A B)
     ⟨restrictRestrictAlgEquivMapHom_injective _ _ h₁,
       restrictRestrictAlgEquivMapHom_surjective _ _ h₂⟩
