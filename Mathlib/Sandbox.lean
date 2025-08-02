@@ -1,4 +1,6 @@
-import Mathlib
+import Mathlib.Algebra.Ring.Defs
+
+#exit
 
 variable (E F : Type*) [Field E] [Field F] [Algebra F E] (K L : IntermediateField F E)
   [Normal F K]
