@@ -261,7 +261,7 @@ noncomputable def quotMapEquivQuotMapMaximalIdeal [p.IsMaximal] [IsLocalization.
     [IsLocalization (algebraMapSubmonoid S p.primeCompl) Sₚ] :
     S ⧸ pS ≃+* Sₚ ⧸ pSₚ := by
   haveI h : pSₚ = Ideal.map (algebraMap S Sₚ) pS := by
-    rw [← IsLocalization.AtPrime.map_eq_maximalIdeal p Rₚ, Ideal.map_map,
+    rw [← map_eq_maximalIdeal p Rₚ, Ideal.map_map,
       ← IsScalarTower.algebraMap_eq, Ideal.map_map, ← IsScalarTower.algebraMap_eq]
   refine (Ideal.quotEquivOfEq ?_).trans
     (RingHom.quotientKerEquivOfSurjective (f := algebraMap S (Sₚ ⧸ pSₚ)) ?_)
