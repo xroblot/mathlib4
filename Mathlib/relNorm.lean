@@ -9,6 +9,26 @@ import Mathlib.Algebra.Polynomial.Eval.Irreducible
 
 set_option linter.style.header false
 
+
+theorem IsScalarTower.trans_left (A B C D : Type*) [CommSemiring A] [CommSemiring B]
+    [CommSemiring C] [CommSemiring D] [Algebra A B] [Algebra A C] [Algebra A D] [Algebra B C]
+    [Algebra B D]
+    [Algebra C D] [IsScalarTower A B C] [IsScalarTower A C D] [IsScalarTower B C D] :
+    IsScalarTower A B D := by
+  apply IsScalarTower.of_algebraMap_eq'
+  rw [IsScalarTower.algebraMap_eq B C, RingHom.comp_assoc, ← IsScalarTower.algebraMap_eq,
+    ← IsScalarTower.algebraMap_eq]
+
+theorem IsScalarTower.trans_right (A B C D : Type*) [CommSemiring A] [CommSemiring B] [CommSemiring C] [CommSemiring D]
+    [Algebra A B] [Algebra A C] [Algebra A D]
+    [Algebra B C] [Algebra B D]
+    [Algebra C D]
+    [IsScalarTower A B C] [IsScalarTower A B D] [IsScalarTower B C D] :
+    IsScalarTower A C D := by
+  apply IsScalarTower.of_algebraMap_eq'
+  rw [IsScalarTower.algebraMap_eq A B C, ← RingHom.comp_assoc, ← IsScalarTower.algebraMap_eq,
+    ← IsScalarTower.algebraMap_eq]
+
 open Ideal Submodule Pointwise
 
 -- attribute [local instance] FractionRing.liftAlgebra
@@ -30,11 +50,11 @@ open Ideal Submodule Pointwise
 -- theorem Ideal.mem_primeCompl_iff {α : Type*} [Semiring α] {P : Ideal α} [hp : P.IsPrime] {x : α} :
 --     x ∈ P.primeCompl ↔ x ∉ P := Iff.rfl
 
-theorem Ideal.comap_map_eq_of_isMaximal (A : Type*) [CommSemiring A] (B : Type*)
-    [Semiring B] [Algebra A B] {P : Ideal A} [hP' : P.IsMaximal]
-    (hP : Ideal.map (algebraMap A B) P ≠ ⊤) :
-    Ideal.comap (algebraMap A B) (Ideal.map (algebraMap A B) P) = P :=
-  (IsCoatom.le_iff_eq hP'.out (comap_ne_top _ hP)).mp <| Ideal.le_comap_map
+-- theorem Ideal.comap_map_eq_of_isMaximal (A : Type*) [CommSemiring A] (B : Type*)
+--     [Semiring B] [Algebra A B] {P : Ideal A} [hP' : P.IsMaximal]
+--     (hP : Ideal.map (algebraMap A B) P ≠ ⊤) :
+--     Ideal.comap (algebraMap A B) (Ideal.map (algebraMap A B) P) = P :=
+--   (IsCoatom.le_iff_eq hP'.out (comap_ne_top _ hP)).mp <| Ideal.le_comap_map
 
 -- set_option maxHeartbeats 1000000 in
 -- theorem Ideal.under_map (A : Type*) [CommSemiring A] (B : Type*) [CommSemiring B] [Algebra A B]
@@ -131,84 +151,39 @@ attribute [local instance] Ideal.Quotient.field
 
 attribute [-instance] instAlgebraAtPrimeFractionRing
 
-set_option maxHeartbeats 500000 in
 theorem relNorm_eq_pow_of_isMaximal_aux₂ [IsGalois (FractionRing R) (FractionRing S)] (P : Ideal S)
-    [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [hP₁ : P.LiesOver p]
-    (hp : p ≠ ⊥) :
+    [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [hP₁ : P.LiesOver p] (hp : p ≠ ⊥) :
     relNorm R P = p ^ p.inertiaDeg P := by
   refine eq_of_localization_maximal (fun q hq ↦ ?_)
   let Rₚ := Localization.AtPrime q
   let Mₛ := Algebra.algebraMapSubmonoid S q.primeCompl
   let Sₚ := Localization Mₛ
-
   by_cases hq : p = q
   · subst hq
     have : NeZero p := ⟨hp⟩
+    have : IsScalarTower R Sₚ (FractionRing S) := .trans_right R S Sₚ (FractionRing S)
     have : IsGalois (FractionRing Rₚ) (FractionRing Sₚ) := by
-      -- let A : Algebra Rₚ (FractionRing Rₚ) := instAlgebraAtPrimeFractionRing Rₚ
-      -- let B : Algebra Rₚ (FractionRing Rₚ) := OreLocalization.instAlgebra
-      -- have : (instAlgebraAtPrimeFractionRing Rₚ : Algebra Rₚ (FractionRing Rₚ)) =
-      --   (OreLocalization.instAlgebra : Algebra Rₚ (FractionRing Rₚ)) := by
-      --   congr
-
-
-      let f := FractionRing.algEquiv Rₚ (FractionRing R)
-      let g := FractionRing.algEquiv Sₚ (FractionRing S)
       apply IsGalois.of_equiv_equiv (F := FractionRing R) (E := FractionRing S)
-        (f := f.symm) (g := g.symm)
+        (f := ((FractionRing.algEquiv Rₚ (FractionRing R)).restrictScalars R).symm)
+        (g := ((FractionRing.algEquiv Sₚ (FractionRing S)).restrictScalars R).symm)
       ext x
-      simp only [AlgEquiv.symm_toRingEquiv, RingHom.coe_comp, RingHom.coe_coe, Function.comp_apply,
-        f, g]
       obtain ⟨x, s, rfl⟩ := IsLocalization.mk'_surjective R⁰ x
-      simp
-      have {x : R} : (FractionRing.algEquiv Rₚ (FractionRing R) : _ ≃+* _).symm
-          (algebraMap R (FractionRing R) x) = algebraMap R (FractionRing Rₚ) x := by
-        have := FractionRing.algEquiv_symm_mk' Rₚ (FractionRing R) (algebraMap R Rₚ x) 1
-        convert this
-        simp
-        rw [← IsScalarTower.algebraMap_apply]
-      simp_rw [this]
-      simp_rw [← IsScalarTower.algebraMap_apply]
-      have {x : R} : (FractionRing.algEquiv Sₚ (FractionRing S) : _ ≃+* _).symm
-          (algebraMap R (FractionRing S) x) = algebraMap R (FractionRing Sₚ) x := by
-        have := FractionRing.algEquiv_symm_mk' Sₚ (FractionRing S) (algebraMap R Sₚ x) 1
-        convert this
-        simp
-
-        have : IsScalarTower R Sₚ (FractionRing S) := by
-          sorry
-        rw [← IsScalarTower.algebraMap_apply]
-      simp_rw [this]
-
-
---      dsimp only
---      have := FractionRing.algEquiv_mk Rₚ (FractionRing R) x s
-
-
-      -- have : Algebra (FractionRing R) (FractionRing Sₚ) := by
-      --   have : FaithfulSMul R Sₚ := sorry
-      --   apply FractionRing.liftAlgebra
-      -- have : IsFractionRing Sₚ (FractionRing S) := by exact
-      --   instIsFractionRingLocalizationAlgebraMapSubmonoidPrimeComplFractionRing S
-      -- have : IsFractionRing Rₚ (FractionRing R) := inferInstance
-      -- let e := FractionRing.algEquiv Sₚ (FractionRing S)
-      -- have := IsGalois.of_algEquiv e (F := Sₚ)
-
-      -- have := IsGalois.of_algEquiv (F := FractionRing R) (E := FractionRing S)
-      --   (E' := FractionRing Sₚ)
-
-
+      simp only [RingHom.coe_comp, RingHom.coe_coe, Function.comp_apply,
+        IsFractionRing.mk'_eq_div, map_div₀, ← IsScalarTower.algebraMap_apply,
+        AlgEquiv.coe_ringEquiv, AlgEquiv.commutes]
     have : (Ideal.map (algebraMap S Sₚ) P).IsMaximal := sorry
     have : (Ideal.map (algebraMap R Rₚ) p).IsMaximal := sorry
     have : (Ideal.map (algebraMap S Sₚ) P).LiesOver (Ideal.map (algebraMap R Rₚ) p) := sorry
+
     rw [← spanNorm_eq, ← spanIntNorm_localization (R := R) (Sₘ := Sₚ) (M := p.primeCompl) _ sorry,
       spanNorm_eq, Ideal.map_pow]
+
     rw [relNorm_eq_pow_of_isMaximal_aux₁ _ (Ideal.map (algebraMap S Sₚ) P)
      (p := Ideal.map (algebraMap R Rₚ) p)]
-    rw [Localization.AtPrime.map_eq_maximalIdeal]
-    have : (Ideal.map (algebraMap S Sₚ) P).LiesOver (IsLocalRing.maximalIdeal Rₚ) := sorry
-    rw [IsLocalization.AtPrime.inertiaDeg_map_eq_inertiaDeg p]
-    exact map_ne_bot_of_ne_bot hp
+    · rw [Localization.AtPrime.map_eq_maximalIdeal]
+      have : (Ideal.map (algebraMap S Sₚ) P).LiesOver (IsLocalRing.maximalIdeal Rₚ) := sorry
+      rw [IsLocalization.AtPrime.inertiaDeg_map_eq_inertiaDeg p]
+    · exact map_ne_bot_of_ne_bot hp
     exact IsPrincipalIdealRing.principal _
     -- case q ≠ p
   · let Mₛ := Algebra.algebraMapSubmonoid S q.primeCompl

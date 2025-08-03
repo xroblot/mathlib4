@@ -1,123 +1,30 @@
 import Mathlib.Algebra.Lie.OfAssociative
 import Mathlib.FieldTheory.Galois.Basic
 import Mathlib.Order.CompletePartialOrder
+import Mathlib.RingTheory.Localization.AtPrime.Basic
+import Mathlib.RingTheory.Localization.LocalizationLocalization
 
-variable (E F : Type*) [Field E] [Field F] [Algebra F E] (K L : IntermediateField F E)
-  [Normal F K]
+noncomputable section
 
-namespace IntermediateField
+variable {R : Type*} [CommRing R] [IsDomain R] {p : Ideal R} [p.IsPrime]
 
-noncomputable def restrictRestrictMapHom :
-    (E ≃ₐ[L] E) →* (K ≃ₐ[F] K) :=
-  (AlgEquiv.restrictNormalHom K).comp (MulSemiringAction.toAlgAut (E ≃ₐ[L] E) F E)
+local notation "Rₚ" => Localization.AtPrime p
 
+example : Algebra Rₚ (FractionRing R) := IsLocalization.instAlgebraLocalizationAtPrime p
 
-@[simp]
-theorem restrictRestrictMapHom_apply (φ : E ≃ₐ[L] E) (x : K) :
-    restrictRestrictMapHom E F K L φ x = φ x := by
-  simp [restrictRestrictMapHom, AlgEquiv.restrictNormalHom_apply]
+def f : FractionRing Rₚ ≃ₐ[Rₚ] FractionRing R := FractionRing.algEquiv Rₚ (FractionRing R)
 
-theorem restrictRestrictMapHom_injective (h : K ⊔ L = ⊤) :
-    Function.Injective (restrictRestrictMapHom E F K L) := by
-  refine (injective_iff_map_eq_one _).mpr fun φ hφ ↦ ?_
-  have : φ ∈ fixingSubgroup ⊤ := by
-    refine (IntermediateField.mem_fixingSubgroup_iff _ _).mpr fun _ hx ↦ ?_
-    rw [← SetLike.mem_coe, ← coe_restrictScalars F, restrictScalars_top, ← h,
-          SetLike.mem_coe, sup_def] at hx
-    induction hx using adjoin_induction F with
-    | mem x hx =>
-      obtain hx | hx := hx
-      · rw [← Subtype.coe_mk x hx, ← restrictRestrictMapHom_apply,
-          congr_arg ((↑) : K → E) (AlgEquiv.congr_fun hφ _), AlgEquiv.one_apply]
-      · rw [← Subtype.coe_mk x hx, ← algebraMap_apply, AlgEquiv.commutes, algebraMap_apply]
-    | algebraMap x => rw [IsScalarTower.algebraMap_apply F L E, AlgEquiv.commutes]
-    | add x y _ _ hx hy => rw [map_add, hx, hy]
-    | inv x _ hx => rw [map_inv₀, hx]
-    | mul x y _ _ hx hy => rw [map_mul, hx, hy]
-  rwa [fixingSubgroup_top, Subgroup.mem_bot] at this
-
-theorem restrictRestrictMapHom_surjective [FiniteDimensional F K] [FiniteDimensional L E]
-    [IsGalois L E] (h : K ⊓ L = ⊥) :
-    Function.Surjective (restrictRestrictMapHom E F K L) := by
-  suffices fixedField (restrictRestrictMapHom E F K L).range = ⊥ from
-     MonoidHom.range_eq_top.mp <|
-      fixingSubgroup_fixedField (restrictRestrictMapHom E F K L).range ▸ this ▸ fixingSubgroup_bot
-  refine eq_bot_iff.mpr fun ⟨x, hx₁⟩ hx₂ ↦ ?_
-  obtain ⟨⟨y, hy⟩, rfl⟩ : x ∈ Set.range (algebraMap L E) := by
-    refine mem_bot.mp <| (IsGalois.mem_bot_iff_fixed _).mpr fun φ ↦ ?_
-    rw [← restrictRestrictMapHom_apply E F K L φ ⟨x, hx₁⟩]
-    rw [mem_fixedField_iff] at hx₂
-    exact congr_arg ((↑) : K → E) <| hx₂ (restrictRestrictMapHom E F K L φ) ⟨φ, rfl⟩
-  obtain ⟨z, rfl⟩ : y ∈ (⊥ : IntermediateField F E) := h ▸ mem_inf.mpr ⟨hx₁, hy⟩
-  exact mem_bot.mp ⟨z, rfl⟩
-
-variable (F E : Type*) [Field F] [Field E] [Algebra F E] (K L : IntermediateField F E)
-   [hN : IsGalois F K] (h : K ⊔ L = ⊤)
-
-open IntermediateField
-
--- example (h : K ⊔ L = ⊤) : 1 = 0 := by
---     let f : (E ≃ₐ[L] E) →* (K ≃ₐ[F] K) :=
---       (AlgEquiv.restrictNormalHom (E := K)).comp (MulSemiringAction.toAlgAut (E ≃ₐ[L] E) F E)
---     have : Function.Injective f := by
---       refine (injective_iff_map_eq_one _).mpr ?_
---       intro φ hφ
---       have : φ ∈ fixingSubgroup ⊤ := by
---         rw [IntermediateField.mem_fixingSubgroup_iff]
---         intro _ hx
---         rw [← SetLike.mem_coe, ← coe_restrictScalars F, restrictScalars_top, ← h,
---           SetLike.mem_coe, sup_def] at hx
---         induction hx using adjoin_induction F with
---         | mem x hx =>
---             obtain hx | hx := hx
---             · change φ (algebraMap K E ⟨x, hx⟩) = _
---               have := congr_arg ((↑) : K → E) (AlgEquiv.congr_fun hφ ⟨x, hx⟩)
---               simpa [MonoidHom.coe_comp, Function.comp_apply, MulSemiringAction.toAlgAut_apply,
---                 AlgEquiv.one_apply, f, AlgEquiv.restrictNormalHom_apply] using this
---             · change φ (algebraMap L E ⟨x, hx⟩) = _
---               rw [AlgEquiv.commutes, IntermediateField.algebraMap_apply]
---         | algebraMap x => rw [IsScalarTower.algebraMap_apply F L E, AlgEquiv.commutes]
---         | add x y _ _ hx hy => rw [map_add, hx, hy]
---         | inv x _ hx => rw [map_inv₀, hx]
---         | mul x y _ _ hx hy => rw [map_mul, hx, hy]
---       rwa [fixingSubgroup_top, Subgroup.mem_bot] at this
+example (x : Rₚ) : f (algebraMap Rₚ (FractionRing Rₚ) x) = algebraMap Rₚ (FractionRing R) x := by
+  exact AlgEquiv.commutes f x
 
 
 
-@[simp]
-theorem map_val_eq_lift {F E : Type*} [Field F] [Field E] [Algebra F E] (L : IntermediateField F E)
-    (K : IntermediateField F L) :
-    map L.val K = lift K := rfl
 
-theorem lift_sup {K L : Type*} [Field K] [Field L] [Algebra K L] {F : IntermediateField K L}
-    {E₁ E₂ : IntermediateField K F} :
-    lift (E₁ ⊔ E₂) = (lift E₁) ⊔ (lift E₂) := by
-  simp_rw [lift, ← map_sup]
-
-#exit
-
-open nonZeroDivisors NumberField
-
-theorem FractionalIdeal.inv_le_inv_iff {A K : Type*} [CommRing A] [Field K] [IsDedekindDomain A]
-    [Algebra A K] [IsFractionRing A K] {I J : FractionalIdeal A⁰ K} (hI : I ≠ 0) (hJ : J ≠ 0) :
-    I⁻¹ ≤ J⁻¹ ↔ J ≤ I := by
-  rw [le_inv_comm (inv_ne_zero hI) hJ, inv_inv]
-
--- instance (K : Type*) [Field K] [NumberField K] (F : Type*) [Field F] [NumberField F] [Algebra F K] :
---     IsLocalization (Algebra.algebraMapSubmonoid (𝓞 K) (𝓞 F)⁰) K := by
---   refine IsLocalization.of_le (Algebra.algebraMapSubmonoid (𝓞 K) ℤ⁰) _ ?_ ?_
---   · rintro _ ⟨a, ha, rfl⟩
---     exact ⟨a, by simpa using ne_zero ha, by simp⟩
---   · rintro _ ⟨x, hx, rfl⟩
---     simpa using ne_zero hx
 
 
 #exit
 
 section not_clean
-
-
-
 
 variable {K M : Type*} [Field K] [NumberField K] [Field M] [NumberField M]
   [Algebra K M] (L₁ L₂ : IntermediateField K M)
