@@ -1,11 +1,4 @@
-import Mathlib.Algebra.Order.Star.Basic
-import Mathlib.NumberTheory.RamificationInertia.Galois
-import Mathlib.RingTheory.DedekindDomain.Factorization
-import Mathlib.RingTheory.FractionalIdeal.Extended
-import Mathlib.RingTheory.Ideal.Norm.RelNorm
-import Mathlib.RingTheory.DedekindDomain.Instances
-import Mathlib.RingTheory.Trace.Quotient
-import Mathlib.Algebra.Polynomial.Eval.Irreducible
+import Mathlib
 
 set_option linter.style.header false
 
@@ -21,19 +14,59 @@ theorem step11 {R S T : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S
     [Module.Finite S T] [NoZeroSMulDivisors R S] [NoZeroSMulDivisors R T] [NoZeroSMulDivisors S T]
     [IsScalarTower R S T]
     [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-    [Algebra.IsSeparable (FractionRing R) (FractionRing T)]
-    [IsGalois (FractionRing R) (FractionRing T)] (x : S) :
+    [Algebra.IsSeparable (FractionRing R) (FractionRing T)] (x : S)
+    {E : Type*} [Field E] [IsAlgClosed E] [Algebra (FractionRing S) E]
+    [Algebra (FractionRing R) E] [IsScalarTower (FractionRing R) (FractionRing S) E]
+    [FaithfulSMul (FractionRing S) E] :
     ∃ y : S, algebraMap R S (intNorm R S x) = x * y := by
-  let u : T := sorry
-  have h₁ : algebraMap R T (intNorm R S x) = (algebraMap S T x) * u := by
-    have := Algebra.algebraMap_intNorm_of_isGalois R T (x := algebraMap S T x)
+  classical
+  let K := FractionRing R
+  let L := FractionRing S
+  let τ := IsScalarTower.toAlgHom K L E
+  let u := ∏ σ ∈ Finset.univ.erase τ, σ ((algebraMap S (FractionRing S)) x)
+  let _ : Algebra S E := by
+    refine RingHom.toAlgebra ?_
+    exact (algebraMap L E).comp (algebraMap S L)
+  have : u ∈ (algebraMap S E).range := by
+    apply Subring.prod_mem
+    intro i _
+    simp only [RingHom.mem_range]
+    refine ⟨sorry, ?_⟩
+    rw [RingHom.algebraMap_toAlgebra]
+    simp only [RingHom.coe_comp, Function.comp_apply]
 
-  have h₂ : u ∈ (algebraMap S T).range := sorry
-  obtain ⟨y, hy⟩ := h₂
-  refine ⟨y, ?_⟩
-  have : Function.Injective (algebraMap S T) := sorry
-  apply this
-  rw [← IsScalarTower.algebraMap_apply, h₁, map_mul, hy]
+
+  obtain ⟨y, hy⟩ := this
+
+-- #exit
+--   refine ⟨sorry, ?_⟩
+--   apply FaithfulSMul.algebraMap_injective S (FractionRing S)
+--   apply FaithfulSMul.algebraMap_injective (FractionRing S) E
+--   have := algebraMap_intNorm (A := R) (K := FractionRing R) (L := FractionRing S) (B := S) x
+--   rw [← IsScalarTower.algebraMap_apply R S]
+--   rw [IsScalarTower.algebraMap_apply R (FractionRing R)]
+--   rw [this]
+--   rw [← IsScalarTower.algebraMap_apply]
+--   rw [norm_eq_prod_embeddings]
+--   let τ := IsScalarTower.toAlgHom K L E
+--   let u := ∏ σ ∈ Finset.univ.erase τ, σ ((algebraMap S (FractionRing S)) x)
+--   rw [← Finset.univ.mul_prod_erase (a := τ)]
+--   unfold τ
+--   rw [map_mul]
+
+-- #exit
+
+  -- let u : T := sorry
+
+  -- have h₁ : algebraMap R T (intNorm R S x) = (algebraMap S T x) * u := by
+  --   have := Algebra.algebraMap_intNorm_of_isGalois R T (x := algebraMap S T x)
+
+  -- have h₂ : u ∈ (algebraMap S T).range := sorry
+  -- obtain ⟨y, hy⟩ := h₂
+  -- refine ⟨y, ?_⟩
+  -- have : Function.Injective (algebraMap S T) := sorry
+  -- apply this
+  -- rw [← IsScalarTower.algebraMap_apply, h₁, map_mul, hy]
 
 
 
@@ -67,10 +100,10 @@ theorem step01 {R S : Type*} [CommRing R] [IsDomain R] [CommRing S] [IsDomain S]
     [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
     [IsGalois (FractionRing R) (FractionRing S)]
     {I : Ideal S} {x : S} (hx : x ∈ I) :
-    (algebraMap R S) ((Algebra.intNorm R S) x) ∈ I := by
+    algebraMap R S ((Algebra.intNorm R S) x) ∈ I := by
   sorry
 
-theorem step11 {R S T : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S] [IsDomain S]
+theorem step110 {R S T : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S] [IsDomain S]
     [CommRing T] [IsDomain T]
     [IsIntegrallyClosed R] [IsIntegrallyClosed S] [IsIntegrallyClosed T]
     [Algebra R S] [Algebra R T] [Algebra S T] [Module.Finite R S] [Module.Finite R T]
@@ -80,9 +113,14 @@ theorem step11 {R S T : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S
     [Algebra.IsSeparable (FractionRing R) (FractionRing T)]
     [Algebra.IsSeparable (FractionRing S) (FractionRing T)]
     [IsGalois (FractionRing R) (FractionRing T)]
-    {I : Ideal S} {x : S} (hx : x ∈ I) :
+    {I : Ideal S} [I.IsMaximal] {x : S} (hx : x ∈ I) :
     (algebraMap R S) ((Algebra.intNorm R S) x) ∈ I := by
   have := step01 (R := R) (Ideal.mem_map_of_mem (algebraMap S T) hx)
+  rw [IsScalarTower.algebraMap_apply R S T] at this
+  rw [← Ideal.mem_comap] at this
+  rw [Ideal.comap_map_eq_self_of_isMaximal] at this
+  rw [Algebra.intNorm_intNorm]
+
 
 
 theorem step10 {R : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S] [IsDomain S]
