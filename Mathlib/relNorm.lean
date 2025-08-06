@@ -13,13 +13,6 @@ import Mathlib.FieldTheory.Minpoly.IsConjRoot
 
 set_option linter.style.header false
 
-@[simp]
-theorem Ideal.bot_pow {R : Type*} [Semiring R] {n : ℕ} (hn : n ≠ 0) :
-    (⊥ : Ideal R) ^ n = ⊥ := by
-  rw [← Ideal.zero_eq_bot]
-  sorry
-
-
 attribute [local instance] FractionRing.liftAlgebra
 
 open Algebra Ideal
@@ -101,58 +94,58 @@ open Algebra Ideal
 --   · exact FaithfulSMul.algebraMap_injective L E
 
 
-theorem dvd_algebraMap_intNorm_self {R : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S]
-    [IsDomain S] [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
-    [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-    (x : S) :
-    x ∣ algebraMap R S (intNorm R S x) := by
-  classical
-  by_cases hx : x = 0
-  · exact ⟨1, by simp [hx]⟩
-  let K := FractionRing R
-  let L := FractionRing S
-  let E := AlgebraicClosure L
-  suffices IsIntegral R ((algebraMap S L x)⁻¹ * (algebraMap R L (intNorm R S x))) by
-    obtain ⟨y, hy⟩ := IsIntegrallyClosed.isIntegral_iff.mp <| IsIntegral.tower_top (A := S) this
-    refine ⟨y, ?_⟩
-    apply FaithfulSMul.algebraMap_injective S L
-    rw [← IsScalarTower.algebraMap_apply, map_mul, hy, mul_inv_cancel_left₀]
-    exact (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective S L)).mpr hx
-  rw [← isIntegral_algHom_iff (IsScalarTower.toAlgHom R L E)
-    (FaithfulSMul.algebraMap_injective L E), IsScalarTower.coe_toAlgHom', map_mul, map_inv₀,
-    IsScalarTower.algebraMap_apply R K L, algebraMap_intNorm (L := L),
-    ← IsScalarTower.algebraMap_apply, ← IsScalarTower.algebraMap_apply, norm_eq_prod_embeddings,
-    ←  Finset.univ.mul_prod_erase _ (Finset.mem_univ (IsScalarTower.toAlgHom K L E)),
-    IsScalarTower.coe_toAlgHom', ← IsScalarTower.algebraMap_apply, inv_mul_cancel_left₀]
-  · refine IsIntegral.prod _ fun σ _ ↦ ?_
-    change IsIntegral R ((σ.restrictScalars R) (IsScalarTower.toAlgHom R S L x))
-    rw [isIntegral_algHom_iff _ (RingHom.injective _),
-      isIntegral_algHom_iff _ (FaithfulSMul.algebraMap_injective S L)]
-    exact IsIntegral.isIntegral x
-  · have := NoZeroSMulDivisors.trans_faithfulSMul S L E
-    exact (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective S E)).mpr hx
+-- theorem dvd_algebraMap_intNorm_self {R : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S]
+--     [IsDomain S] [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
+--     [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
+--     (x : S) :
+--     x ∣ algebraMap R S (intNorm R S x) := by
+--   classical
+--   by_cases hx : x = 0
+--   · exact ⟨1, by simp [hx]⟩
+--   let K := FractionRing R
+--   let L := FractionRing S
+--   let E := AlgebraicClosure L
+--   suffices IsIntegral R ((algebraMap S L x)⁻¹ * (algebraMap R L (intNorm R S x))) by
+--     obtain ⟨y, hy⟩ := IsIntegrallyClosed.isIntegral_iff.mp <| IsIntegral.tower_top (A := S) this
+--     refine ⟨y, ?_⟩
+--     apply FaithfulSMul.algebraMap_injective S L
+--     rw [← IsScalarTower.algebraMap_apply, map_mul, hy, mul_inv_cancel_left₀]
+--     exact (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective S L)).mpr hx
+--   rw [← isIntegral_algHom_iff (IsScalarTower.toAlgHom R L E)
+--     (FaithfulSMul.algebraMap_injective L E), IsScalarTower.coe_toAlgHom', map_mul, map_inv₀,
+--     IsScalarTower.algebraMap_apply R K L, algebraMap_intNorm (L := L),
+--     ← IsScalarTower.algebraMap_apply, ← IsScalarTower.algebraMap_apply, norm_eq_prod_embeddings,
+--     ←  Finset.univ.mul_prod_erase _ (Finset.mem_univ (IsScalarTower.toAlgHom K L E)),
+--     IsScalarTower.coe_toAlgHom', ← IsScalarTower.algebraMap_apply, inv_mul_cancel_left₀]
+--   · refine IsIntegral.prod _ fun σ _ ↦ ?_
+--     change IsIntegral R ((σ.restrictScalars R) (IsScalarTower.toAlgHom R S L x))
+--     rw [isIntegral_algHom_iff _ (RingHom.injective _),
+--       isIntegral_algHom_iff _ (FaithfulSMul.algebraMap_injective S L)]
+--     exact IsIntegral.isIntegral x
+--   · have := NoZeroSMulDivisors.trans_faithfulSMul S L E
+--     exact (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective S E)).mpr hx
 
-theorem step01 {R S : Type*} [CommRing R] [IsDomain R] [CommRing S] [IsDomain S]
-    [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
-    [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-    {I : Ideal S} {x : S} (hx : x ∈ I) :
-    algebraMap R S ((Algebra.intNorm R S) x) ∈ I :=
-  Ideal.mem_of_dvd _ (dvd_algebraMap_intNorm_self x) hx
+-- theorem step01 {R S : Type*} [CommRing R] [IsDomain R] [CommRing S] [IsDomain S]
+--     [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
+--     [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
+--     {I : Ideal S} {x : S} (hx : x ∈ I) :
+--     algebraMap R S ((Algebra.intNorm R S) x) ∈ I :=
+--   Ideal.mem_of_dvd _ (dvd_algebraMap_intNorm_self x) hx
 
-theorem Ideal.spanNorm_le_comap (R : Type*) [CommRing R] [IsDomain R] {S : Type*} [CommRing S]
-    [IsDomain S] [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
-    [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-    (I : Ideal S) : spanNorm R I ≤ comap (algebraMap R S) I := by
-  rw [spanNorm, Ideal.map, Ideal.span_le, ← Submodule.span_le]
-  apply Submodule.span_induction
-  · rintro _ ⟨x, hx, rfl⟩
-    rw [Ideal.mem_comap]
-    exact Ideal.mem_of_dvd _ (dvd_algebraMap_intNorm_self x) hx
-  · simp
-  · intro _ _ _ _ hx hy
-    exact Submodule.add_mem _ hx hy
-  · intro _ _ _ hx
-    exact Submodule.smul_mem _ _ hx
+-- theorem Ideal.spanNorm_le_comap (R : Type*) [CommRing R] [IsDomain R] {S : Type*} [CommRing S]
+--     [IsDomain S] [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
+--     [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
+--     (I : Ideal S) : spanNorm R I ≤ comap (algebraMap R S) I := by
+--   rw [spanNorm, Ideal.map, Ideal.span_le, ← Submodule.span_le]
+--   apply Submodule.span_induction
+--   · rintro _ ⟨x, hx, rfl⟩
+--     rw [Ideal.mem_comap]
+--     exact Ideal.mem_of_dvd _ (dvd_algebraMap_intNorm_self x) hx
+--   · simp
+--   · intro _ _ _ _ hx hy
+--     exact Submodule.add_mem _ hx hy
+--   · intro _ _ _ hx
+--     exact Submodule.smul_mem _ _ hx
 
 
 
@@ -234,7 +227,8 @@ theorem relNorm_eq_pow_of_isMaximal' [IsGalois (FractionRing R) (FractionRing S)
     [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [hPp : P.LiesOver p] :
     relNorm R P = p ^ p.inertiaDeg P := by
   by_cases hp : p = ⊥
-  · have h : p.inertiaDeg P ≠ 0 := (Ideal.inertiaDeg_pos p P).ne'
+  ·
+    have h : p.inertiaDeg P ≠ 0 := (Ideal.inertiaDeg_pos p P).ne'
     rw [hp] at hPp
     rw [liesOver_iff, under_def, eq_comm] at hPp
     rw [eq_bot_iff] at hPp
