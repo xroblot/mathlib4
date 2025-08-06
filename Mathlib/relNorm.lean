@@ -1,164 +1,160 @@
-import Mathlib
+import Mathlib.RingTheory.Ideal.Maps
+import Mathlib.RingTheory.IntegralClosure.IntegrallyClosed
+import Mathlib.FieldTheory.Separable
+import Mathlib.FieldTheory.IsAlgClosed.Basic
+import Mathlib.RingTheory.Ideal.Norm.RelNorm
+import Mathlib.RingTheory.Ideal.Maximal
+import Mathlib.NumberTheory.RamificationInertia.Galois
+import Mathlib.RingTheory.FractionalIdeal.Extended
+import Mathlib.RingTheory.DedekindDomain.Factorization
+import Mathlib.RingTheory.DedekindDomain.Instances
+import Mathlib.RingTheory.Localization.AtPrime.Extension
+import Mathlib.FieldTheory.Minpoly.IsConjRoot
 
 set_option linter.style.header false
 
+@[simp]
+theorem Ideal.bot_pow {R : Type*} [Semiring R] {n : ℕ} (hn : n ≠ 0) :
+    (⊥ : Ideal R) ^ n = ⊥ := by
+  rw [← Ideal.zero_eq_bot]
+  sorry
+
+
 attribute [local instance] FractionRing.liftAlgebra
 
-open Algebra
+open Algebra Ideal
+
+-- theorem step11 {R S : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S] [IsDomain S]
+--     [IsIntegrallyClosed R] [IsIntegrallyClosed S]
+--     [Algebra R S] [Module.Finite R S] [NoZeroSMulDivisors R S]
+--     [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
+--     (x : S)
+--     {E : Type*} [Field E] [Algebra (FractionRing R) E]
+--     [IsAlgClosure (FractionRing R) E]
+--     [Algebra (FractionRing S) E]
+--     [IsScalarTower (FractionRing R) (FractionRing S) E]
+--     [FaithfulSMul (FractionRing S) E] :
+--     ∃ y : S, algebraMap R S (intNorm R S x) = y * x := by
+--   classical
+--   by_cases hx : x = 0
+--   · exact ⟨1, by simp [hx]⟩
+--   let K := FractionRing R
+--   let L := FractionRing S
+--   let u := (algebraMap R L (intNorm R S x)) * (algebraMap S L x)⁻¹
+--   suffices IsIntegral S u by
+--     have : u ∈ (algebraMap S L).range := by
+--       rw [IsIntegrallyClosed.isIntegral_iff] at this
+--       exact this
+--     obtain ⟨y, hy⟩ := this
+--     refine ⟨y, ?_⟩
+--     apply FaithfulSMul.algebraMap_injective S L
+--     rw [← IsScalarTower.algebraMap_apply, map_mul, hy]
+--     unfold u
+--     rw [inv_mul_cancel_right₀]
+--     refine (map_ne_zero_iff (algebraMap S L) ?_).mpr ?_
+--     · exact FaithfulSMul.algebraMap_injective S L
+--     · exact hx
+--   suffices IsIntegral R u by
+--     exact IsIntegral.tower_top this
+--   let _ : Algebra R E := by
+--     refine RingHom.toAlgebra ?_
+--     exact (algebraMap L E).comp (algebraMap R L)
+--   have : IsScalarTower R L E := IsScalarTower.of_algebraMap_eq' rfl
+--   let f := IsScalarTower.toAlgHom R L E
+--   rw [← isIntegral_algHom_iff (f := f)]
+--   · unfold f u
+--     simp only [IsScalarTower.coe_toAlgHom', map_mul, map_inv₀]
+--     rw [IsScalarTower.algebraMap_apply R K L]
+--     rw [algebraMap_intNorm (A := R) (K := K) (B := S) (L := L)]
+--     let _ : Algebra S E := by
+--       refine RingHom.toAlgebra ?_
+--       exact (algebraMap L E).comp (algebraMap S L)
+--     have : IsScalarTower S L E := IsScalarTower.of_algebraMap_eq' rfl
+--     let _ : Algebra R E := by
+--       refine RingHom.toAlgebra ?_
+--       exact (algebraMap S E).comp (algebraMap R S)
+--     have : IsScalarTower R L E := IsScalarTower.of_algebraMap_eq' rfl
+--     have : IsScalarTower R S E := sorry
+--     rw [← IsScalarTower.algebraMap_apply]
+--     have : IsAlgClosed E :=  IsAlgClosure.isAlgClosed (FractionRing R)
+--     rw [norm_eq_prod_embeddings]
+--     let τ := IsScalarTower.toAlgHom K L E
+--     rw [←  Finset.univ.prod_erase_mul _ (Finset.mem_univ τ)]
+--     unfold τ
+--     simp
+--     rw [mul_inv_cancel_right₀]
+--     · apply IsIntegral.prod
+--       intro σ _
+--       have :  IsScalarTower R K E := sorry
+--       change IsIntegral R ((σ.restrictScalars R) ((algebraMap S L) x))
+--       rw [isIntegral_algHom_iff]
+--       change IsIntegral R (IsScalarTower.toAlgHom R S L x)
+--       rw [isIntegral_algHom_iff]
+--       exact IsIntegral.isIntegral x
+--       sorry -- exact FaithfulSMul.algebraMap_injective S E
+--       sorry -- exact FaithfulSMul.algebraMap_injective S E
+--     · refine (map_ne_zero_iff _ ?_).mpr ?_
+--       · exact FaithfulSMul.algebraMap_injective L E
+--       · refine (map_ne_zero_iff _ ?_).mpr ?_
+--         · exact FaithfulSMul.algebraMap_injective S L
+--         · exact hx
+--   · exact FaithfulSMul.algebraMap_injective L E
 
 
-theorem step11 {R S T : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S] [IsDomain S]
-    [CommRing T] [IsDomain T]
-    [IsIntegrallyClosed R] [IsIntegrallyClosed S] [IsIntegrallyClosed T]
-    [Algebra R S] [Algebra R T] [Algebra S T] [Module.Finite R S] [Module.Finite R T]
-    [Module.Finite S T] [NoZeroSMulDivisors R S] [NoZeroSMulDivisors R T] [NoZeroSMulDivisors S T]
-    [IsScalarTower R S T]
-    [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-    [Algebra.IsSeparable (FractionRing R) (FractionRing T)] (x : S)
-    {E : Type*} [Field E] [IsAlgClosed E] [Algebra (FractionRing S) E]
-    [Algebra (FractionRing R) E] [IsScalarTower (FractionRing R) (FractionRing S) E]
-    [FaithfulSMul (FractionRing S) E] :
-    ∃ y : S, algebraMap R S (intNorm R S x) = x * y := by
+theorem dvd_algebraMap_intNorm_self {R : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S]
+    [IsDomain S] [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
+    [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
+    (x : S) :
+    x ∣ algebraMap R S (intNorm R S x) := by
   classical
+  by_cases hx : x = 0
+  · exact ⟨1, by simp [hx]⟩
   let K := FractionRing R
   let L := FractionRing S
-  let τ := IsScalarTower.toAlgHom K L E
-  let u := ∏ σ ∈ Finset.univ.erase τ, σ ((algebraMap S (FractionRing S)) x)
-  let _ : Algebra S E := by
-    refine RingHom.toAlgebra ?_
-    exact (algebraMap L E).comp (algebraMap S L)
-  have : u ∈ (algebraMap S E).range := by
-    apply Subring.prod_mem
-    intro i _
-    simp only [RingHom.mem_range]
-    refine ⟨sorry, ?_⟩
-    rw [RingHom.algebraMap_toAlgebra]
-    simp only [RingHom.coe_comp, Function.comp_apply]
-
-
-  obtain ⟨y, hy⟩ := this
-
--- #exit
---   refine ⟨sorry, ?_⟩
---   apply FaithfulSMul.algebraMap_injective S (FractionRing S)
---   apply FaithfulSMul.algebraMap_injective (FractionRing S) E
---   have := algebraMap_intNorm (A := R) (K := FractionRing R) (L := FractionRing S) (B := S) x
---   rw [← IsScalarTower.algebraMap_apply R S]
---   rw [IsScalarTower.algebraMap_apply R (FractionRing R)]
---   rw [this]
---   rw [← IsScalarTower.algebraMap_apply]
---   rw [norm_eq_prod_embeddings]
---   let τ := IsScalarTower.toAlgHom K L E
---   let u := ∏ σ ∈ Finset.univ.erase τ, σ ((algebraMap S (FractionRing S)) x)
---   rw [← Finset.univ.mul_prod_erase (a := τ)]
---   unfold τ
---   rw [map_mul]
-
--- #exit
-
-  -- let u : T := sorry
-
-  -- have h₁ : algebraMap R T (intNorm R S x) = (algebraMap S T x) * u := by
-  --   have := Algebra.algebraMap_intNorm_of_isGalois R T (x := algebraMap S T x)
-
-  -- have h₂ : u ∈ (algebraMap S T).range := sorry
-  -- obtain ⟨y, hy⟩ := h₂
-  -- refine ⟨y, ?_⟩
-  -- have : Function.Injective (algebraMap S T) := sorry
-  -- apply this
-  -- rw [← IsScalarTower.algebraMap_apply, h₁, map_mul, hy]
-
-
-
-variable (A : Type*) (B : Type*) [CommRing A] [CommRing B] [Algebra A B] [IsDomain A]
-  [IsIntegrallyClosed A] [IsDomain B] [IsIntegrallyClosed B] [Module.Finite A B]
-  [NoZeroSMulDivisors A B]
-
-theorem step1 [IsGalois (FractionRing A) (FractionRing B)] (x : B) :
-    ∃ y : B, algebraMap A B (intNorm A B x) = x * y := by
-  classical
-  refine ⟨(∏ σ ∈ Finset.univ.erase (AlgEquiv.refl : B ≃ₐ[A] B), σ x), ?_⟩
-  calc
-    _ = (AlgEquiv.refl : B ≃ₐ[A] B) x *
-          ∏ σ ∈ Finset.univ.erase (AlgEquiv.refl : B ≃ₐ[A] B), σ x := by sorry
-    _ = ∏ σ : B ≃ₐ[A] B, σ x := sorry
-    _ = algebraMap A B (intNorm A B x) := (algebraMap_intNorm_of_isGalois A B).symm
-
-theorem step2 [Algebra.IsSeparable (FractionRing A) (FractionRing B)] (x : B) :
-    ∃ y : B, algebraMap A B (intNorm A B x) = x * y := by
-  let E := FractionRing A
-  let F := FractionRing B
-
-  let L := AlgebraicClosure (FractionRing B)
-  let N := IntermediateField.normalClosure (FractionRing A) (FractionRing B)
-    (AlgebraicClosure (FractionRing B))
-  let C := integralClosure B N
-
+  let E := AlgebraicClosure L
+  suffices IsIntegral R ((algebraMap S L x)⁻¹ * (algebraMap R L (intNorm R S x))) by
+    obtain ⟨y, hy⟩ := IsIntegrallyClosed.isIntegral_iff.mp <| IsIntegral.tower_top (A := S) this
+    refine ⟨y, ?_⟩
+    apply FaithfulSMul.algebraMap_injective S L
+    rw [← IsScalarTower.algebraMap_apply, map_mul, hy, mul_inv_cancel_left₀]
+    exact (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective S L)).mpr hx
+  rw [← isIntegral_algHom_iff (IsScalarTower.toAlgHom R L E)
+    (FaithfulSMul.algebraMap_injective L E), IsScalarTower.coe_toAlgHom', map_mul, map_inv₀,
+    IsScalarTower.algebraMap_apply R K L, algebraMap_intNorm (L := L),
+    ← IsScalarTower.algebraMap_apply, ← IsScalarTower.algebraMap_apply, norm_eq_prod_embeddings,
+    ←  Finset.univ.mul_prod_erase _ (Finset.mem_univ (IsScalarTower.toAlgHom K L E)),
+    IsScalarTower.coe_toAlgHom', ← IsScalarTower.algebraMap_apply, inv_mul_cancel_left₀]
+  · refine IsIntegral.prod _ fun σ _ ↦ ?_
+    change IsIntegral R ((σ.restrictScalars R) (IsScalarTower.toAlgHom R S L x))
+    rw [isIntegral_algHom_iff _ (RingHom.injective _),
+      isIntegral_algHom_iff _ (FaithfulSMul.algebraMap_injective S L)]
+    exact IsIntegral.isIntegral x
+  · have := NoZeroSMulDivisors.trans_faithfulSMul S L E
+    exact (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective S E)).mpr hx
 
 theorem step01 {R S : Type*} [CommRing R] [IsDomain R] [CommRing S] [IsDomain S]
     [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
     [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-    [IsGalois (FractionRing R) (FractionRing S)]
     {I : Ideal S} {x : S} (hx : x ∈ I) :
-    algebraMap R S ((Algebra.intNorm R S) x) ∈ I := by
-  sorry
+    algebraMap R S ((Algebra.intNorm R S) x) ∈ I :=
+  Ideal.mem_of_dvd _ (dvd_algebraMap_intNorm_self x) hx
 
-theorem step110 {R S T : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S] [IsDomain S]
-    [CommRing T] [IsDomain T]
-    [IsIntegrallyClosed R] [IsIntegrallyClosed S] [IsIntegrallyClosed T]
-    [Algebra R S] [Algebra R T] [Algebra S T] [Module.Finite R S] [Module.Finite R T]
-    [Module.Finite S T] [NoZeroSMulDivisors R S] [NoZeroSMulDivisors R T] [NoZeroSMulDivisors S T]
-    [IsScalarTower R S T]
-    [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-    [Algebra.IsSeparable (FractionRing R) (FractionRing T)]
-    [Algebra.IsSeparable (FractionRing S) (FractionRing T)]
-    [IsGalois (FractionRing R) (FractionRing T)]
-    {I : Ideal S} [I.IsMaximal] {x : S} (hx : x ∈ I) :
-    (algebraMap R S) ((Algebra.intNorm R S) x) ∈ I := by
-  have := step01 (R := R) (Ideal.mem_map_of_mem (algebraMap S T) hx)
-  rw [IsScalarTower.algebraMap_apply R S T] at this
-  rw [← Ideal.mem_comap] at this
-  rw [Ideal.comap_map_eq_self_of_isMaximal] at this
-  rw [Algebra.intNorm_intNorm]
-
-
-
-theorem step10 {R : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S] [IsDomain S]
-    [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
+theorem Ideal.spanNorm_le_comap (R : Type*) [CommRing R] [IsDomain R] {S : Type*} [CommRing S]
+    [IsDomain S] [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
     [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-    [IsGalois (FractionRing R) (FractionRing S)]
-    {I : Ideal S} :
-    spanNorm R I ≤ comap (algebraMap R S) I := by
-  classical
-  rw [spanNorm]
-  rw [Ideal.map]
-  rw [Ideal.span_le]
-  rw [← @Submodule.span_le]
+    (I : Ideal S) : spanNorm R I ≤ comap (algebraMap R S) I := by
+  rw [spanNorm, Ideal.map, Ideal.span_le, ← Submodule.span_le]
   apply Submodule.span_induction
   · rintro _ ⟨x, hx, rfl⟩
     rw [Ideal.mem_comap]
-    rw [Algebra.algebraMap_intNorm_of_isGalois, ← Finset.prod_erase_mul _ _
-      (Finset.mem_univ AlgEquiv.refl), AlgEquiv.coe_refl, Ideal.mem_span_singleton]
+    exact Ideal.mem_of_dvd _ (dvd_algebraMap_intNorm_self x) hx
+  · simp
+  · intro _ _ _ _ hx hy
+    exact Submodule.add_mem _ hx hy
+  · intro _ _ _ hx
+    exact Submodule.smul_mem _ _ hx
 
-    sorry
-  · sorry
-  · sorry
-  · sorry
 
-
-  obtain ⟨x, rfl⟩ := hI
-  rw [submodule_span_eq, spanNorm_singleton, Ideal.span_singleton_le_iff_mem, Ideal.mem_comap,
-    Algebra.algebraMap_intNorm_of_isGalois, ← Finset.prod_erase_mul _ _
-    (Finset.mem_univ AlgEquiv.refl), AlgEquiv.coe_refl, Ideal.mem_span_singleton]
-  exact dvd_mul_left x _
-
-theorem step2 {R : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S] [IsDomain S]
-    [IsIntegrallyClosed R] [IsIntegrallyClosed S] [Algebra R S] [Module.Finite R S]
-    [NoZeroSMulDivisors R S] [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-    [IsGalois (FractionRing R) (FractionRing S)]
-    {I : Ideal S} :
-    spanNorm R I ≤ comap (algebraMap R S) I := by
-  sorry
 
 attribute [local instance] FractionRing.liftAlgebra
 
@@ -185,10 +181,10 @@ theorem Ideal.card_stabilizer_eq_ramificationIdxIn_mul_inertiaDegIn [p.IsMaximal
 
 variable [IsIntegrallyClosed S]
 
-open nonZeroDivisors
+open nonZeroDivisors Submodule Pointwise
 
 theorem relNorm_eq_pow_of_isMaximal'' [IsGalois (FractionRing R) (FractionRing S)] (P : Ideal S)
-    [P.IsMaximal] {p : Ideal R} [p.IsMaximal] [P.LiesOver p] (hp : p ≠ ⊥) (hP : IsPrincipal P) :
+    [P.IsMaximal] {p : Ideal R} [p.IsMaximal] (hp : p ≠ ⊥) [P.LiesOver p] (hP : IsPrincipal P) :
     relNorm R P = p ^ p.inertiaDeg P := by
   classical
   have hPp : P ∈ p.primesOver S := ⟨IsMaximal.isPrime' _, inferInstance⟩
@@ -235,8 +231,18 @@ attribute [-instance] instAlgebraAtPrimeFractionRing
 
 open IsLocalization.AtPrime in
 theorem relNorm_eq_pow_of_isMaximal' [IsGalois (FractionRing R) (FractionRing S)] (P : Ideal S)
-    [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [P.LiesOver p] (hp : p ≠ ⊥) :
+    [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [hPp : P.LiesOver p] :
     relNorm R P = p ^ p.inertiaDeg P := by
+  by_cases hp : p = ⊥
+  · have h : p.inertiaDeg P ≠ 0 := (Ideal.inertiaDeg_pos p P).ne'
+    rw [hp] at hPp
+    rw [liesOver_iff, under_def, eq_comm] at hPp
+    rw [eq_bot_iff] at hPp
+    have := (Ideal.spanNorm_le_comap R P).trans hPp
+    rw [le_bot_iff] at this
+    rw [spanNorm_eq_bot_iff] at this
+    rw [hp, this, relNorm_bot, ← Ideal.zero_eq_bot, zero_pow]
+    rwa [hp, this] at h
   refine eq_of_localization_maximal (fun q hq ↦ ?_)
   let Rₚ := Localization.AtPrime q
   let Mₛ := Algebra.algebraMapSubmonoid S q.primeCompl
@@ -291,17 +297,36 @@ theorem relNorm_eq_pow_of_isMaximal' [IsGalois (FractionRing R) (FractionRing S)
       (primeCompl_le_nonZeroDivisors q), spanNorm_eq, Ideal.map_pow, h₁, h₂, relNorm_top, top_pow]
 
 theorem relNorm_eq_pow_of_isMaximal [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-    (P : Ideal S) [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [hP₁ : P.LiesOver p] :
+    (P : Ideal S) [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [P.LiesOver p] :
     relNorm R P = p ^ p.inertiaDeg P := by
-  by_cases hp : p = ⊥
-  · rw [hp] at hP₁
-    rw [liesOver_iff, under_def, eq_comm] at hP₁
+  let K := FractionRing R
+  let L := FractionRing S
+  let E := IntermediateField.normalClosure K L (AlgebraicClosure L)
+  let _ : Algebra K E := sorry
+  let _ : Algebra L E := sorry
+  let _ : Algebra S E := sorry
+  have : IsGalois K E := sorry
+  have : IsGalois L E := sorry
+  let T := integralClosure S E
+  let _ : Algebra R T := sorry
+  have : Module.Finite S T := sorry
+  have : Module.Finite R T := sorry
+  have : FaithfulSMul S T := sorry
+  have : FaithfulSMul R T := sorry
+  have : IsDedekindDomain T := sorry
+  have : IsScalarTower R S T := sorry
+  have : IsGalois (FractionRing S) (FractionRing T) := sorry
+  have : IsGalois (FractionRing R) (FractionRing T) := sorry
+  have : ∃ Q : Ideal T, Q ∈ primesOver P T := sorry
+  obtain ⟨Q, hQ⟩ := this
+  have hQ₁ : Q.IsMaximal := sorry
+  have hQ₂ : Q.LiesOver P := sorry
+  have t₁ := relNorm_eq_pow_of_isMaximal' S Q P
+  have hQ₃ : Q.LiesOver p := sorry
+  have t₂ := relNorm_eq_pow_of_isMaximal' R Q p
+  rw [← relNorm_relNorm R S, t₁, map_pow] at t₂
+  sorry
 
-
-
-    sorry
-
-  · sorry
 
 #exit
 
