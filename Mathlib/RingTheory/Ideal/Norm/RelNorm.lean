@@ -174,6 +174,23 @@ theorem spanNorm_mul_of_bot_or_top (eq_bot_or_top : ∀ I : Ideal R, I = ⊥ ∨
   rw [hJ]
   exact le_top
 
+theorem spanNorm_le_comap (I : Ideal S) :
+    spanNorm R I ≤ comap (algebraMap R S) I := by
+  rw [spanNorm, Ideal.map, Ideal.span_le, ← Submodule.span_le]
+  intro x hx
+  induction hx using Submodule.span_induction with
+  | mem _ h =>
+      obtain ⟨x, hx, rfl⟩ := h
+      exact mem_comap.mpr <| mem_of_dvd _ (Algebra.dvd_algebraMap_intNorm_self _ _ x) hx
+  | zero => simp
+  | add _ _ _ _ hx hy => exact Submodule.add_mem _ hx hy
+  | smul _ _ _ hx => exact Submodule.smul_mem _ _ hx
+
+theorem bot_of_liesOver_bot (P : Ideal S) [h : P.LiesOver (⊥ : Ideal R)] :
+    P = ⊥ := by
+  rw [liesOver_iff,under_def, eq_comm, eq_bot_iff] at h
+  exact spanNorm_eq_bot_iff.mp <| eq_bot_iff.mpr <| (spanNorm_le_comap R P).trans h
+
 /-- Multiplicativity of `Ideal.spanNorm`. simp-normal form is `map_mul (Ideal.relNorm R)`. -/
 theorem spanNorm_mul [IsDedekindDomain R] [IsDedekindDomain S] (I J : Ideal S) :
     spanNorm R (I * J) = spanNorm R I * spanNorm R J := by

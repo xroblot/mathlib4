@@ -10,12 +10,65 @@ import Mathlib.RingTheory.DedekindDomain.Factorization
 import Mathlib.RingTheory.DedekindDomain.Instances
 import Mathlib.RingTheory.Localization.AtPrime.Extension
 import Mathlib.FieldTheory.Minpoly.IsConjRoot
+import Mathlib.RingTheory.DedekindDomain.Factorization
 
 set_option linter.style.header false
 
 attribute [local instance] FractionRing.liftAlgebra
 
 open Algebra Ideal
+
+theorem Submodule.bot_pow {R : Type*} [Semiring R] {A : Type*} [Semiring A] [Module R A]
+    [IsScalarTower R A A] {n : ℕ} (hn : n ≠ 0) :
+    (⊥ : Submodule R A) ^ n = ⊥ := by
+  have : 1 ≤ n := by exact Nat.one_le_iff_ne_zero.mpr hn
+  induction n, this using Nat.le_induction with
+  | base => rw [Submodule.pow_one]
+  | succ n hmn h => rw [Submodule.pow_succ, h (Nat.ne_zero_of_lt hmn), Submodule.bot_mul]
+
+theorem Ideal.pow_bot {R : Type*} [Semiring R] {n : ℕ} (hn : n ≠ 0) :
+    (⊥ : Ideal R) ^ n = ⊥ := Submodule.bot_pow hn
+
+open scoped nonZeroDivisors
+
+theorem FractionalIdeal.ext' {R : Type*} [CommRing R] (K : Type*) [Field K] [Algebra R K]
+    [IsFractionRing R K] [IsDedekindDomain R] {I J : FractionalIdeal R⁰ K}
+    (hI : I ≠ 0) (hJ : J ≠ 0) :
+    I = J ↔ ∀ (v : IsDedekindDomain.HeightOneSpectrum R), count K v I = count K v J := by
+  constructor
+  · intro h
+    rw [h]
+    exact fun v ↦ rfl
+  · intro h
+    rw [← finprod_heightOneSpectrum_factorization' _ hI,
+      ← finprod_heightOneSpectrum_factorization' _ hJ]
+    simp_rw [h]
+
+variable {R : Type*} [CommRing R] {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K]
+    [IsDedekindDomain R] in
+#synth NoZeroDivisors (FractionalIdeal R⁰ K)
+
+
+instance {R : Type*} [CommRing R] {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K]
+    [IsDedekindDomain R] : IsMulTorsionFree (FractionalIdeal R⁰ K) := by
+  refine ⟨fun n hn I J h ↦ ?_⟩
+  dsimp at h
+  by_cases hI : I = 0
+  · rw [hI, zero_pow hn, eq_comm, pow_eq_zero_iff hn] at h
+    rw [hI, h]
+  by_cases hJ : J = 0
+  · rw [hJ, zero_pow hn, pow_eq_zero_iff hn] at h
+    rw [h, hJ]
+
+  rw [FractionalIdeal.ext'] at h
+  simp_rw [FractionalIdeal.count_pow, mul_right_inj' sorry] at h
+  rwa [← FractionalIdeal.ext'] at h
+
+
+
+
+
+
 
 -- theorem step11 {R S : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S] [IsDomain S]
 --     [IsIntegrallyClosed R] [IsIntegrallyClosed S]
@@ -222,21 +275,18 @@ attribute [local instance] Ideal.Quotient.field
 
 attribute [-instance] instAlgebraAtPrimeFractionRing
 
+
+variable (q : Ideal R) [q.IsPrime] in
+#synth IsPrincipalIdealRing (Localization.AtPrime q)
+
 open IsLocalization.AtPrime in
 theorem relNorm_eq_pow_of_isMaximal' [IsGalois (FractionRing R) (FractionRing S)] (P : Ideal S)
     [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [hPp : P.LiesOver p] :
     relNorm R P = p ^ p.inertiaDeg P := by
   by_cases hp : p = ⊥
-  ·
-    have h : p.inertiaDeg P ≠ 0 := (Ideal.inertiaDeg_pos p P).ne'
-    rw [hp] at hPp
-    rw [liesOver_iff, under_def, eq_comm] at hPp
-    rw [eq_bot_iff] at hPp
-    have := (Ideal.spanNorm_le_comap R P).trans hPp
-    rw [le_bot_iff] at this
-    rw [spanNorm_eq_bot_iff] at this
-    rw [hp, this, relNorm_bot, ← Ideal.zero_eq_bot, zero_pow]
-    rwa [hp, this] at h
+  · have h : p.inertiaDeg P ≠ 0 := (Ideal.inertiaDeg_pos p P).ne'
+    rw [hp] at hPp h ⊢
+    rw [pow_bot h, bot_of_liesOver_bot R P, relNorm_eq_bot_iff]
   refine eq_of_localization_maximal (fun q hq ↦ ?_)
   let Rₚ := Localization.AtPrime q
   let Mₛ := Algebra.algebraMapSubmonoid S q.primeCompl
@@ -272,6 +322,11 @@ theorem relNorm_eq_pow_of_isMaximal' [IsGalois (FractionRing R) (FractionRing S)
     · rw [Localization.AtPrime.map_eq_maximalIdeal]
       rw [IsLocalization.AtPrime.inertiaDeg_map_eq_inertiaDeg p]
     · exact map_ne_bot_of_ne_bot hp
+    have : IsNoetherianRing Rₚ := by exact
+      IsLocalization.instIsNoetherianRingLocalization p.primeCompl
+    have : IsBezout Rₚ := by exact IsBezout.of_isPrincipalIdealRing Rₚ
+    have : IsPrincipalIdealRing Rₚ := by exact
+      IsPrincipalIdealRing.of_isNoetherianRing_of_isBezout
     exact IsPrincipalIdealRing.principal _
     -- case q ≠ p
   · let Mₛ := Algebra.algebraMapSubmonoid S q.primeCompl
@@ -319,6 +374,10 @@ theorem relNorm_eq_pow_of_isMaximal [Algebra.IsSeparable (FractionRing R) (Fract
   have hQ₃ : Q.LiesOver p := sorry
   have t₂ := relNorm_eq_pow_of_isMaximal' R Q p
   rw [← relNorm_relNorm R S, t₁, map_pow] at t₂
+  rw [Ideal.inertiaDeg_algebra_tower p P Q] at t₂
+  rw [pow_mul] at t₂
+
+
   sorry
 
 
