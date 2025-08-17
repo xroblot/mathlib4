@@ -18,57 +18,7 @@ attribute [local instance] FractionRing.liftAlgebra
 
 open Algebra Ideal
 
-theorem Submodule.bot_pow {R : Type*} [Semiring R] {A : Type*} [Semiring A] [Module R A]
-    [IsScalarTower R A A] {n : ℕ} (hn : n ≠ 0) :
-    (⊥ : Submodule R A) ^ n = ⊥ := by
-  have : 1 ≤ n := by exact Nat.one_le_iff_ne_zero.mpr hn
-  induction n, this using Nat.le_induction with
-  | base => rw [Submodule.pow_one]
-  | succ n hmn h => rw [Submodule.pow_succ, h (Nat.ne_zero_of_lt hmn), Submodule.bot_mul]
-
-theorem Ideal.pow_bot {R : Type*} [Semiring R] {n : ℕ} (hn : n ≠ 0) :
-    (⊥ : Ideal R) ^ n = ⊥ := Submodule.bot_pow hn
-
 open scoped nonZeroDivisors
-
-theorem FractionalIdeal.ext' {R : Type*} [CommRing R] (K : Type*) [Field K] [Algebra R K]
-    [IsFractionRing R K] [IsDedekindDomain R] {I J : FractionalIdeal R⁰ K}
-    (hI : I ≠ 0) (hJ : J ≠ 0) :
-    I = J ↔ ∀ (v : IsDedekindDomain.HeightOneSpectrum R), count K v I = count K v J := by
-  constructor
-  · intro h
-    rw [h]
-    exact fun v ↦ rfl
-  · intro h
-    rw [← finprod_heightOneSpectrum_factorization' _ hI,
-      ← finprod_heightOneSpectrum_factorization' _ hJ]
-    simp_rw [h]
-
-variable {R : Type*} [CommRing R] {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K]
-    [IsDedekindDomain R] in
-#synth NoZeroDivisors (FractionalIdeal R⁰ K)
-
-
-instance {R : Type*} [CommRing R] {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K]
-    [IsDedekindDomain R] : IsMulTorsionFree (FractionalIdeal R⁰ K) := by
-  refine ⟨fun n hn I J h ↦ ?_⟩
-  dsimp at h
-  by_cases hI : I = 0
-  · rw [hI, zero_pow hn, eq_comm, pow_eq_zero_iff hn] at h
-    rw [hI, h]
-  by_cases hJ : J = 0
-  · rw [hJ, zero_pow hn, pow_eq_zero_iff hn] at h
-    rw [h, hJ]
-
-  rw [FractionalIdeal.ext'] at h
-  simp_rw [FractionalIdeal.count_pow, mul_right_inj' sorry] at h
-  rwa [← FractionalIdeal.ext'] at h
-
-
-
-
-
-
 
 -- theorem step11 {R S : Type*} [CommRing R] [IsDomain R] {S : Type*} [CommRing S] [IsDomain S]
 --     [IsIntegrallyClosed R] [IsIntegrallyClosed S]
