@@ -223,12 +223,6 @@ theorem relNorm_eq_pow_of_isMaximal'' [IsGalois (FractionRing R) (FractionRing S
 
 attribute [local instance] Ideal.Quotient.field
 
-attribute [-instance] instAlgebraAtPrimeFractionRing
-
-
-variable (q : Ideal R) [q.IsPrime] in
-#synth IsPrincipalIdealRing (Localization.AtPrime q)
-
 open IsLocalization.AtPrime in
 theorem relNorm_eq_pow_of_isMaximal' [IsGalois (FractionRing R) (FractionRing S)] (P : Ideal S)
     [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [hPp : P.LiesOver p] :
