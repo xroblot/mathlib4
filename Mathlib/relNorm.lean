@@ -230,7 +230,7 @@ theorem relNorm_eq_pow_of_isMaximal' [IsGalois (FractionRing R) (FractionRing S)
   by_cases hp : p = ⊥
   · have h : p.inertiaDeg P ≠ 0 := (Ideal.inertiaDeg_pos p P).ne'
     rw [hp] at hPp h ⊢
-    rw [pow_bot h, bot_of_liesOver_bot R P, relNorm_eq_bot_iff]
+    rw [Ideal.bot_pow h, eq_bot_of_liesOver_bot R P, relNorm_eq_bot_iff]
   refine eq_of_localization_maximal (fun q hq ↦ ?_)
   let Rₚ := Localization.AtPrime q
   let Mₛ := Algebra.algebraMapSubmonoid S q.primeCompl
@@ -239,7 +239,8 @@ theorem relNorm_eq_pow_of_isMaximal' [IsGalois (FractionRing R) (FractionRing S)
   · subst hq
     have : NeZero p := ⟨hp⟩
     have hP : P ≠ ⊥ := ne_bot_of_liesOver_of_ne_bot hp P
-    have : IsScalarTower R Sₚ (FractionRing S) := .trans_right R S Sₚ (FractionRing S)
+    let _ : Algebra Sₚ (FractionRing S) := 
+    have : IsScalarTower R Sₚ (FractionRing S) := sorry -- .trans_right R S Sₚ (FractionRing S)
     have : NoZeroSMulDivisors S Sₚ := noZeroSMulDivisors_localization p Sₚ
     have : IsGalois (FractionRing Rₚ) (FractionRing Sₚ) := by
       apply IsGalois.of_equiv_equiv (F := FractionRing R) (E := FractionRing S)
