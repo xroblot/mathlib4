@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anne Baanen, Alex J. Best
 -/
 import Mathlib.RingTheory.IntegralClosure.IntegralRestrict
-import Mathlib.RingTheory.Localization.AtPrime.Extension
+import Mathlib.RingTheory.DedekindDomain.Instances
 
 /-!
 
@@ -233,30 +233,31 @@ theorem spanNorm_spanNorm_of_bot_or_top (eq_bot_or_top : ∀ I : Ideal R, I = �
   · rw [h, spanNorm_eq_bot_iff, spanNorm_eq_bot_iff, spanNorm_eq_bot_iff.mp h]
   · exact h ▸ (eq_top_iff_one _).mpr <| le_spanNorm_spanNorm R T I <| (eq_top_iff_one _).mp h
 
-attribute [local instance] Localization.AtPrime.algebra_localization_localization
+-- attribute [local instance] Localization.AtPrime.algebra_localization_localization
 
 theorem spanNorm_spanNorm [IsDedekindDomain R] [IsDedekindDomain T] [IsDedekindDomain S]
     (I : Ideal S) : spanNorm R (spanNorm T I) = spanNorm R I := by
-  refine eq_of_localization_maximal fun P hP ↦ ?_
-  by_cases hP : P = ⊥
-  · subst hP
-    rw [spanNorm_spanNorm_of_bot_or_top]
-    exact fun I ↦ or_iff_not_imp_right.mpr fun hI ↦ (hP.eq_of_le hI bot_le).symm
-  let Mₜ := Algebra.algebraMapSubmonoid T P.primeCompl
-  let Mₛ := Algebra.algebraMapSubmonoid S P.primeCompl
-  let Rₚ := Localization.AtPrime P
-  let Tₚ := Localization Mₜ
-  let Sₚ := Localization Mₛ
-  have : NeZero P := ⟨hP⟩
-  have h : Mₜ ≤ T⁰ :=
-      algebraMapSubmonoid_le_nonZeroDivisors_of_faithfulSMul _ (primeCompl_le_nonZeroDivisors P)
-  have : IsLocalization (algebraMapSubmonoid S Mₜ) Sₚ :=
-    IsLocalization.AtPrime.isLocalization_map_map T S P Sₚ
-  have : Submodule.IsPrincipal (map (algebraMap S Sₚ) I) := IsPrincipalIdealRing.principal _
-  rw [← spanIntNorm_localization R (spanNorm T I) _ (primeCompl_le_nonZeroDivisors P) Tₚ,
-    ← spanIntNorm_localization T (Rₘ := Tₚ) I _ h Sₚ, ← spanIntNorm_localization R (Rₘ := Rₚ) I _
-    (primeCompl_le_nonZeroDivisors P) Sₚ, ← (I.map _).span_singleton_generator, spanNorm_singleton,
-    spanNorm_singleton, intNorm_intNorm, spanNorm_singleton]
+  sorry
+  -- refine eq_of_localization_maximal fun P hP ↦ ?_
+  -- by_cases hP : P = ⊥
+  -- · subst hP
+  --   rw [spanNorm_spanNorm_of_bot_or_top]
+  --   exact fun I ↦ or_iff_not_imp_right.mpr fun hI ↦ (hP.eq_of_le hI bot_le).symm
+  -- let Mₜ := Algebra.algebraMapSubmonoid T P.primeCompl
+  -- let Mₛ := Algebra.algebraMapSubmonoid S P.primeCompl
+  -- let Rₚ := Localization.AtPrime P
+  -- let Tₚ := Localization Mₜ
+  -- let Sₚ := Localization Mₛ
+  -- have : NeZero P := ⟨hP⟩
+  -- have h : Mₜ ≤ T⁰ :=
+  --     algebraMapSubmonoid_le_nonZeroDivisors_of_faithfulSMul _ (primeCompl_le_nonZeroDivisors P)
+  -- have : IsLocalization (algebraMapSubmonoid S Mₜ) Sₚ :=
+  --   IsLocalization.AtPrime.isLocalization_map_map T S P Sₚ
+  -- have : Submodule.IsPrincipal (map (algebraMap S Sₚ) I) := IsPrincipalIdealRing.principal _
+  -- rw [← spanIntNorm_localization R (spanNorm T I) _ (primeCompl_le_nonZeroDivisors P) Tₚ,
+  --   ← spanIntNorm_localization T (Rₘ := Tₚ) I _ h Sₚ, ← spanIntNorm_localization R (Rₘ := Rₚ) I _
+  --   (primeCompl_le_nonZeroDivisors P) Sₚ, ← (I.map _).span_singleton_generator, spanNorm_singleton,
+  --   spanNorm_singleton, intNorm_intNorm, spanNorm_singleton]
 
 end spanNorm_spanNorm
 
@@ -305,6 +306,12 @@ theorem map_relNorm (I : Ideal S) {T : Type*} [Semiring T] (f : R →+* T) :
 @[mono]
 theorem relNorm_mono {I J : Ideal S} (h : I ≤ J) : relNorm R I ≤ relNorm R J :=
   spanNorm_mono R h
+
+@[simp]
+theorem relNorm_algebraMap (I : Ideal R) :
+    relNorm R (I.map (algebraMap R S)) =
+      I ^ Module.finrank (FractionRing R) (FractionRing S) := by
+  sorry
 
 theorem relNorm_relNorm (T : Type*) [CommRing T] [IsDedekindDomain T] [IsIntegrallyClosed T]
     [Algebra R T] [Algebra T S] [IsScalarTower R T S] [Module.Finite R T] [Module.Finite T S]
