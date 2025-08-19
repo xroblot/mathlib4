@@ -3,22 +3,12 @@ import Mathlib.FieldTheory.Galois.Basic
 import Mathlib.Order.CompletePartialOrder
 import Mathlib.RingTheory.Localization.AtPrime.Basic
 import Mathlib.RingTheory.Localization.LocalizationLocalization
+import Mathlib.Algebra.GroupWithZero.Torsion
+import Mathlib.RingTheory.DedekindDomain.Ideal.Basic
 
-noncomputable section
+variable {R : Type*} [CommRing R] [IsDedekindDomain R]
 
-variable {R : Type*} [CommRing R] [IsDomain R] {p : Ideal R} [p.IsPrime]
-
-local notation "Rₚ" => Localization.AtPrime p
-
-example : Algebra Rₚ (FractionRing R) := IsLocalization.instAlgebraLocalizationAtPrime p
-
-def f : FractionRing Rₚ ≃ₐ[Rₚ] FractionRing R := FractionRing.algEquiv Rₚ (FractionRing R)
-
-example (x : Rₚ) : f (algebraMap Rₚ (FractionRing Rₚ) x) = algebraMap Rₚ (FractionRing R) x := by
-  exact AlgEquiv.commutes f x
-
-
-
+instance : IsMulTorsionFree (Ideal R) := inferInstance
 
 
 
