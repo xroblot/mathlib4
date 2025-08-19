@@ -20,6 +20,7 @@ example (M : Type*) [Monoid M] [IsMulTorsionFree M] {x : M} (hx : x ≠ 1) (hx :
   rw [le_iff_exists_add] at this
   obtain ⟨l, rfl⟩ := this
   rw [pow_add, eq_comm, IsLeftRegular.mul_left_eq_self_iff (hx.pow n)] at h
+  
 
 
 
