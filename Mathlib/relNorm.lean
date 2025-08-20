@@ -177,7 +177,9 @@ lemma res2 [p.IsMaximal] [P.IsPrime] [IsGalois (FractionRing R) (FractionRing S)
 
 set_option maxHeartbeats 1000000 in
 -- set_option synthInstance.maxHeartbeats 100000 in
-theorem relNorm_eq_pow_of_isMaximal -- [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
+theorem relNorm_eq_pow_of_isMaximal --
+    -- [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
+    -- [Algebra.IsSeparable (FractionRing R) (AlgebraicClosure (FractionRing S))]
     [PerfectField (FractionRing R)]
     (P : Ideal S) [P.IsMaximal] (p : Ideal R) [p.IsMaximal] [P.LiesOver p] :
     relNorm R P = p ^ p.inertiaDeg P := by
@@ -185,6 +187,7 @@ theorem relNorm_eq_pow_of_isMaximal -- [Algebra.IsSeparable (FractionRing R) (Fr
   let L := FractionRing S
   let A := AlgebraicClosure L
   let E := IntermediateField.normalClosure K L A
+  -- Lean has trouble finding this instance
   let _ : Algebra K A := AlgebraicClosure.instAlgebra L
   -- Lean has trouble finding this instance
   let _ : Algebra L E := normalClosure.algebra K L A
@@ -198,8 +201,9 @@ theorem relNorm_eq_pow_of_isMaximal -- [Algebra.IsSeparable (FractionRing R) (Fr
 
   have : IsScalarTower S L E := IsScalarTower.of_algebraMap_eq' rfl
   have : IsScalarTower R S T := IsScalarTower.of_algebraMap_eq' rfl
-  have : IsScalarTower R T E := by
-    sorry
+  have : IsScalarTower R L E := IsScalarTower.to₁₃₄ R K L E
+  have : IsScalarTower R S E := IsScalarTower.to₁₂₄ R S L E
+  have : IsScalarTower R T E := IsScalarTower.to₁₃₄ R S T E
 
   have : Module.Finite L E := Module.Finite.right K L E
 
@@ -225,7 +229,8 @@ theorem relNorm_eq_pow_of_isMaximal -- [Algebra.IsSeparable (FractionRing R) (Fr
   let _ : Algebra K (FractionRing T) := FractionRing.liftAlgebra R (FractionRing ↥T)
 
   have : IsGalois K (FractionRing T) := by
-    refine { to_isSeparable := IsAlgebraic.isSeparable_of_perfectField, to_normal := ?_ }
+    refine { to_isSeparable := ?_, to_normal := ?_ }
+    · exact IsAlgebraic.isSeparable_of_perfectField
     have : Normal K E := normalClosure.normal K L A
     apply Normal.of_equiv_equiv (F := K) (E := E) (f := RingEquiv.refl K)
       (g := (FractionRing.algEquiv T E).symm)
