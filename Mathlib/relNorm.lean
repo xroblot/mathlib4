@@ -9,26 +9,39 @@ import Mathlib.RingTheory.DedekindDomain.Factorization
 import Mathlib.RingTheory.DedekindDomain.Instances
 import Mathlib.FieldTheory.Minpoly.IsConjRoot
 import Mathlib.RingTheory.DedekindDomain.Factorization
+import Mathlib.Algebra.Regular.Opposite
+import Mathlib.RingTheory.Ideal.Norm.RelNorm
+import Mathlib.Algebra.GroupWithZero.Torsion
 
 set_option linter.style.header false
 
-example (M : Type*) [Monoid M] [IsMulTorsionFree M] {x : M} (hx : x ≠ 1) (hx : IsLeftRegular x) :
-    Function.Injective (fun n ↦ x ^ n) := by
-  intro n m h
-  dsimp at h
-  have : n ≤ m := sorry
-  rw [le_iff_exists_add] at this
-  obtain ⟨l, rfl⟩ := this
-  rw [pow_add, eq_comm, IsLeftRegular.mul_left_eq_self_iff (hx.pow n)] at h
-  
+open MulOpposite in
+@[to_additive]
+instance (M : Type*) [Monoid M] [IsMulTorsionFree M] : IsMulTorsionFree (Mᵐᵒᵖ) :=
+  ⟨fun _ h ↦ op_injective.comp <| (pow_left_injective h).comp <| unop_injective⟩
 
+@[to_additive]
+theorem IsLeftRegular.pow_inj (M : Type*) [Monoid M] [IsMulTorsionFree M] {x : M}
+    (hx : IsLeftRegular x) (hx' : x ≠ 1) : Function.Injective (fun n ↦ x ^ n) := by
+  intro n m hnm
+  have main {n m} (h₁ : n ≤ m) (h₂ : x ^ n = x ^ m) : n = m := by
+    obtain ⟨l, rfl⟩ := le_iff_exists_add.mp h₁
+    rw [pow_add, eq_comm, IsLeftRegular.mul_left_eq_self_iff (hx.pow n),
+      IsMulTorsionFree.pow_eq_one_iff' hx'] at h₂
+    rw [h₂, add_zero]
+  obtain h | h := Nat.le_or_le n m
+  · exact main h hnm
+  · exact (main h hnm.symm).symm
 
-
-
+@[to_additive]
+theorem IsRightRegular.pow_inj (M : Type*) [Monoid M] [IsMulTorsionFree M] {x : M}
+    (hx : IsRightRegular x) (hx' : x ≠ 1) : Function.Injective (fun n ↦ x ^ n) :=
+  MulOpposite.unop_injective.comp <| (isLeftRegular_op.mpr hx).pow_inj Mᵐᵒᵖ  <|
+    (MulOpposite.op_eq_one_iff x).not.mpr hx'
 
 attribute [local instance] FractionRing.liftAlgebra
 
-open Algebra Ideal Pointwise
+open Ideal Algebra Pointwise
 
 theorem galRestrict_symm_algebraMap_apply (A : Type*) (K : Type*) (L : Type*)
     (B : Type*) [CommRing A] [CommRing B] [Algebra A B] [Field K] [Field L] [Algebra A K]
@@ -44,9 +57,7 @@ theorem galRestrict_symm_algebraMap_apply (A : Type*) (K : Type*) (L : Type*)
 
 -- def Algebra.norm (R : Type u_1)  {S : Type u_2}  [CommRing R]  [Ring S]  [Algebra R S] :
 
-
 variable (R : Type*) [CommRing R] {S₀ : Type*} [Ring S₀] [Algebra R S₀]
-
 
 variable [IsDomain R] {S : Type*} [CommRing S] [Algebra R S] [IsDomain S] [IsIntegrallyClosed R]
   [IsIntegrallyClosed S] [Module.Finite R S] [NoZeroSMulDivisors R S]
@@ -95,6 +106,8 @@ lemma res2 [p.IsMaximal] [IsGalois (FractionRing R) (FractionRing S)] :
     relNorm R Q ^ ramificationIdx (algebraMap R S) p Q = p ^ (s * (p.ramificationIdxIn S)) := sorry
   simp_rw +contextual [this] at h
   rw [Finset.prod_const, Set.toFinset_card, ← pow_mul] at h
+  have : IsLeftRegular p := IsLeftCancelMulZero.mul_left_cancel_of_ne_zero hp
+  have := IsLeftRegular.pow_inj (Ideal R)
 
   have h₀ := congr_arg (relNorm R ·) <| congr_arg (map (algebraMap R S) ·) (hs 1)
   dsimp at h₀
