@@ -205,6 +205,9 @@ theorem relNorm_eq_pow_of_isMaximal --
   have : IsScalarTower R S E := IsScalarTower.to₁₂₄ R S L E
   have : IsScalarTower R T E := IsScalarTower.to₁₃₄ R S T E
 
+  have : IsScalarTower K L E := by exact
+    normalClosure.instIsScalarTowerSubtypeMemIntermediateFieldNormalClosure K L A
+
   have : Module.Finite L E := Module.Finite.right K L E
 
   have : Algebra.IsSeparable L E := by
