@@ -5,7 +5,7 @@ Authors: Anne Baanen, Alex J. Best
 -/
 import Mathlib.LinearAlgebra.FreeModule.PID
 import Mathlib.RingTheory.DedekindDomain.PID
-import Mathlib.RingTheory.DedekindDomain.Instances
+import Mathlib.RingTheory.DedekindDomain.Instances.LocalizationAtPrime
 import Mathlib.RingTheory.Localization.NormTrace
 import Mathlib.RingTheory.IntegralClosure.IntegralRestrict
 

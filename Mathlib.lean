@@ -5306,6 +5306,8 @@ import Mathlib.RingTheory.DedekindDomain.FiniteAdeleRing
 import Mathlib.RingTheory.DedekindDomain.Ideal.Basic
 import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
 import Mathlib.RingTheory.DedekindDomain.Instances
+import Mathlib.RingTheory.DedekindDomain.Instances.LocalizationAtPrime
+import Mathlib.RingTheory.DedekindDomain.Instances.NormalClosure
 import Mathlib.RingTheory.DedekindDomain.IntegralClosure
 import Mathlib.RingTheory.DedekindDomain.PID
 import Mathlib.RingTheory.DedekindDomain.SInteger
