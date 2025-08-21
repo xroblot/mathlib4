@@ -6,30 +6,6 @@ import Mathlib.RingTheory.Ideal.Norm.RelNorm
 
 set_option linter.style.header false
 
-open MulOpposite in
-@[to_additive]
-instance (M : Type*) [Monoid M] [IsMulTorsionFree M] : IsMulTorsionFree (Mᵐᵒᵖ) :=
-  ⟨fun _ h ↦ op_injective.comp <| (pow_left_injective h).comp <| unop_injective⟩
-
-@[to_additive]
-theorem IsLeftRegular.pow_inj {M : Type*} [Monoid M] [IsMulTorsionFree M] {x : M}
-    (hx : IsLeftRegular x) (hx' : x ≠ 1) : Function.Injective (fun n ↦ x ^ n) := by
-  intro n m hnm
-  have main {n m} (h₁ : n ≤ m) (h₂ : x ^ n = x ^ m) : n = m := by
-    obtain ⟨l, rfl⟩ := le_iff_exists_add.mp h₁
-    rw [pow_add, eq_comm, IsLeftRegular.mul_left_eq_self_iff (hx.pow n),
-      IsMulTorsionFree.pow_eq_one_iff' hx'] at h₂
-    rw [h₂, add_zero]
-  obtain h | h := Nat.le_or_le n m
-  · exact main h hnm
-  · exact (main h hnm.symm).symm
-
-@[to_additive]
-theorem IsRightRegular.pow_inj {M : Type*} [Monoid M] [IsMulTorsionFree M] {x : M}
-    (hx : IsRightRegular x) (hx' : x ≠ 1) : Function.Injective (fun n ↦ x ^ n) :=
-  MulOpposite.unop_injective.comp <| (isLeftRegular_op.mpr hx).pow_inj  <|
-    (MulOpposite.op_eq_one_iff x).not.mpr hx'
-
 open Ideal Algebra Pointwise
 
 attribute [local instance] FractionRing.liftAlgebra
@@ -175,7 +151,7 @@ lemma res2 [p.IsMaximal] [P.IsPrime] [IsGalois (FractionRing R) (FractionRing S)
   · rw [one_eq_top]
     exact IsMaximal.ne_top inferInstance
 
-set_option maxHeartbeats 1000000 in
+set_option maxHeartbeats 800000 in
 -- set_option synthInstance.maxHeartbeats 100000 in
 theorem relNorm_eq_pow_of_isMaximal --
     -- [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
