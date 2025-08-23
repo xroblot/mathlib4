@@ -64,7 +64,7 @@ def galRestrictHom : (L →ₐ[K] L) ≃* (B →ₐ[A] B) where
       (((f.restrictScalars A).comp (IsScalarTower.toAlgHom A B L)).codRestrict
         (integralClosure A L) (fun x ↦ IsIntegral.map _ (IsIntegralClosure.isIntegral A L x)))
   map_mul' := by
-    intros σ₁ σ₂
+    intro σ₁ σ₂
     ext x
     apply (IsIntegralClosure.equiv A (integralClosure A L) L B).symm.injective
     ext
@@ -116,6 +116,11 @@ lemma galRestrict_apply (σ : L ≃ₐ[K] L) (x : B) :
 lemma algebraMap_galRestrict_apply (σ : L ≃ₐ[K] L) (x : B) :
     algebraMap B L (galRestrict A K L B σ x) = σ (algebraMap B L x) :=
   algebraMap_galRestrictHom_apply A K L B σ.toAlgHom x
+
+variable (K) in
+lemma galRestrict_symm_algebraMap_apply (σ : B ≃ₐ[A] B) (x : B) :
+    (galRestrict A K L B).symm σ (algebraMap B L x) = algebraMap B L (σ x) :=
+  galRestrictHom_symm_algebraMap_apply A K L B σ x
 
 end galois
 
@@ -370,6 +375,12 @@ lemma Algebra.intNorm_zero : Algebra.intNorm A B 0 = 0 := by
   simp
 
 variable {A B}
+
+theorem Algebra.intNorm_eq_of_algEquiv (x : B) (σ : B ≃ₐ[A] B) :
+    Algebra.intNorm A B (σ x) = Algebra.intNorm A B x := by
+  apply FaithfulSMul.algebraMap_injective A (FractionRing A)
+  rw [algebraMap_intNorm_fractionRing, algebraMap_intNorm_fractionRing,
+    ← galRestrict_symm_algebraMap_apply A (FractionRing A), norm_eq_of_algEquiv]
 
 @[simp]
 lemma Algebra.intNorm_eq_zero {x : B} : Algebra.intNorm A B x = 0 ↔ x = 0 := by

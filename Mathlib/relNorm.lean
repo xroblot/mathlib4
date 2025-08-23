@@ -45,14 +45,6 @@ theorem Ideal.ramificationIdx_ne_zero_of_liesOver {R : Type*} [CommRing R]
 
 attribute [local instance] FractionRing.liftAlgebra
 
-theorem galRestrict_symm_algebraMap_apply (A : Type*) (K : Type*) (L : Type*)
-    (B : Type*) [CommRing A] [CommRing B] [Algebra A B] [Field K] [Field L] [Algebra A K]
-    [IsFractionRing A K] [Algebra B L] [Algebra K L] [Algebra A L] [IsScalarTower A B L]
-    [IsScalarTower A K L] [IsIntegralClosure B A L] [Algebra.IsAlgebraic K L] (σ : B ≃ₐ[A] B)
-    (x : B) :
-    ((galRestrict A K L B).symm σ) ((algebraMap B L) x) = (algebraMap B L) (σ x) :=
-  galRestrictHom_symm_algebraMap_apply A K L B σ x
-
 -- (A : Type u_1)  (B : Type u_4)  [CommRing A]  [CommRing B]  [Algebra A B] [IsIntegrallyClosed A]
 -- [IsDomain A]  [IsDomain B]  [IsIntegrallyClosed B] [Module.Finite A B]  [NoZeroSMulDivisors A B]
 -- [Algebra.IsSeparable (FractionRing A) (FractionRing B)]
@@ -64,13 +56,6 @@ variable (R : Type*) [CommRing R] {S₀ : Type*} [Ring S₀] [Algebra R S₀]
 variable [IsDomain R] {S : Type*} [CommRing S] [Algebra R S] [IsDomain S] [IsIntegrallyClosed R]
   [IsIntegrallyClosed S] [Module.Finite R S] [NoZeroSMulDivisors R S]
 
-theorem Algebra.intNorm_eq_of_algEquiv [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
-    (x : S) (σ : S ≃ₐ[R] S) :
-    intNorm R S (σ x) = intNorm R S x := by
-  apply FaithfulSMul.algebraMap_injective R (FractionRing R)
-  rw [algebraMap_intNorm_fractionRing, algebraMap_intNorm_fractionRing,
-    ← galRestrict_symm_algebraMap_apply R (FractionRing R), norm_eq_of_algEquiv]
-
 variable [IsDedekindDomain R] [IsDedekindDomain S]
 
 theorem relNorm_smul [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
@@ -80,7 +65,7 @@ theorem relNorm_smul [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
     simp_rw [Ideal.relNorm_apply]
     apply span_mono
     rintro _ ⟨x, hx₁, hx₂⟩
-    exact ⟨τ⁻¹ x, mem_pointwise_smul_iff_inv_smul_mem.mp hx₁, hx₂ ▸ intNorm_eq_of_algEquiv R x τ⁻¹⟩
+    exact ⟨τ⁻¹ x, mem_pointwise_smul_iff_inv_smul_mem.mp hx₁, hx₂ ▸ intNorm_eq_of_algEquiv x τ⁻¹⟩
   apply le_antisymm
   · exact h I σ
   · convert h (σ • I) σ⁻¹
@@ -101,7 +86,7 @@ lemma res1 [Algebra.IsSeparable (FractionRing R) (FractionRing S)] [p.IsPrime] (
     rw [map_le_iff_le_comap]
     exact le_of_eq hPp
   have := relNorm_mono R this
-  rw [relNorm_algebraMap R, ← dvd_iff_le] at this
+  rw [relNorm_algebraMap S, ← dvd_iff_le] at this
   rw [dvd_prime_pow] at this
   · obtain ⟨s, _, hs⟩ := this
     refine ⟨s, ?_⟩
@@ -120,7 +105,7 @@ lemma res2 [p.IsMaximal] [P.IsPrime] [IsGalois (FractionRing R) (FractionRing S)
     rw [hp, hP, relNorm_bot, bot_pow]
     rwa [hp, hP] at h
   have t₁ := congr_arg (relNorm R ·) <| Ideal.map_algebraMap_eq_finset_prod_pow S hp
-  have t₂ := relNorm_algebraMap R (S := S) p
+  have t₂ := relNorm_algebraMap S p
   have h := t₁.symm.trans t₂
   dsimp at h
   simp_rw [map_prod, map_pow] at h

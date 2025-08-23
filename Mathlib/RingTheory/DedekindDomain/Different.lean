@@ -209,7 +209,7 @@ lemma isIntegral_discr_mul_of_mem_traceDual
   apply IsIntegral.algebraMap
   rw [cramer_apply]
   apply IsIntegral.det
-  intros j k
+  intro j k
   rw [updateCol_apply]
   split
   · rw [mul_assoc]
@@ -747,7 +747,7 @@ lemma pow_sub_one_dvd_differentIdeal_aux
       exact ⟨intTrace A B z, this z hz, rfl⟩
     rwa [mul_comm, ← smul_eq_mul, ← LinearMap.map_smul, Algebra.smul_def, mul_comm,
       ← IsScalarTower.algebraMap_apply, IsScalarTower.algebraMap_apply A B L, ← hz']
-  intros x hx
+  intro x hx
   rw [← Ideal.Quotient.eq_zero_iff_mem, ← trace_quotient_eq_of_isDedekindDomain,
     ← isNilpotent_iff_eq_zero]
   refine trace_isNilpotent_of_isNilpotent ⟨e, ?_⟩
@@ -905,7 +905,7 @@ lemma dvd_differentIdeal_of_not_isSeparable
       exact ⟨Algebra.intTrace A B z, this z hz, rfl⟩
     rwa [mul_comm, ← smul_eq_mul, ← LinearMap.map_smul, Algebra.smul_def, mul_comm,
       ← IsScalarTower.algebraMap_apply, IsScalarTower.algebraMap_apply A B L, ← hz']
-  intros x hx
+  intro x hx
   rw [← Ideal.Quotient.eq_zero_iff_mem, ← Algebra.trace_quotient_eq_of_isDedekindDomain]
   letI : Algebra (A ⧸ p) (B ⧸ a) :=
     Ideal.Quotient.algebraQuotientOfLEComap (Ideal.map_le_iff_le_comap.mp
