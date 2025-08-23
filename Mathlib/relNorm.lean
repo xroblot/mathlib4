@@ -65,7 +65,7 @@ theorem relNorm_smul [Algebra.IsSeparable (FractionRing R) (FractionRing S)]
     simp_rw [Ideal.relNorm_apply]
     apply span_mono
     rintro _ ⟨x, hx₁, hx₂⟩
-    exact ⟨τ⁻¹ x, mem_pointwise_smul_iff_inv_smul_mem.mp hx₁, hx₂ ▸ intNorm_eq_of_algEquiv R x τ⁻¹⟩
+    exact ⟨τ⁻¹ x, mem_pointwise_smul_iff_inv_smul_mem.mp hx₁, hx₂ ▸ intNorm_eq_of_algEquiv x τ⁻¹⟩
   apply le_antisymm
   · exact h I σ
   · convert h (σ • I) σ⁻¹
@@ -86,7 +86,7 @@ lemma res1 [Algebra.IsSeparable (FractionRing R) (FractionRing S)] [p.IsPrime] (
     rw [map_le_iff_le_comap]
     exact le_of_eq hPp
   have := relNorm_mono R this
-  rw [relNorm_algebraMap R, ← dvd_iff_le] at this
+  rw [relNorm_algebraMap S, ← dvd_iff_le] at this
   rw [dvd_prime_pow] at this
   · obtain ⟨s, _, hs⟩ := this
     refine ⟨s, ?_⟩
@@ -105,7 +105,7 @@ lemma res2 [p.IsMaximal] [P.IsPrime] [IsGalois (FractionRing R) (FractionRing S)
     rw [hp, hP, relNorm_bot, bot_pow]
     rwa [hp, hP] at h
   have t₁ := congr_arg (relNorm R ·) <| Ideal.map_algebraMap_eq_finset_prod_pow S hp
-  have t₂ := relNorm_algebraMap R (S := S) p
+  have t₂ := relNorm_algebraMap S p
   have h := t₁.symm.trans t₂
   dsimp at h
   simp_rw [map_prod, map_pow] at h
