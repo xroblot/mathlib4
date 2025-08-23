@@ -3,10 +3,7 @@ Copyright (c) 2022 Anne Baanen. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anne Baanen, Alex J. Best
 -/
-import Mathlib.LinearAlgebra.FreeModule.PID
-import Mathlib.RingTheory.DedekindDomain.PID
 import Mathlib.RingTheory.DedekindDomain.Instances
-import Mathlib.RingTheory.Localization.NormTrace
 import Mathlib.RingTheory.IntegralClosure.IntegralRestrict
 
 /-!
@@ -26,7 +23,7 @@ spanned by the norms of elements in `I`.
 ## Main results
 
 * `map_mul Ideal.relNorm`: multiplicativity of the relative ideal norm
-* `relNorm_relNorm`: transitivity of the relative norm
+* `relNorm_relNorm`: transitivity of the relative ideal norm
 
 -/
 
