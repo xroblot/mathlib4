@@ -17,7 +17,7 @@ attribute [local instance] FractionRing.liftAlgebra
 theorem Ideal.exists_mem_primesOver_of_isIntegral {R : Type*} [CommRing R] {S : Type*} [CommRing S]
     [Nontrivial S] [Algebra R S] [Algebra.IsIntegral R S] [NoZeroSMulDivisors R S] (P : Ideal R)
     [P.IsPrime] :
-    ∃ (Q : Ideal S),  Q ∈ primesOver P S := by
+    ∃ (Q : Ideal S), Q ∈ primesOver P S := by
   obtain ⟨Q, _, hQ₁, hQ₂⟩ := exists_ideal_over_prime_of_isIntegral P (⊥ : Ideal S) (by simp)
   exact ⟨Q, ⟨hQ₁, (liesOver_iff _ _).mpr hQ₂.symm⟩⟩
 
