@@ -204,9 +204,19 @@ theorem ramificationIdx_map_self_eq_one [IsDedekindDomain S] (h₁ : map f p ≠
   have := IsMulTorsionFree.pow_right_injective₀ (by rwa [one_eq_top]) h₂ this
   simp_all
 
+variable (p P) in
+theorem ramificationIdx_le_ramificationIdx {T : Type*} [CommRing T] (Q : Ideal T) (f : R →+* S)
+    (g : S →+* T) (hp : p = Ideal.comap f P) (h : BddAbove {n | map (g.comp f) p ≤ Q ^ n}) :
+    Ideal.ramificationIdx g P Q ≤ Ideal.ramificationIdx (g.comp f) p Q := by
+  refine csSup_le_csSup' h fun n hn ↦ ?_
+  rw [Set.mem_setOf_eq, ← map_map, map_le_iff_le_comap, map_le_iff_le_comap, hp]
+  refine Ideal.comap_mono <| by rwa [← Ideal.map_le_iff_le_comap]
+
 namespace IsDedekindDomain
 
 variable [IsDedekindDomain S]
+
+
 
 theorem ramificationIdx_eq_normalizedFactors_count [DecidableEq (Ideal S)]
     (hp0 : map f p ≠ ⊥) (hP : P.IsPrime)
@@ -272,6 +282,19 @@ lemma ramificationIdx_eq_one_iff
   rw [← not_ne_iff, IsLocalization.map_algebraMap_ne_top_iff_disjoint P.primeCompl]
   simpa [primeCompl, Set.disjoint_compl_left_iff_subset]
 
+theorem ramificationIdx_le_ramificationIdx [IsDomain R] [Algebra R S] [Module.IsTorsionFree R S]
+    {S₀ : Type*} [CommRing S₀] [Algebra R S₀] [Algebra S₀ S] [IsScalarTower R S₀ S] (p : Ideal R)
+    (P : Ideal S₀) (Q : Ideal S) [Q.LiesOver p] [P.LiesOver p] [Q.IsPrime] (hp : p ≠ ⊥) :
+    Ideal.ramificationIdx (algebraMap S₀ S) P Q ≤ Ideal.ramificationIdx (algebraMap R S) p Q := by
+  rw [IsScalarTower.algebraMap_eq R S₀ S]
+  refine Ideal.ramificationIdx_le_ramificationIdx p P Q (algebraMap R S₀) (algebraMap S₀ S) ?_ ?_
+  · rwa [← under_def, ← liesOver_iff]
+  · rw [← IsScalarTower.algebraMap_eq R S₀ S]
+    suffices ramificationIdx (algebraMap R S) p Q ≠ 0 by
+      contrapose! this
+      exact ramificationIdx_eq_zero (by rwa [not_bddAbove_iff] at this)
+    exact ramificationIdx_ne_zero_of_liesOver _ hp
+
 end IsDedekindDomain
 
 variable (f p P) [Algebra R S]
@@ -313,7 +336,7 @@ theorem inertiaDeg_pos [p.IsMaximal] [Module.Finite R S] [P.LiesOver p] : 0 < in
 theorem inertiaDeg_ne_zero [p.IsMaximal] [Module.Finite R S] [P.LiesOver p] : inertiaDeg p P ≠ 0 :=
   (Nat.ne_of_lt (inertiaDeg_pos p P)).symm
 
-lemma inertiaDeg_comap_eq (e : S ≃ₐ[R] S₁) (P : Ideal S₁) [p.IsMaximal] :
+lemma inertiaDeg_comap_eq (e : S ≃ₐ[R] S₁) (P : Ideal S₁) :
     inertiaDeg p (P.comap e) = inertiaDeg p P := by
   have he : (P.comap e).comap (algebraMap R S) = p ↔ P.comap (algebraMap R S₁) = p := by
     rw [← comap_coe e, comap_comap, ← e.toAlgHom_toRingHom, AlgHom.comp_algebraMap]
@@ -323,7 +346,7 @@ lemma inertiaDeg_comap_eq (e : S ≃ₐ[R] S₁) (P : Ideal S₁) [p.IsMaximal] 
   · rw [inertiaDeg, dif_neg (fun eq => h ⟨(he.mp eq).symm⟩)]
     rw [inertiaDeg, dif_neg (fun eq => h ⟨eq.symm⟩)]
 
-lemma inertiaDeg_map_eq [p.IsMaximal] (P : Ideal S)
+lemma inertiaDeg_map_eq (P : Ideal S)
     {E : Type*} [EquivLike E S S₁] [AlgEquivClass E R S S₁] (e : E) :
     inertiaDeg p (P.map e) = inertiaDeg p P := by
   rw [show P.map e = _ from map_comap_of_equiv (e : S ≃+* S₁)]
@@ -337,6 +360,16 @@ theorem inertiaDeg_bot [Nontrivial R] [IsDomain S] [Algebra.IsIntegral R S]
   rw [Algebra.finrank_eq_of_equiv_equiv (RingEquiv.quotientBot R).symm
     ((quotEquivOfEq hP).trans (RingEquiv.quotientBot S)).symm]
   rfl
+
+theorem inertiaDeg_le_inertiaDeg {T : Type*} [CommRing T] [Algebra R T] [Algebra S T]
+    [IsScalarTower R S T] [Module.Finite R T] (Q : Ideal T) [P.LiesOver p] [Q.LiesOver P]
+    [p.IsPrime] :
+    Ideal.inertiaDeg P Q ≤ Ideal.inertiaDeg p Q := by
+  have : Q.LiesOver p := Ideal.LiesOver.trans Q P p
+  rw [inertiaDeg_algebraMap, inertiaDeg_algebraMap]
+  have : IsScalarTower (R ⧸ p) (S ⧸ P) (T ⧸ Q) := IsScalarTower.of_algebraMap_eq <| by
+    rintro ⟨x⟩; exact congr_arg _ (IsScalarTower.algebraMap_apply R S T x)
+  exact Module.finrank_top_le_finrank_of_isScalarTower _ _ _
 
 end DecEq
 
@@ -1002,7 +1035,7 @@ variable [Algebra R S] [Algebra S T] [Algebra R T] [IsScalarTower R S T]
 
 /-- Let `T / S / R` be a tower of algebras, `p, P, Q` be ideals in `R, S, T` respectively,
   and `P` and `Q` are prime. If `P = Q ∩ S`, then `e (Q | p) = e (P | p) * e (Q | P)`. -/
-theorem ramificationIdx_algebra_tower [IsDedekindDomain S] [IsDedekindDomain T]
+theorem ramificationIdx_algebra_tower₀ [IsDedekindDomain S] [IsDedekindDomain T]
     {p : Ideal R} {P : Ideal S} {Q : Ideal T} [hpm : P.IsPrime] [hqm : Q.IsPrime]
     (hg0 : map (algebraMap S T) P ≠ ⊥)
     (hfg : map (algebraMap R T) p ≠ ⊥) (hg : map (algebraMap S T) P ≤ Q) :
@@ -1010,6 +1043,21 @@ theorem ramificationIdx_algebra_tower [IsDedekindDomain S] [IsDedekindDomain T]
     ramificationIdx (algebraMap R S) p P * ramificationIdx (algebraMap S T) P Q := by
   rw [IsScalarTower.algebraMap_eq R S T] at hfg ⊢
   exact ramificationIdx_tower hg0 hfg hg
+
+@[deprecated (since := "2026-02-18")] alias ramificationIdx_algebra_tower :=
+  ramificationIdx_algebra_tower₀
+
+theorem ramificationIdx_algebra_tower' {R : Type*} [CommRing R] [IsDomain R] [Algebra R S]
+    [Algebra R T] [Module.IsTorsionFree R S] [Module.IsTorsionFree S T] [Module.IsTorsionFree R T]
+    [IsDedekindDomain S] [IsDedekindDomain T] [IsScalarTower R S T] (p : Ideal R) (P : Ideal S)
+    (Q : Ideal T) [P.IsPrime] [Q.IsPrime] [Q.LiesOver P] [P.LiesOver p] :
+    ramificationIdx (algebraMap R T) p Q =
+      ramificationIdx (algebraMap R S) p P * ramificationIdx (algebraMap S T) P Q := by
+  by_cases hp : p = ⊥
+  · rw [hp, ramificationIdx_bot, ramificationIdx_bot, zero_mul]
+  have hP : P ≠ ⊥ := ne_bot_of_liesOver_of_ne_bot hp _
+  exact ramificationIdx_algebra_tower (map_ne_bot_of_ne_bot hP) (map_ne_bot_of_ne_bot hp)
+    <| map_le_iff_le_comap.mpr <| le_of_eq <| over_def Q P
 
 /-- Let `T / S / R` be a tower of algebras, `p, P, I` be ideals in `R, S, T`, respectively,
   and `p` and `P` are maximal. If `p = P ∩ S` and `P = I ∩ S`,
