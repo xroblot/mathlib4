@@ -975,7 +975,7 @@ theorem sum_ramification_inertia {p : Ideal R} [p.IsMaximal] (hp0 : p ≠ ⊥) :
       algebraMap_injective_of_field_isFractionRing R S K L, le_bot_iff]
   · exact finrank_quotient_map p K L
 
-theorem inertiaDeg_le_finrank [NoZeroSMulDivisors R S] {p : Ideal R} [p.IsMaximal]
+theorem inertiaDeg_le_finrank [Module.IsTorsionFree R S] {p : Ideal R} [p.IsMaximal]
     (P : Ideal S) [hP₁ : P.IsPrime] [hP₂ : P.LiesOver p] (hp0 : p ≠ ⊥) :
     p.inertiaDeg P ≤ Module.finrank K L := by
   classical
@@ -984,7 +984,7 @@ theorem inertiaDeg_le_finrank [NoZeroSMulDivisors R S] {p : Ideal R} [p.IsMaxima
   refine le_trans (Nat.le_mul_of_pos_left _ ?_) (Nat.le_add_right _ _)
   exact Nat.pos_iff_ne_zero.mpr <| IsDedekindDomain.ramificationIdx_ne_zero_of_liesOver _ hp0
 
-theorem ramificationIdx_le_finrank [NoZeroSMulDivisors R S] {p : Ideal R} [p.IsMaximal]
+theorem ramificationIdx_le_finrank [Module.IsTorsionFree R S] {p : Ideal R} [p.IsMaximal]
     (P : Ideal S) [hP₁ : P.IsPrime] [hP₂ : P.LiesOver p] :
     p.ramificationIdx (algebraMap R S) P ≤ Module.finrank K L := by
   classical
@@ -1056,10 +1056,10 @@ theorem ramificationIdx_algebra_tower [IsDedekindDomain S] [IsDedekindDomain T]
   rw [IsScalarTower.algebraMap_eq R S T] at hfg ⊢
   exact ramificationIdx_tower hg0 hfg hg
 
-theorem ramificationIdx_algebra_tower' {R : Type*} [CommRing R] [IsDomain R] [Algebra R S]
-    [Algebra R T] [Module.IsTorsionFree R S] [Module.IsTorsionFree S T] [Module.IsTorsionFree R T]
-    [IsDedekindDomain S] [IsDedekindDomain T] [IsScalarTower R S T] (p : Ideal R) (P : Ideal S)
-    (Q : Ideal T) [P.IsPrime] [Q.IsPrime] [Q.LiesOver P] [P.LiesOver p] :
+theorem ramificationIdx_algebra_tower' [IsDedekindDomain S] [IsDedekindDomain T] [IsDomain R]
+    [Module.IsTorsionFree R S] [Module.IsTorsionFree S T] [Module.IsTorsionFree R T]
+    (p : Ideal R) (P : Ideal S) (Q : Ideal T) [P.IsPrime] [Q.IsPrime] [Q.LiesOver P]
+    [P.LiesOver p] :
     ramificationIdx (algebraMap R T) p Q =
       ramificationIdx (algebraMap R S) p P * ramificationIdx (algebraMap S T) P Q := by
   by_cases hp : p = ⊥
@@ -1084,6 +1084,85 @@ theorem inertiaDeg_algebra_tower (p : Ideal R) (P : Ideal S) (I : Ideal T) [p.Is
   letI : IsScalarTower (R ⧸ p) (S ⧸ P) (T ⧸ I) := IsScalarTower.of_algebraMap_eq <| by
     rintro ⟨x⟩; exact congr_arg _ (IsScalarTower.algebraMap_apply R S T x)
   exact (finrank_mul_finrank (R ⧸ p) (S ⧸ P) (T ⧸ I)).symm
+
+theorem ramificationIdx_eq_finrank_of_finrank_le [IsDedekindDomain R] [IsDedekindDomain S]
+    [IsDedekindDomain T] [Module.IsTorsionFree R T] [Module.IsTorsionFree R S]
+    [Module.IsTorsionFree S T] [Module.Finite R S] [Module.Finite S T] (K F L : Type*) [Field K]
+    [Field F] [Field L]
+    [Algebra R K] [IsFractionRing R K] [Algebra T L] [IsFractionRing T L] [Algebra S F]
+    [IsFractionRing S F] [Algebra S L] [Algebra K L] [Algebra K F] [Algebra F L]
+    [FiniteDimensional K L] [Algebra R F] [IsScalarTower R K F] [IsScalarTower R S F]
+    [IsScalarTower S T L] [IsScalarTower S F L] [IsScalarTower K F L] {p : Ideal R} [p.IsMaximal]
+    {Q : Ideal T} [Q.IsPrime] (P : Ideal S) [P.IsMaximal] [Q.LiesOver P] [P.LiesOver p]
+    (h : Module.finrank K L ≤ ramificationIdx (algebraMap R T) p Q) :
+    ramificationIdx (algebraMap R S) p P = Module.finrank K F := by
+  have : FiniteDimensional F L := FiniteDimensional.right K F L
+  by_cases hp : p = ⊥
+  · rw [hp, ramificationIdx_bot] at h
+    have : 0 < Module.finrank K L := Module.finrank_pos
+    grind
+  suffices Module.finrank K F ≤ ramificationIdx (algebraMap R S) p P by
+    exact le_antisymm (ramificationIdx_le_finrank _ _ _ _) this
+  contrapose! h
+  rw [ramificationIdx_algebra_tower' p P Q, ← Module.finrank_mul_finrank K F L]
+  exact Nat.mul_lt_mul_of_lt_of_le h (ramificationIdx_le_finrank _ _ _ _) Module.finrank_pos
+
+theorem ramificationIdx_eq_finrank_of_finrank_le' [IsDedekindDomain R] [IsDedekindDomain S]
+    [IsDedekindDomain T] [Module.IsTorsionFree R T] [Module.IsTorsionFree R S]
+    [Module.IsTorsionFree S T] [Module.Finite R S] [Module.Finite S T] (K F L : Type*) [Field K]
+    [Field F] [Field L] [Algebra R K] [IsFractionRing R K] [Algebra T L] [IsFractionRing T L]
+    [Algebra S F] [IsFractionRing S F] [Algebra S L] [Algebra K L] [Algebra K F] [Algebra F L]
+    [FiniteDimensional K L] [Algebra R F] [IsScalarTower R K F] [IsScalarTower R S F]
+    [IsScalarTower S T L] [IsScalarTower S F L] [IsScalarTower K F L] {p : Ideal R} [p.IsMaximal]
+    {Q : Ideal T} [Q.IsPrime] (P : Ideal S) [P.IsMaximal] [Q.LiesOver P] [P.LiesOver p]
+    (h : Module.finrank K L ≤ ramificationIdx (algebraMap R T) p Q) :
+    ramificationIdx (algebraMap S T) P Q = Module.finrank F L := by
+  have : FiniteDimensional K F := FiniteDimensional.left K F L
+  by_cases hp : p = ⊥
+  · rw [hp, ramificationIdx_bot] at h
+    have : 0 < Module.finrank K L := Module.finrank_pos
+    grind
+  suffices Module.finrank F L ≤ ramificationIdx (algebraMap S T) P Q by
+    exact le_antisymm (ramificationIdx_le_finrank _ _ _ _) this
+  contrapose! h
+  rw [ramificationIdx_algebra_tower' p P Q, ← Module.finrank_mul_finrank K F L]
+  exact Nat.mul_lt_mul_of_le_of_lt (ramificationIdx_le_finrank _ _ _ _) h  Module.finrank_pos
+
+theorem inertiaIdx_eq_finrank_of_finrank_le [IsDedekindDomain R] [IsDedekindDomain S]
+    [IsDedekindDomain T] [Module.IsTorsionFree R T] [Module.IsTorsionFree R S]
+    [Module.IsTorsionFree S T] [Module.Finite R S] [Module.Finite S T] (K F L : Type*) [Field K]
+    [Field F] [Field L] [Algebra R K] [IsFractionRing R K] [Algebra T L] [IsFractionRing T L]
+    [Algebra S F] [IsFractionRing S F] [Algebra S L] [Algebra K L] [Algebra K F] [Algebra F L]
+    [FiniteDimensional K L] [Algebra R F] [IsScalarTower R K F] [IsScalarTower R S F]
+    [IsScalarTower S T L] [IsScalarTower S F L] [IsScalarTower K F L] {p : Ideal R} [p.IsMaximal]
+    {Q : Ideal T} [Q.IsPrime] (P : Ideal S) [P.IsMaximal] [Q.LiesOver P] [P.LiesOver p]
+    (h : Module.finrank K L ≤ inertiaDeg p Q) (hp : p ≠ ⊥) :
+    inertiaDeg p P = Module.finrank K F := by
+  have : FiniteDimensional F L := FiniteDimensional.right K F L
+  suffices Module.finrank K F ≤ inertiaDeg p P by
+    exact le_antisymm (inertiaDeg_le_finrank _ _ _ _ hp) this
+  contrapose! h
+  rw [inertiaDeg_algebra_tower p P Q, ← Module.finrank_mul_finrank K F L]
+  refine Nat.mul_lt_mul_of_lt_of_le h (inertiaDeg_le_finrank _ _ _ _ ?_) Module.finrank_pos
+  exact ne_bot_of_liesOver_of_ne_bot hp P
+
+theorem inertiaIdx_eq_finrank_of_finrank_le' [IsDedekindDomain R] [IsDedekindDomain S]
+    [IsDedekindDomain T] [Module.IsTorsionFree R T] [Module.IsTorsionFree R S]
+    [Module.IsTorsionFree S T] [Module.Finite R S] [Module.Finite S T] (K F L : Type*) [Field K]
+    [Field F] [Field L] [Algebra R K] [IsFractionRing R K] [Algebra T L] [IsFractionRing T L]
+    [Algebra S F] [IsFractionRing S F] [Algebra S L] [Algebra K L] [Algebra K F] [Algebra F L]
+    [FiniteDimensional K L] [Algebra R F] [IsScalarTower R K F] [IsScalarTower R S F]
+    [IsScalarTower S T L] [IsScalarTower S F L] [IsScalarTower K F L] {p : Ideal R} [p.IsMaximal]
+    {Q : Ideal T} [Q.IsPrime] (P : Ideal S) [P.IsMaximal] [Q.LiesOver P] [P.LiesOver p]
+    (h : Module.finrank K L ≤ inertiaDeg p Q) (hp : p ≠ ⊥) :
+    inertiaDeg P Q = Module.finrank F L := by
+  have : FiniteDimensional K F := FiniteDimensional.left K F L
+  have hP : P ≠ ⊥ := ne_bot_of_liesOver_of_ne_bot hp P
+  suffices Module.finrank F L ≤ inertiaDeg P Q by
+    exact le_antisymm (inertiaDeg_le_finrank _ _ _ _ hP) this
+  contrapose! h
+  rw [inertiaDeg_algebra_tower p P Q, ← Module.finrank_mul_finrank K F L]
+  exact Nat.mul_lt_mul_of_le_of_lt (inertiaDeg_le_finrank _ _ _ _ hp) h Module.finrank_pos
 
 end tower
 
