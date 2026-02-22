@@ -197,6 +197,28 @@ def AlgHom.extendScalars : @AlgHom B C D _ _ _ _ (f.restrictDomain B).toRingHom.
   commutes' := fun _ ↦ rfl
   __ := (f.restrictDomain B).toRingHom.toAlgebra
 
+@[simp]
+theorem AlgHom.extendScalars_apply (x : C) :
+    f.extendScalars B x = f x := rfl
+
+/-- Extend the scalars of an `AlgEquiv`. -/
+def AlgEquiv.extendScalars (e : C ≃ₐ[A] D) :
+     @AlgEquiv B C D _ _ _ _ (e.toAlgHom.restrictDomain B).toRingHom.toAlgebra :=
+  letI : Algebra B D := (e.toAlgHom.restrictDomain B).toRingHom.toAlgebra
+  { __ := e.toAlgHom.extendScalars B
+    invFun := e.symm
+    left_inv _ := by simp
+    right_inv _ := by simp }
+
+@[simp]
+theorem AlgEquiv.extendScalars_apply (e : C ≃ₐ[A] D) (x : C) :
+    e.extendScalars B x = e x := rfl
+
+@[simp]
+theorem AlgEquiv.extendScalars_symm_apply (e : C ≃ₐ[A] D) (x : D) :
+    letI : Algebra B D := (e.toAlgHom.restrictDomain B).toRingHom.toAlgebra
+    (e.extendScalars B).symm x = e.symm x := rfl
+
 variable {B}
 
 /-- `AlgHom`s from the top of a tower are equivalent to a pair of `AlgHom`s. -/

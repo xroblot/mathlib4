@@ -9,6 +9,9 @@ public import Mathlib.FieldTheory.Galois.IsGaloisGroup
 public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.FieldTheory.Finite.GaloisField
 public import Mathlib.LinearAlgebra.FreeModule.IdealQuotient
+public import Mathlib.RingTheory.NormalClosure
+
+public import Mathlib.MWE
 
 /-!
 
@@ -522,12 +525,12 @@ theorem isInertiaField_le_iff [P.IsPrime] (hp : p ≠ ⊥) :
       simp [IsScalarTower.algebraMap_apply 𝓞E E L, algebraMap_galRestrict'_apply,
         IsScalarTower.algebraMap_apply 𝓞F F L]
     have : IsScalarTower 𝓞E E F := by
-        refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
-        apply FaithfulSMul.algebraMap_injective F L
-        rw [← IsScalarTower.algebraMap_apply E F L, IsScalarTower.algebraMap_apply 𝓞E 𝓞F F,
-          ← IsScalarTower.algebraMap_apply 𝓞F F L, IsScalarTower.algebraMap_apply 𝓞F B L,
-          ← IsScalarTower.algebraMap_apply 𝓞E 𝓞F B, ← IsScalarTower.algebraMap_apply,
-          ← IsScalarTower.algebraMap_apply] -- That look's fishy
+      refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+      apply FaithfulSMul.algebraMap_injective F L
+      rw [← IsScalarTower.algebraMap_apply E F L, IsScalarTower.algebraMap_apply 𝓞E 𝓞F F,
+        ← IsScalarTower.algebraMap_apply 𝓞F F L, IsScalarTower.algebraMap_apply 𝓞F B L,
+        ← IsScalarTower.algebraMap_apply 𝓞E 𝓞F B, ← IsScalarTower.algebraMap_apply,
+        ← IsScalarTower.algebraMap_apply] -- That look's fishy
     have : Module.Finite 𝓞E 𝓞F := Module.Finite.left 𝓞E 𝓞F B
     have : Module.IsTorsionFree 𝓞E 𝓞F := Module.IsTorsionFree.of_faithfulSMul _ _ B
     let 𝓟E := under 𝓞E 𝓟F
@@ -568,7 +571,7 @@ theorem le_isInertiaField_iff
   refine ⟨?_, ?_⟩
   · intro h
     let : Algebra 𝓞F 𝓞E := (galRestrict' A 𝓞F 𝓞E (inclusion h)).toRingHom.toAlgebra
-    have :  IsScalarTower 𝓞F 𝓞E B := by
+    have : IsScalarTower 𝓞F 𝓞E B := by
       refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
       apply FaithfulSMul.algebraMap_injective B L
       rw [RingHom.algebraMap_toAlgebra, ← IsScalarTower.algebraMap_apply,
@@ -606,6 +609,505 @@ end IntermediateField
 
 section applications
 
+theorem Ideal.ramificationIdx_sup_eq_one_of_isGalois (K L : Type*) [Field K] [Field L] [Algebra K L]
+    [IsGalois K L] [FiniteDimensional K L]
+    (F₁ F₂ : IntermediateField K L) {A B₁ B₂ B C : Type*} [CommRing A] [CommRing B₁]
+    [CommRing B₂] [CommRing B] [CommRing C] [Ring.HasFiniteQuotients A] [IsDedekindDomain A]
+    [Ring.HasFiniteQuotients C] [IsDedekindDomain C]
+    [Algebra A K] [IsFractionRing A K]
+    [Algebra C L] [IsFractionRing C L]
+    [Algebra B₁ F₁] [IsFractionRing B₁ F₁] [Ring.HasFiniteQuotients B₁] [IsDedekindDomain B₁]
+    [Algebra B₂ F₂] [IsFractionRing B₂ F₂] [Ring.HasFiniteQuotients B₂] [IsDedekindDomain B₂]
+    [Algebra B ↥(F₁ ⊔ F₂)] [IsFractionRing B ↥(F₁ ⊔ F₂)] [Ring.HasFiniteQuotients B]
+    [IsDedekindDomain B]
+    [MulSemiringAction Gal(L/K) C] [SMulDistribClass Gal(L/K) C L]
+    [Algebra A B₁] [Algebra A B₂] [Algebra A B]
+    [Algebra A C] [Algebra B₁ C] [Algebra B₂ C] [Algebra B C]
+    [Module.Finite A C] [Module.IsTorsionFree A C]
+    [Algebra A L] [IsScalarTower A K L] [IsScalarTower A C L]
+    [Algebra B₁ L] [IsScalarTower B₁ F₁ L] [IsScalarTower B₁ C L]
+    [Algebra B₂ L] [IsScalarTower B₂ F₂ L] [IsScalarTower B₂ C L]
+    [Algebra B L] [IsScalarTower B ↥(F₁ ⊔ F₂) L] [IsScalarTower B C L]
+    [Module.IsTorsionFree B₁ C] [Module.IsTorsionFree B₂ C] [Module.IsTorsionFree B C]
+    [IsIntegralClosure B₁ A F₁] [IsIntegralClosure B₂ A F₂] [IsIntegralClosure B A ↥(F₁ ⊔ F₂)]
+    [IsScalarTower A B₁ F₁] [IsScalarTower A B₂ F₂]
+    [IsScalarTower A B₁ C] [IsScalarTower A B₂ C]
+    [IsScalarTower A B ↥(F₁ ⊔ F₂)] [IsScalarTower A B C]
+    {p : Ideal A} {P₁ : Ideal B₁} {P₂ : Ideal B₂} (P : Ideal B) (Q : Ideal C)
+    [p.IsMaximal] [P₁.IsMaximal] [P₂.IsMaximal] [P.IsMaximal] [Q.IsMaximal]
+    [Q.LiesOver p] [Q.LiesOver P₁] [Q.LiesOver P₂] [Q.LiesOver P]
+    (h₁ : ramificationIdx (algebraMap A B₁) p P₁ = 1)
+    (h₂ : ramificationIdx (algebraMap A B₂) p P₂ = 1) (hp : p ≠ ⊥) :
+    ramificationIdx (algebraMap A B) p P = 1 := by
+  have : Module.Finite B₁ C := Module.Finite.right A B₁ C
+  have : Module.Finite B₂ C := Module.Finite.right A B₂ C
+  have : Module.Finite B C := Module.Finite.right A B C
+  let E : IntermediateField K L := FixedPoints.intermediateField (inertia Gal(L/K) Q)
+  let : Algebra A E := E.algebra'
+  let 𝓞E := integralClosure A E
+  have : IsDedekindDomain 𝓞E := integralClosure.isDedekindDomain A K E
+  have : IsFractionRing 𝓞E E := integralClosure.isFractionRing_of_finite_extension K E
+  let : Algebra 𝓞E L := 𝓞E.toAlgebra
+  let : Algebra 𝓞E C := (galRestrict' A 𝓞E C E.val).toRingHom.toAlgebra
+  have : Module.IsTorsionFree 𝓞E C := by
+    rw [Module.isTorsionFree_iff_faithfulSMul]
+    apply Algebra.IsAlgebraic.faithfulSMul_tower_top A
+  have : IsScalarTower A 𝓞E C := IsScalarTower.of_algHom _
+  have : IsScalarTower 𝓞E C L := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    have := algebraMap_galRestrict'_apply A 𝓞E C E.val x
+    rw [RingHom.algebraMap_toAlgebra (galRestrict' A 𝓞E C E.val).toRingHom, AlgHom.toRingHom_eq_coe,
+      RingHom.coe_coe, algebraMap_galRestrict'_apply, IsScalarTower.algebraMap_apply 𝓞E E L,
+      Subalgebra.algebraMap_apply, IntermediateField.algebraMap_apply, IntermediateField.coe_val]
+  rw [← IntermediateField.le_isInertiaField_iff _ K _ (E := E) (B := C) (𝓞E := 𝓞E) (p := p)
+    (P := Q) (F := F₁) _ _ hp] at h₁
+  rw [← IntermediateField.le_isInertiaField_iff _ K _ (E := E) (B := C) (𝓞E := 𝓞E) (p := p)
+    (P := Q) (F := F₂) _ _ hp] at h₂
+  have := sup_le h₁ h₂
+  rwa [IntermediateField.le_isInertiaField_iff _ K _ (E := E) (B := C) (𝓞E := 𝓞E) (p := p)
+    (P := Q) (𝓟F := P) (F := F₁ ⊔ F₂) _ hp] at this
+
+set_option maxHeartbeats 1000000 in
+-- set_option synthInstance.maxHeartbeats 50000 in
+open IntermediateField in
+theorem Ideal.ramificationIdx_sup_eq_one' (K L : Type*) [Field K] [Field L]
+    [PerfectField K]
+    [PerfectField L]
+    [Algebra K L]
+    [FiniteDimensional K L]
+    (F₁ F₂ : IntermediateField K L) {A B₁ B₂ B C : Type*} [CommRing A] [CommRing B] [CommRing B₁]
+    [CommRing B₂] [CommRing B] [CommRing C] [Ring.HasFiniteQuotients A] [IsDedekindDomain A]
+    [Ring.HasFiniteQuotients C] [IsDedekindDomain C]
+    [Algebra A K] [IsFractionRing A K]
+    [Algebra C L] [IsFractionRing C L]
+    [Algebra B₁ F₁] [IsFractionRing B₁ F₁] [Ring.HasFiniteQuotients B₁] [IsDedekindDomain B₁]
+    [Algebra B₂ F₂] [IsFractionRing B₂ F₂] [Ring.HasFiniteQuotients B₂] [IsDedekindDomain B₂]
+    [Algebra B ↥(F₁ ⊔ F₂)] [IsFractionRing B ↥(F₁ ⊔ F₂)] [Ring.HasFiniteQuotients B]
+    [IsDedekindDomain B]
+    [MulSemiringAction Gal(L/K) C] [SMulDistribClass Gal(L/K) C L]
+    [Algebra A B₁] [Algebra A B₂] [Algebra A B]
+    [Algebra A C] [Algebra B₁ C] [Algebra B₂ C] [Algebra B C]
+    [Module.Finite A C] [Module.IsTorsionFree A C]
+    [Algebra A L] [IsScalarTower A K L] [IsScalarTower A C L]
+    [Algebra B₁ L] [IsScalarTower B₁ F₁ L] [IsScalarTower B₁ C L]
+    [Algebra B₂ L] [IsScalarTower B₂ F₂ L] [IsScalarTower B₂ C L]
+    [Algebra B L] [IsScalarTower B ↥(F₁ ⊔ F₂) L] [IsScalarTower B C L]
+    [Module.IsTorsionFree B₁ C] [Module.IsTorsionFree B₂ C] [Module.IsTorsionFree B C]
+    [IsIntegralClosure B₁ A F₁] [IsIntegralClosure B₂ A F₂] [IsIntegralClosure B A ↥(F₁ ⊔ F₂)]
+    [IsScalarTower A B₁ F₁] [IsScalarTower A B₂ F₂]
+    [IsScalarTower A B₁ C] [IsScalarTower A B₂ C]
+    [IsScalarTower A B ↥(F₁ ⊔ F₂)] [IsScalarTower A B C]
+    [PerfectField (FractionRing A)]
+    {p : Ideal A} {P₁ : Ideal B₁} {P₂ : Ideal B₂} (P : Ideal B) (Q : Ideal C)
+    [p.IsMaximal] [P₁.IsMaximal] [P₂.IsMaximal] [P.IsMaximal] [Q.IsMaximal]
+    [Q.LiesOver p] [Q.LiesOver P₁] [Q.LiesOver P₂] [Q.LiesOver P]
+    (h₁ : ramificationIdx (algebraMap A B₁) p P₁ = 1)
+    (h₂ : ramificationIdx (algebraMap A B₂) p P₂ = 1) (hp : p ≠ ⊥) :
+    ramificationIdx (algebraMap A B) p P = 1 := by
+  let N := IntermediateField.normalClosure K L (AlgebraicClosure L)
+  let : Algebra L N := normalClosure.algebra K L (AlgebraicClosure L)
+  have : FiniteDimensional L N := Module.Finite.right K L N
+  have : Algebra.IsSeparable L N := Algebra.IsAlgebraic.isSeparable_of_perfectField
+  algebraize [(algebraMap L N).comp (algebraMap C L)]
+
+  let C₀ := integralClosure C N
+  have : Ring.HasFiniteQuotients C₀ := sorry
+  have : FaithfulSMul C N := (faithfulSMul_iff_algebraMap_injective C N).mpr <|
+      (FaithfulSMul.algebraMap_injective L N).comp (FaithfulSMul.algebraMap_injective C L)
+  have : Module.IsTorsionFree C C₀ := Subalgebra.instIsTorsionFree (integralClosure C N)
+  have : IsDedekindDomain C₀ := integralClosure.isDedekindDomain C L N
+  have : IsFractionRing C₀ N := integralClosure.isFractionRing_of_finite_extension L N
+  have : SMulCommClass Gal(N/K) C N := sorry
+
+  algebraize [(algebraMap C C₀).comp (algebraMap A C)]
+  algebraize [(algebraMap C C₀).comp (algebraMap B C)]
+  algebraize [(algebraMap C C₀).comp (algebraMap B₁ C)]
+  algebraize [(algebraMap C C₀).comp (algebraMap B₂ C)]
+
+  have : Module.Finite C C₀ := IsIntegralClosure.finite C L N _
+  have : Module.Finite A C₀ := Module.Finite.trans C C₀
+  have : Module.IsTorsionFree A C₀ := sorry
+  have : Module.IsTorsionFree B₁ C₀ := sorry
+  have : Module.IsTorsionFree B₂ C₀ := sorry
+  have : Module.IsTorsionFree B C₀ := sorry
+
+  let F := F₁ ⊔ F₂
+  let F₁' := F₁.map (Algebra.algHom K L N)
+  let F₂' := F₂.map (Algebra.algHom K L N)
+  let F' := F₁' ⊔ F₂'
+  let f₁ : F₁ ≃ₐ[K] F₁' := F₁.equivMap (Algebra.algHom K L N)
+  let f₂ : F₂ ≃ₐ[K] F₂' := F₂.equivMap (Algebra.algHom K L N)
+  let f : F ≃ₐ[K] F' := (F.equivMap (Algebra.algHom K L N)).trans <| equivOfEq <| F₁.map_sup F₂ _
+  algebraize [f₁.toRingHom]
+  algebraize [f₂.toRingHom]
+  algebraize [f.toRingHom]
+  algebraize [(algebraMap F₁ F₁').comp (algebraMap B₁ F₁)]
+  algebraize [(algebraMap F₂ F₂').comp (algebraMap B₂ F₂)]
+  algebraize [(algebraMap F F').comp (algebraMap B F)]
+
+  have : IsFractionRing B₁ F₁' := sorry
+  have : IsIntegralClosure B₁ A F₁' := sorry
+  have : IsFractionRing B₂ F₂' := sorry
+  have : IsIntegralClosure B₂ A F₂' := sorry
+  have : IsFractionRing B F' := sorry
+  have : IsIntegralClosure B A F' := sorry
+
+  algebraize [(algebraMap C N).comp (algebraMap B₁ C)]
+  algebraize [(algebraMap C N).comp (algebraMap B₂ C)]
+  algebraize [(algebraMap C N).comp (algebraMap B C)]
+
+  have : IsScalarTower A C₀ N := sorry
+  have : IsScalarTower B₁ F₁' N := sorry
+  have : IsScalarTower B₂ F₂' N := sorry
+  have : IsScalarTower B F' N := sorry
+  have : IsScalarTower A B₁ F₁' := sorry
+  have : IsScalarTower A B₂ F₂' := sorry
+  have : IsScalarTower A B F' := sorry
+  have : IsScalarTower A B₁ C₀ := sorry
+  have : IsScalarTower A B₂ C₀ := sorry
+  have : IsScalarTower A B C₀ := sorry
+
+  obtain ⟨Q₀, _, _⟩  := Ideal.exists_maximal_ideal_liesOver_of_isIntegral (S := C₀) Q
+  have : Q₀.LiesOver p := sorry
+  have : Q₀.LiesOver P₁ := sorry
+  have : Q₀.LiesOver P₂ := sorry
+  have : Q₀.LiesOver P := sorry
+
+  exact ramificationIdx_sup_eq_one_of_isGalois K N F₁' F₂' P Q₀ h₁ h₂ hp
+
+#exit
+  have : IsScalarTower A K N := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, RingHom.coe_comp, Function.comp_apply,
+      ← IsScalarTower.algebraMap_apply A K L, RingHom.algebraMap_toAlgebra, RingHom.coe_comp,
+      Function.comp_apply, ← IsScalarTower.algebraMap_apply A L, ← IsScalarTower.algebraMap_apply]
+  have : IsGalois K N :=
+    IsGalois.of_equiv_equiv (f := (FractionRing.algEquiv A K).toRingEquiv)
+      (g := RingEquiv.refl N) <|
+        RingHom.ext fun x ↦ IsFractionRing.algEquiv_commutes (FractionRing.algEquiv A K)
+          (AlgEquiv.refl (R := K) (A₁ := N)) x
+  have : FiniteDimensional K N := by
+    sorry
+  let : MulSemiringAction Gal(N/K) C₀ := sorry
+  have : SMulDistribClass Gal(N/K) C₀ N := sorry
+  let F₁' := F₁.map (Algebra.algHom K L N)
+  let F₂' := F₂.map (Algebra.algHom K L N)
+  let f₁ : F₁ ≃ₐ[K] F₁' := F₁.equivMap (Algebra.algHom K L N)
+  let f₂ : F₂ ≃ₐ[K] F₂' := F₂.equivMap (Algebra.algHom K L N)
+  let f : ↥(F₁ ⊔ F₂) ≃ₐ[K] ↥(F₁' ⊔ F₂') :=
+    ((F₁ ⊔ F₂).equivMap (Algebra.algHom K L N)).trans <| equivOfEq <| F₁.map_sup F₂ _
+  algebraize [f.toRingHom]
+  algebraize [(algebraMap ↥(F₁ ⊔ F₂) ↥(F₁' ⊔ F₂')).comp (algebraMap B ↥(F₁ ⊔ F₂))]
+--  algebraize [(algebraMap B ↥(F₁' ⊔ F₂')).comp (algebraMap A B)]
+  have : IsIntegralClosure B A ↥(F₁' ⊔ F₂') := sorry
+  have : IsFractionRing B ↥(F₁' ⊔ F₂') := .of_algEquiv B _ _ <|
+    (f.restrictScalars A).extendScalars B
+  -- algebraize [((algebraMap L N).comp (algebraMap B L))]
+  algebraize [f₁.toRingHom]
+  algebraize [(algebraMap F₁ F₁').comp (algebraMap B₁ F₁)]
+  -- algebraize [(algebraMap B₁ F₁').comp (algebraMap A B₁)]
+  have : IsFractionRing B₁ F₁' := .of_algEquiv B₁ F₁ _ <| (f₁.restrictScalars A).extendScalars B₁
+  algebraize [f₂.toRingHom]
+  algebraize [(algebraMap F₂ F₂').comp (algebraMap B₂ F₂)]
+  -- algebraize [(algebraMap B₂ F₂').comp (algebraMap A B₂)]
+  -- let :  Algebra B₁ F₁' := (f₁.toRingHom.comp (algebraMap B₁ F₁)).toAlgebra
+  have : IsFractionRing B₂ F₂' := .of_algEquiv B₂ F₂ _ <| (f₂.restrictScalars A).extendScalars B₂
+  -- Algebra B₁ C₀
+--  let : Algebra C C₀ := Ring.instAlgebraNormalClosure A C
+  algebraize [(algebraMap C C₀).comp (algebraMap B₁ C)]
+  algebraize [(algebraMap C C₀).comp (algebraMap B₂ C)]
+--   let : Algebra B₁ N := sorry
+--   have : IsScalarTower B₁ F₁' N := sorry
+--   have : IsScalarTower A B₁ F₁' := sorry
+--   have :  IsIntegralClosure B₁ A F₁' := sorry
+--   let :  Algebra B₂ F₂' := (f₂.toRingHom.comp (algebraMap B₂ F₂)).toAlgebra
+--   have : IsFractionRing B₂ F₂' := .of_algEquiv B₂ F₂ _ <| (f₂.restrictScalars A).extendScalars B₂
+--   let : Algebra B₂ N := sorry
+--   have : IsScalarTower B₂ F₂' N := sorry
+--   have : IsScalarTower A B₂ F₂' := sorry
+--   have :  IsIntegralClosure B₂ A F₂' := sorry
+
+--   let : Algebra C N := ((algebraMap L N).comp (algebraMap C L)).toAlgebra
+--   let C₀ := integralClosure C N
+--   let : Algebra C C₀ := sorry
+  have : Algebra.IsIntegral C C₀ := sorry
+--   have : Ring.HasFiniteQuotients C₀ := sorry
+--   have : IsDedekindDomain C₀ := sorry
+  have : FaithfulSMul C C₀ := sorry
+--   have : IsFractionRing C₀ N := sorry
+  obtain ⟨Q₀, _, _⟩  := Ideal.exists_maximal_ideal_liesOver_of_isIntegral (S := C₀) Q
+  have : IsScalarTower F₁ F₁' N := IsScalarTower.of_algebraMap_eq' rfl
+  have : IsScalarTower B₁ L (FractionRing C) := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, AlgEquiv.toRingEquiv_eq_coe, AlgEquiv.symm_toRingEquiv,
+      RingEquiv.toRingHom_eq_coe, RingHom.coe_coe, RingEquiv.eq_symm_apply, AlgEquiv.coe_ringEquiv,
+      IsScalarTower.algebraMap_apply B₁ C (FractionRing C), AlgEquiv.commutes,
+      ← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B₁ L N := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, RingHom.coe_comp, Function.comp_apply]
+    rw [← IsScalarTower.algebraMap_apply B₁]
+    rw [← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B₁ F₁ N := IsScalarTower.to₁₂₄ B₁ F₁ L N
+  have : IsScalarTower B₁ F₁' N := IsScalarTower.to₁₃₄ B₁ F₁ F₁' N
+
+  have : IsScalarTower F₂ F₂' N := IsScalarTower.of_algebraMap_eq' rfl
+  have : IsScalarTower B₂ L (FractionRing C) := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, AlgEquiv.toRingEquiv_eq_coe, AlgEquiv.symm_toRingEquiv,
+      RingEquiv.toRingHom_eq_coe, RingHom.coe_coe, RingEquiv.eq_symm_apply, AlgEquiv.coe_ringEquiv,
+      IsScalarTower.algebraMap_apply B₂ C (FractionRing C), AlgEquiv.commutes,
+      ← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B₂ L N := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, RingHom.coe_comp, Function.comp_apply]
+    rw [← IsScalarTower.algebraMap_apply B₂]
+    rw [← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B₂ F₂ N := IsScalarTower.to₁₂₄ B₂ F₂ L N
+  have : IsScalarTower B₂ F₂' N := IsScalarTower.to₁₃₄ B₂ F₂ F₂' N
+
+  let F := F₁ ⊔ F₂
+  let F' := F₁' ⊔ F₂'
+
+  have : IsScalarTower F F' N := IsScalarTower.of_algebraMap_eq' rfl
+  have : IsScalarTower B L (FractionRing C) := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, AlgEquiv.toRingEquiv_eq_coe, AlgEquiv.symm_toRingEquiv,
+      RingEquiv.toRingHom_eq_coe, RingHom.coe_coe, RingEquiv.eq_symm_apply, AlgEquiv.coe_ringEquiv,
+      IsScalarTower.algebraMap_apply B C (FractionRing C), AlgEquiv.commutes,
+      ← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B L N := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, RingHom.coe_comp, Function.comp_apply]
+    rw [← IsScalarTower.algebraMap_apply B]
+    rw [← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B F N := IsScalarTower.to₁₂₄ B F L N
+  have : IsScalarTower B F' N := IsScalarTower.to₁₃₄ B F F' N
+--  have : IsScalarTower B ↥(F₁' ⊔ F₂') N := sorry
+--  have : IsScalarTower B C₀ N := sorry
+--   have : IsScalarTower A C N := sorry
+-- --  have : IsFractionRing C N := .of_algEquiv C _ _ <| sorry
+--   have : MulSemiringAction Gal(N/K) C₀ := sorry
+--   have :  SMulDistribClass Gal(N/K) C₀ N := sorry
+--   let : Algebra B₁ C₀ := sorry
+--   let : Algebra B₂ C₀ := sorry
+  have : Module.IsTorsionFree B₁ C₀ := sorry
+  have : Module.IsTorsionFree B₂ C₀ := sorry
+  have : Module.IsTorsionFree B C₀ := sorry
+  have : IsIntegralClosure B₁ A F₁' := sorry
+  have : IsIntegralClosure B₂ A F₂' := sorry
+  have : IsScalarTower A B₁ F₁' := sorry
+  have : IsScalarTower A B₂ F₂' := sorry
+  have : IsScalarTower A B₁ C₀ := sorry
+  have : IsScalarTower A B₂ C₀ := sorry
+  have : IsScalarTower A B C₀ := sorry
+  have : IsScalarTower A B ↥(F₁' ⊔ F₂') := sorry
+  have : Q₀.LiesOver p := sorry
+  have : Q₀.LiesOver P₁ := sorry
+  have : Q₀.LiesOver P₂ := sorry
+  have : Q₀.LiesOver P := sorry
+  have : IsScalarTower B C₀ N := OreLocalization.instIsScalarTower
+--   have : Module.Finite A C₀ := sorry
+--   have : Module.IsTorsionFree A C₀ := sorry
+--   have : IsScalarTower B₁ C₀ ↥N := sorry
+--   have : IsScalarTower B₁ C₀ ↥N := sorry
+  exact ramificationIdx_sup_eq_one_of_isGalois K N F₁' F₂' P Q₀ h₁ h₂ hp
+
+set_option maxHeartbeats 1000000 in
+set_option synthInstance.maxHeartbeats 50000 in
+open IntermediateField in
+theorem Ideal.ramificationIdx_sup_eq_one (K L : Type*) [Field K] [Field L] [PerfectField K]
+    [Algebra K L]
+    [FiniteDimensional K L]
+    (F₁ F₂ : IntermediateField K L) {A B₁ B₂ B C : Type*} [CommRing A] [CommRing B] [CommRing B₁]
+    [CommRing B₂] [CommRing B] [CommRing C] [Ring.HasFiniteQuotients A] [IsDedekindDomain A]
+    [Ring.HasFiniteQuotients C] [IsDedekindDomain C]
+    [Algebra A K] [IsFractionRing A K]
+    [Algebra C L] [IsFractionRing C L]
+    [Algebra B₁ F₁] [IsFractionRing B₁ F₁] [Ring.HasFiniteQuotients B₁] [IsDedekindDomain B₁]
+    [Algebra B₂ F₂] [IsFractionRing B₂ F₂] [Ring.HasFiniteQuotients B₂] [IsDedekindDomain B₂]
+    [Algebra B ↥(F₁ ⊔ F₂)] [IsFractionRing B ↥(F₁ ⊔ F₂)] [Ring.HasFiniteQuotients B]
+    [IsDedekindDomain B]
+    [MulSemiringAction Gal(L/K) C] [SMulDistribClass Gal(L/K) C L]
+    [Algebra A B₁] [Algebra A B₂] [Algebra A B]
+    [Algebra A C] [Algebra B₁ C] [Algebra B₂ C] [Algebra B C]
+    [Module.Finite A C] [Module.IsTorsionFree A C]
+    [Algebra A L] [IsScalarTower A K L] [IsScalarTower A C L]
+    [Algebra B₁ L] [IsScalarTower B₁ F₁ L] [IsScalarTower B₁ C L]
+    [Algebra B₂ L] [IsScalarTower B₂ F₂ L] [IsScalarTower B₂ C L]
+    [Algebra B L] [IsScalarTower B ↥(F₁ ⊔ F₂) L] [IsScalarTower B C L]
+    [Module.IsTorsionFree B₁ C] [Module.IsTorsionFree B₂ C] [Module.IsTorsionFree B C]
+    [IsIntegralClosure B₁ A F₁] [IsIntegralClosure B₂ A F₂] [IsIntegralClosure B A ↥(F₁ ⊔ F₂)]
+    [IsScalarTower A B₁ F₁] [IsScalarTower A B₂ F₂]
+    [IsScalarTower A B₁ C] [IsScalarTower A B₂ C]
+    [IsScalarTower A B ↥(F₁ ⊔ F₂)] [IsScalarTower A B C]
+    [PerfectField (FractionRing A)]
+    {p : Ideal A} {P₁ : Ideal B₁} {P₂ : Ideal B₂} (P : Ideal B) (Q : Ideal C)
+    [p.IsMaximal] [P₁.IsMaximal] [P₂.IsMaximal] [P.IsMaximal] [Q.IsMaximal]
+    [Q.LiesOver p] [Q.LiesOver P₁] [Q.LiesOver P₂] [Q.LiesOver P]
+    (h₁ : ramificationIdx (algebraMap A B₁) p P₁ = 1)
+    (h₂ : ramificationIdx (algebraMap A B₂) p P₂ = 1) (hp : p ≠ ⊥) :
+    ramificationIdx (algebraMap A B) p P = 1 := by
+  let C₀ := Ring.NormalClosure A C
+  have : Ring.HasFiniteQuotients C₀ := sorry
+  let N := FractionRing C₀
+  let : Algebra (FractionRing A) N := Ring.instAlgebraFractionRing A C₀
+  let : Algebra (FractionRing C) N := Ring.instAlgebraFractionRing C C₀
+  algebraize [(algebraMap C C₀).comp (algebraMap B C)]
+  algebraize [(FractionRing.algEquiv A K).symm.toRingHom]
+  algebraize [(FractionRing.algEquiv C L).symm.toRingHom]
+  algebraize [(algebraMap (FractionRing C) N).comp (algebraMap L (FractionRing C))]
+  algebraize [(algebraMap L N).comp (algebraMap K L)]
+  have : IsScalarTower A K (FractionRing A) := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, AlgEquiv.toRingEquiv_eq_coe, AlgEquiv.symm_toRingEquiv,
+      RingEquiv.toRingHom_eq_coe, RingHom.coe_coe, RingEquiv.eq_symm_apply, AlgEquiv.coe_ringEquiv,
+      AlgEquiv.commutes]
+  have : IsScalarTower A L (FractionRing C) := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, AlgEquiv.toRingEquiv_eq_coe, AlgEquiv.symm_toRingEquiv,
+      RingEquiv.toRingHom_eq_coe, RingHom.coe_coe, RingEquiv.eq_symm_apply, AlgEquiv.coe_ringEquiv,
+      IsScalarTower.algebraMap_apply A C (FractionRing C), AlgEquiv.commutes,
+      ← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower A K N := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, RingHom.coe_comp, Function.comp_apply,
+      ← IsScalarTower.algebraMap_apply A K L, RingHom.algebraMap_toAlgebra, RingHom.coe_comp,
+      Function.comp_apply, ← IsScalarTower.algebraMap_apply A L, ← IsScalarTower.algebraMap_apply]
+  have : IsGalois K N :=
+    IsGalois.of_equiv_equiv (f := (FractionRing.algEquiv A K).toRingEquiv)
+      (g := RingEquiv.refl N) <|
+        RingHom.ext fun x ↦ IsFractionRing.algEquiv_commutes (FractionRing.algEquiv A K)
+          (AlgEquiv.refl (R := K) (A₁ := N)) x
+  have : FiniteDimensional K N := by
+    sorry
+  let : MulSemiringAction Gal(N/K) C₀ := sorry
+  have : SMulDistribClass Gal(N/K) C₀ N := sorry
+  let F₁' := F₁.map (Algebra.algHom K L N)
+  let F₂' := F₂.map (Algebra.algHom K L N)
+  let f₁ : F₁ ≃ₐ[K] F₁' := F₁.equivMap (Algebra.algHom K L N)
+  let f₂ : F₂ ≃ₐ[K] F₂' := F₂.equivMap (Algebra.algHom K L N)
+  let f : ↥(F₁ ⊔ F₂) ≃ₐ[K] ↥(F₁' ⊔ F₂') :=
+    ((F₁ ⊔ F₂).equivMap (Algebra.algHom K L N)).trans <| equivOfEq <| F₁.map_sup F₂ _
+  algebraize [f.toRingHom]
+  algebraize [(algebraMap ↥(F₁ ⊔ F₂) ↥(F₁' ⊔ F₂')).comp (algebraMap B ↥(F₁ ⊔ F₂))]
+--  algebraize [(algebraMap B ↥(F₁' ⊔ F₂')).comp (algebraMap A B)]
+  have : IsIntegralClosure B A ↥(F₁' ⊔ F₂') := sorry
+  have : IsFractionRing B ↥(F₁' ⊔ F₂') := .of_algEquiv B _ _ <|
+    (f.restrictScalars A).extendScalars B
+  -- algebraize [((algebraMap L N).comp (algebraMap B L))]
+  algebraize [f₁.toRingHom]
+  algebraize [(algebraMap F₁ F₁').comp (algebraMap B₁ F₁)]
+  -- algebraize [(algebraMap B₁ F₁').comp (algebraMap A B₁)]
+  have : IsFractionRing B₁ F₁' := .of_algEquiv B₁ F₁ _ <| (f₁.restrictScalars A).extendScalars B₁
+  algebraize [f₂.toRingHom]
+  algebraize [(algebraMap F₂ F₂').comp (algebraMap B₂ F₂)]
+  -- algebraize [(algebraMap B₂ F₂').comp (algebraMap A B₂)]
+  -- let :  Algebra B₁ F₁' := (f₁.toRingHom.comp (algebraMap B₁ F₁)).toAlgebra
+  have : IsFractionRing B₂ F₂' := .of_algEquiv B₂ F₂ _ <| (f₂.restrictScalars A).extendScalars B₂
+  -- Algebra B₁ C₀
+--  let : Algebra C C₀ := Ring.instAlgebraNormalClosure A C
+  algebraize [(algebraMap C C₀).comp (algebraMap B₁ C)]
+  algebraize [(algebraMap C C₀).comp (algebraMap B₂ C)]
+--   let : Algebra B₁ N := sorry
+--   have : IsScalarTower B₁ F₁' N := sorry
+--   have : IsScalarTower A B₁ F₁' := sorry
+--   have :  IsIntegralClosure B₁ A F₁' := sorry
+--   let :  Algebra B₂ F₂' := (f₂.toRingHom.comp (algebraMap B₂ F₂)).toAlgebra
+--   have : IsFractionRing B₂ F₂' := .of_algEquiv B₂ F₂ _ <| (f₂.restrictScalars A).extendScalars B₂
+--   let : Algebra B₂ N := sorry
+--   have : IsScalarTower B₂ F₂' N := sorry
+--   have : IsScalarTower A B₂ F₂' := sorry
+--   have :  IsIntegralClosure B₂ A F₂' := sorry
+
+--   let : Algebra C N := ((algebraMap L N).comp (algebraMap C L)).toAlgebra
+--   let C₀ := integralClosure C N
+--   let : Algebra C C₀ := sorry
+  have : Algebra.IsIntegral C C₀ := sorry
+--   have : Ring.HasFiniteQuotients C₀ := sorry
+--   have : IsDedekindDomain C₀ := sorry
+  have : FaithfulSMul C C₀ := sorry
+--   have : IsFractionRing C₀ N := sorry
+  obtain ⟨Q₀, _, _⟩  := Ideal.exists_maximal_ideal_liesOver_of_isIntegral (S := C₀) Q
+  have : IsScalarTower F₁ F₁' N := IsScalarTower.of_algebraMap_eq' rfl
+  have : IsScalarTower B₁ L (FractionRing C) := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, AlgEquiv.toRingEquiv_eq_coe, AlgEquiv.symm_toRingEquiv,
+      RingEquiv.toRingHom_eq_coe, RingHom.coe_coe, RingEquiv.eq_symm_apply, AlgEquiv.coe_ringEquiv,
+      IsScalarTower.algebraMap_apply B₁ C (FractionRing C), AlgEquiv.commutes,
+      ← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B₁ L N := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, RingHom.coe_comp, Function.comp_apply]
+    rw [← IsScalarTower.algebraMap_apply B₁]
+    rw [← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B₁ F₁ N := IsScalarTower.to₁₂₄ B₁ F₁ L N
+  have : IsScalarTower B₁ F₁' N := IsScalarTower.to₁₃₄ B₁ F₁ F₁' N
+
+  have : IsScalarTower F₂ F₂' N := IsScalarTower.of_algebraMap_eq' rfl
+  have : IsScalarTower B₂ L (FractionRing C) := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, AlgEquiv.toRingEquiv_eq_coe, AlgEquiv.symm_toRingEquiv,
+      RingEquiv.toRingHom_eq_coe, RingHom.coe_coe, RingEquiv.eq_symm_apply, AlgEquiv.coe_ringEquiv,
+      IsScalarTower.algebraMap_apply B₂ C (FractionRing C), AlgEquiv.commutes,
+      ← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B₂ L N := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, RingHom.coe_comp, Function.comp_apply]
+    rw [← IsScalarTower.algebraMap_apply B₂]
+    rw [← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B₂ F₂ N := IsScalarTower.to₁₂₄ B₂ F₂ L N
+  have : IsScalarTower B₂ F₂' N := IsScalarTower.to₁₃₄ B₂ F₂ F₂' N
+
+  let F := F₁ ⊔ F₂
+  let F' := F₁' ⊔ F₂'
+
+  have : IsScalarTower F F' N := IsScalarTower.of_algebraMap_eq' rfl
+  have : IsScalarTower B L (FractionRing C) := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, AlgEquiv.toRingEquiv_eq_coe, AlgEquiv.symm_toRingEquiv,
+      RingEquiv.toRingHom_eq_coe, RingHom.coe_coe, RingEquiv.eq_symm_apply, AlgEquiv.coe_ringEquiv,
+      IsScalarTower.algebraMap_apply B C (FractionRing C), AlgEquiv.commutes,
+      ← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B L N := by
+    refine IsScalarTower.of_algebraMap_eq fun x ↦ ?_
+    rw [RingHom.algebraMap_toAlgebra, RingHom.coe_comp, Function.comp_apply]
+    rw [← IsScalarTower.algebraMap_apply B]
+    rw [← IsScalarTower.algebraMap_apply]
+  have : IsScalarTower B F N := IsScalarTower.to₁₂₄ B F L N
+  have : IsScalarTower B F' N := IsScalarTower.to₁₃₄ B F F' N
+--  have : IsScalarTower B ↥(F₁' ⊔ F₂') N := sorry
+--  have : IsScalarTower B C₀ N := sorry
+--   have : IsScalarTower A C N := sorry
+-- --  have : IsFractionRing C N := .of_algEquiv C _ _ <| sorry
+--   have : MulSemiringAction Gal(N/K) C₀ := sorry
+--   have :  SMulDistribClass Gal(N/K) C₀ N := sorry
+--   let : Algebra B₁ C₀ := sorry
+--   let : Algebra B₂ C₀ := sorry
+  have : Module.IsTorsionFree B₁ C₀ := sorry
+  have : Module.IsTorsionFree B₂ C₀ := sorry
+  have : Module.IsTorsionFree B C₀ := sorry
+  have : IsIntegralClosure B₁ A F₁' := sorry
+  have : IsIntegralClosure B₂ A F₂' := sorry
+  have : IsScalarTower A B₁ F₁' := sorry
+  have : IsScalarTower A B₂ F₂' := sorry
+  have : IsScalarTower A B₁ C₀ := sorry
+  have : IsScalarTower A B₂ C₀ := sorry
+  have : IsScalarTower A B C₀ := sorry
+  have : IsScalarTower A B ↥(F₁' ⊔ F₂') := sorry
+  have : Q₀.LiesOver p := sorry
+  have : Q₀.LiesOver P₁ := sorry
+  have : Q₀.LiesOver P₂ := sorry
+  have : Q₀.LiesOver P := sorry
+  have : IsScalarTower B C₀ N := OreLocalization.instIsScalarTower
+--   have : Module.Finite A C₀ := sorry
+--   have : Module.IsTorsionFree A C₀ := sorry
+--   have : IsScalarTower B₁ C₀ ↥N := sorry
+--   have : IsScalarTower B₁ C₀ ↥N := sorry
+  exact ramificationIdx_sup_eq_one_of_isGalois K N F₁' F₂' P Q₀ h₁ h₂ hp
+
+
+
 open NumberField
 
 example {K : Type*} [Field K] [NumberField K] [IsGalois ℚ K] (F₁ F₂ : IntermediateField ℚ K)
@@ -615,6 +1117,10 @@ example {K : Type*} [Field K] [NumberField K] [IsGalois ℚ K] (F₁ F₂ : Inte
     (h₁ : ramificationIdx (algebraMap ℤ (𝓞 F₁)) p P₁ = 1)
     (h₂ : ramificationIdx (algebraMap ℤ (𝓞 F₂)) p P₂ = 1) (hp : p ≠ ⊥) :
     ramificationIdx (algebraMap ℤ (𝓞 ↥(F₁ ⊔ F₂))) p P = 1 := by
+  exact Ideal.ramificationIdx_sup_eq_one ℚ K F₁ F₂ P Q h₁ h₂ hp
+
+
+#exit
   let E : IntermediateField ℚ K := FixedPoints.intermediateField (inertia Gal(K/ℚ) Q)
   rw [← IntermediateField.le_isInertiaField_iff _ ℚ _ (E := E) (B := 𝓞 K) (𝓞E := 𝓞 E) (p := p)
     (P := Q) (F := F₁) _ _ hp] at h₁
