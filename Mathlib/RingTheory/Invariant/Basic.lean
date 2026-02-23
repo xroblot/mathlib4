@@ -56,7 +56,7 @@ noncomputable def IsIntegralClosure.MulSemiringAction [Algebra.IsAlgebraic K L] 
 
 instance [Algebra.IsAlgebraic K L] : let := IsIntegralClosure.MulSemiringAction A K L B
     SMulDistribClass Gal(L/K) B L :=
-  let := IsIntegralClosure.MulSemiringAction A K L B
+  letI := IsIntegralClosure.MulSemiringAction A K L B
   ⟨fun g b l ↦ by
     simp only [Algebra.smul_def, smul_mul', mul_eq_mul_right_iff]
     exact Or.inl (algebraMap_galRestrictHom_apply A K L B g b).symm⟩
