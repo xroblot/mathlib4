@@ -11,6 +11,8 @@ public import Mathlib.FieldTheory.Finite.GaloisField
 public import Mathlib.LinearAlgebra.FreeModule.IdealQuotient
 public import Mathlib.RingTheory.NormalClosure
 public import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients
+public import Mathlib.NumberTheory.NumberField.Discriminant.Different
+public import Mathlib.FieldTheory.IntermediateField.Adjoin.Defs
 
 public import Mathlib.MWE
 
@@ -668,7 +670,8 @@ theorem Ideal.ramificationIdx_sup_eq_one_of_isGalois (K L : Type*) [Field K] [Fi
   rwa [IntermediateField.le_isInertiaField_iff _ K _ (E := E) (B := C) (𝓞E := 𝓞E) (p := p)
     (P := Q) (𝓟F := P) (F := F₁ ⊔ F₂) _ hp] at this
 
-set_option maxHeartbeats 600000 in
+set_option maxHeartbeats 1000000 in
+set_option synthInstance.maxHeartbeats 50000 in
 open IntermediateField in
 theorem Ideal.ramificationIdx_sup_eq_one (K L : Type*) [Field K] [Field L]
     [PerfectField K]
@@ -696,7 +699,7 @@ theorem Ideal.ramificationIdx_sup_eq_one (K L : Type*) [Field K] [Field L]
     [IsScalarTower A B₁ F₁] [IsScalarTower A B₂ F₂]
     [IsScalarTower A B₁ C] [IsScalarTower A B₂ C]
     [IsScalarTower A B ↥(F₁ ⊔ F₂)] [IsScalarTower A B C]
-    {p : Ideal A} {P₁ : Ideal B₁} {P₂ : Ideal B₂} (P : Ideal B) (Q : Ideal C)
+    (p : Ideal A) (P₁ : Ideal B₁) (P₂ : Ideal B₂) (P : Ideal B) (Q : Ideal C)
     [p.IsMaximal] [P₁.IsMaximal] [P₂.IsMaximal] [P.IsMaximal] [Q.IsMaximal]
     [Q.LiesOver p] [Q.LiesOver P₁] [Q.LiesOver P₂] [Q.LiesOver P]
     (h₁ : ramificationIdx (algebraMap A B₁) p P₁ = 1)
@@ -850,8 +853,8 @@ theorem Ideal.ramificationIdx_inertiaDeg_sup_eq_one_of_isGalois (K L : Type*) [F
   rwa [IntermediateField.le_isDecompositionField_iff _ K _ (D := D) (B := C) (𝓞D := 𝓞D) (p := p)
     (P := Q) (𝓟F := P) (F := F₁ ⊔ F₂) _ hp] at this
 
-set_option maxHeartbeats 600000 in
-open IntermediateField in
+set_option maxHeartbeats 1000000 in
+set_option synthInstance.maxHeartbeats 50000 in
 theorem Ideal.ramificationIdx_inertiaDeg_sup_eq_one (K L : Type*) [Field K] [Field L]
     [PerfectField K]
     [PerfectField L]
@@ -878,7 +881,7 @@ theorem Ideal.ramificationIdx_inertiaDeg_sup_eq_one (K L : Type*) [Field K] [Fie
     [IsScalarTower A B₁ F₁] [IsScalarTower A B₂ F₂]
     [IsScalarTower A B₁ C] [IsScalarTower A B₂ C]
     [IsScalarTower A B ↥(F₁ ⊔ F₂)] [IsScalarTower A B C]
-    {p : Ideal A} {P₁ : Ideal B₁} {P₂ : Ideal B₂} (P : Ideal B) (Q : Ideal C)
+    (p : Ideal A) (P₁ : Ideal B₁) (P₂ : Ideal B₂) (P : Ideal B) (Q : Ideal C)
     [p.IsMaximal] [P₁.IsMaximal] [P₂.IsMaximal] [P.IsMaximal] [Q.IsMaximal]
     [Q.LiesOver p] [Q.LiesOver P₁] [Q.LiesOver P₂] [Q.LiesOver P]
     (h₁ : ramificationIdx (algebraMap A B₁) p P₁ = 1 ∧ inertiaDeg p P₁ = 1)
@@ -921,7 +924,8 @@ theorem Ideal.ramificationIdx_inertiaDeg_sup_eq_one (K L : Type*) [Field K] [Fie
   let f₂ : F₂ ≃ₐ[K] F₂' := F₂.equivMap (Algebra.algHom K L N)
   algebraize [f₂.toRingHom]
   let F := F₁ ⊔ F₂
-  let f : F ≃ₐ[K] F' := (F.equivMap (Algebra.algHom K L N)).trans <| equivOfEq <| F₁.map_sup F₂ _
+  let f : F ≃ₐ[K] F' := (F.equivMap (Algebra.algHom K L N)).trans <|
+    IntermediateField.equivOfEq <| F₁.map_sup F₂ _
   algebraize [f.toRingHom]
   algebraize [(algebraMap F₁ F₁').comp (algebraMap B₁ F₁)]
   algebraize [(algebraMap F₂ F₂').comp (algebraMap B₂ F₂)]
@@ -972,6 +976,11 @@ theorem Ideal.ramificationIdx_inertiaDeg_sup_eq_one (K L : Type*) [Field K] [Fie
   have : Q₀.LiesOver P := LiesOver.trans Q₀ Q P
   exact ramificationIdx_inertiaDeg_sup_eq_one_of_isGalois K N F₁' F₂' P Q₀ h₁ h₂ hp
 
+
+
+
+
+
 open NumberField
 
 example {K : Type*} [Field K] [NumberField K] (F₁ F₂ : IntermediateField ℚ K)
@@ -981,8 +990,122 @@ example {K : Type*} [Field K] [NumberField K] (F₁ F₂ : IntermediateField ℚ
     (h₁ : ramificationIdx (algebraMap ℤ (𝓞 F₁)) p P₁ = 1)
     (h₂ : ramificationIdx (algebraMap ℤ (𝓞 F₂)) p P₂ = 1) (hp : p ≠ ⊥) :
     ramificationIdx (algebraMap ℤ (𝓞 ↥(F₁ ⊔ F₂))) p P = 1 := by
-  exact Ideal.ramificationIdx_sup_eq_one ℚ K F₁ F₂ P Q h₁ h₂ hp
+  exact Ideal.ramificationIdx_sup_eq_one ℚ K F₁ F₂ _  _ _ P Q h₁ h₂ hp
+
+-- instance {ι K : Type*} [Field K] [CharZero K] (s : Finset ι) (F : ι → IntermediateField ℚ K)
+--     [∀ i, NumberField (F i)] :
+--     NumberField (s.sup F : IntermediateField ℚ K) where
+--   to_finiteDimensional := by
+--     classical
+--     induction s using Finset.induction with
+--     | empty =>
+--         rw [Finset.sup_empty]
+--         infer_instance
+--     | insert i s hi h =>
+--         rw [Finset.sup_insert]
+--         exact IntermediateField.finiteDimensional_sup (F i) (s.sup F)
+
+theorem NumberField.not_dvd_discr_finsetSup_of_not_dvd_discr (ι K : Type*) [Field K] [NumberField K]
+    (F : ι → IntermediateField ℚ K) [∀ i, NumberField (F i)] {p : ℕ} (hp : p.Prime) (s : Finset ι)
+    (hF : ∀ i ∈ s, ¬ (p : ℤ) ∣ discr (F i)) :
+    ¬ (p : ℤ) ∣ discr (s.sup F : IntermediateField ℚ K) := by
+  classical
+  induction s using Finset.induction with
+  | empty =>
+      rw [Finset.sup_empty, discr_eq_discr_of_algEquiv _ (IntermediateField.botEquiv ℚ K),
+        Rat.numberField_discr, Int.natCast_dvd_ofNat]
+      exact hp.not_dvd_one
+  | insert i s hi h =>
+      let F₁ := F i
+      let F₂ : IntermediateField ℚ K := s.sup F
+      let : Algebra F₁ ↥(F₁ ⊔ F₂) := (IntermediateField.inclusion le_sup_left).toAlgebra
+      let : Algebra F₂ ↥(F₁ ⊔ F₂) := (IntermediateField.inclusion le_sup_right).toAlgebra
+      have : IsScalarTower F₁ ↥(F₁ ⊔ F₂) K := IsScalarTower.of_algebraMap_eq' rfl
+      have : IsScalarTower F₂ ↥(F₁ ⊔ F₂) K := IsScalarTower.of_algebraMap_eq' rfl
+      rw [Finset.sup_insert,
+        not_dvd_discr_iff_forall_liesOver _ (𝓞 ↥(F₁ ⊔ F₂)) (Nat.prime_iff_prime_int.mp hp)]
+      intro P hP₁ hP₂
+      have hP : P ≠ ⊥ := IsMaximal.ne_bot_of_isIntegral_int P
+      refine (Algebra.isUnramifiedAt_iff_of_isDedekindDomain hP).mpr ?_
+      let p := under ℤ P
+      have hp' : p ≠ ⊥ := under_ne_bot ℤ hP
+      let P₁ := under (𝓞 F₁) P
+      let P₂ := under (𝓞 F₂) P
+      obtain ⟨Q, _, _⟩ := Ideal.exists_maximal_ideal_liesOver_of_isIntegral (S := 𝓞 K) P
+      have : Q.LiesOver p := LiesOver.trans Q P p
+      have : Q.LiesOver P₁ := LiesOver.trans Q P P₁
+      have : Q.LiesOver P₂ := LiesOver.trans Q P P₂
+      refine Ideal.ramificationIdx_sup_eq_one ℚ K F₁ F₂ p P₁ P₂ P Q ?_ ?_ hp'
+      · have hP₁ : P₁ ≠ ⊥ := under_ne_bot (𝓞 F₁) hP
+        rw [over_def P₁ p, ← Algebra.isUnramifiedAt_iff_of_isDedekindDomain hP₁]
+        apply (not_dvd_discr_iff_forall_liesOver _ (𝓞 F₁)
+          (Nat.prime_iff_prime_int.mp hp)).mp <| hF i (Finset.mem_insert_self i s)
+        · infer_instance
+        · infer_instance
+      · have hP₂ : P₂ ≠ ⊥ := under_ne_bot (𝓞 F₂) hP
+        rw [over_def P₂ p, ← Algebra.isUnramifiedAt_iff_of_isDedekindDomain hP₂]
+        apply (not_dvd_discr_iff_forall_liesOver _ (𝓞 F₂)
+          (Nat.prime_iff_prime_int.mp hp)).mp <| h fun _ h ↦ hF _ (Finset.mem_insert_of_mem h)
+        · infer_instance
+        · infer_instance
+
+instance {K L : Type*} [Field K] [NumberField K] [Field L] [NumberField L]
+    [Algebra K L] [Field A] [Algebra K A] :
+    NumberField (IntermediateField.normalClosure K L A) where
+  to_finiteDimensional := FiniteDimensional.trans ℚ K _
+
+open IntermediateField
+theorem NumberField.dvd_discr_iff_dvd_discr_normalClosure (K A : Type*) [Field K] [NumberField K]
+    [Field A] [NumberField A] [Algebra K A] [IsScalarTower ℚ K A] {p : ℕ} (hp : p.Prime) :
+    (p : ℤ) ∣ discr K ↔ (p : ℤ) ∣ discr (normalClosure ℚ K A) := by
+  refine ⟨?_, ?_⟩
+  · intro h
+    exact Int.dvd_trans h <| discr_dvd_discr K (normalClosure ℚ K A)
+  · intro h
+    contrapose! h
+    have := NumberField.not_dvd_discr_finsetSup_of_not_dvd_discr (K →ₐ[ℚ] A) A
+      (fun f ↦ f.fieldRange) hp (s := Finset.univ) ?_
+    · rwa [Finset.sup_univ_eq_iSup, ← normalClosure_def] at this
+    · intro f _
+      dsimp
+      let e : K ≃+* f.fieldRange := by
+        refine RingEquiv.ofBijective (f.codRestrict _ <| by simp).toRingHom ⟨?_, ?_⟩
+        · exact RingHom.injective _
+        · intro ⟨_, ⟨x, rfl⟩⟩
+          refine ⟨x, rfl⟩
+      rwa [discr_eq_discr_of_ringEquiv _ e.symm]
+
+set_option synthInstance.maxHeartbeats 200000 in
+set_option maxHeartbeats 500000 in
+theorem NumberField.linearDisjoint_of_isCoprime_discr (L : Type*) [Field L]
+    [NumberField L] (K₁ K₂ : IntermediateField ℚ L) (h : IsCoprime (discr K₁) (discr K₂)) :
+    K₁.LinearDisjoint K₂ := by
+  let M := IntermediateField.normalClosure ℚ L (AlgebraicClosure L)
+  let F₁ := K₁.map (Algebra.algHom ℚ L M)
+  let F₂ := K₂.map (Algebra.algHom ℚ L M)
+  suffices F₁.LinearDisjoint F₂ by
+    apply this.algEquiv_of_isAlgebraic _ _ (K₁.equivMap (Algebra.algHom ℚ L M)).symm
+      (K₂.equivMap (Algebra.algHom ℚ L M)).symm
+    left
+    exact isAlgebraic_tower_bot
+  let N₁ := (IntermediateField.normalClosure ℚ F₁ M).restrictScalars ℚ
+  suffices N₁.LinearDisjoint F₂ by
+    refine this.of_le_left ?_
+    rintro _ ⟨x, hx, rfl⟩
+    apply F₁.val.fieldRange_le_normalClosure
+    rw [fieldRange_val]
+    exact ⟨x, hx, rfl⟩
+  have : IsGalois ℚ N₁ := IsGalois.normalClosure ℚ F₁ M
+  apply linearDisjoint_of_isGalois_isCoprime_discr
+  rw [discr_eq_discr_of_algEquiv F₂ (K₂.equivMap (Algebra.algHom ℚ L _)).symm]
+  rw [Int.isCoprime_iff_nat_coprime] at h ⊢
+  refine Nat.coprime_of_dvd' fun p hp hp₁ hp₂ ↦ ?_
+  have : N₁ = normalClosure ℚ F₁ M := rfl
+  rw [← Int.natCast_dvd, this, ← dvd_discr_iff_dvd_discr_normalClosure _ _ hp,
+    discr_eq_discr_of_algEquiv F₁ (K₁.equivMap (Algebra.algHom ℚ L _)).symm,
+    Int.natCast_dvd] at hp₁
+  have : p ∣ (discr K₁).natAbs.gcd (discr K₂).natAbs := Nat.dvd_gcd hp₁ hp₂
+  rwa [h] at this
 
 end applications
 
-#lint

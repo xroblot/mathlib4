@@ -48,6 +48,19 @@ theorem IsIntegralClosure.of_algEquiv (e : B ≃ₐ[R] B')
 
 end
 
+noncomputable section
+
+def AlgHom.fieldRangeEquiv {K L : Type*} {L' : Type*} [Field K] [Field L] [Field L'] [Algebra K L]
+    [Algebra K L'] (f : L →ₐ[K] L') :
+    L ≃ₐ[K] f.fieldRange := by
+  refine AlgEquiv.ofBijective (f.codRestrict _ <| by simp) ⟨?_, ?_⟩
+  · dsimp
+    rw?
+    sorry
+  · sorry
+
+end
+
 #exit
 
 section

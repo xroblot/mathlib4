@@ -24,6 +24,9 @@ We prove basic properties of `IsIntegralClosure`.
 
 @[expose] public section
 
+-- Lifted from #30666
+public theorem Int.not_isField : ¬IsField ℤ := fun ⟨_, _, h⟩ ↦ have := @h 2; by grind
+
 open Module Polynomial Submodule
 
 section inv
@@ -634,6 +637,12 @@ theorem isField_of_isIntegral_of_isField (hRS : Function.Injective (algebraMap R
 theorem Algebra.IsIntegral.isField_iff_isField [IsDomain S]
     (hRS : Function.Injective (algebraMap R S)) : IsField R ↔ IsField S :=
   ⟨isField_of_isIntegral_of_isField', isField_of_isIntegral_of_isField hRS⟩
+
+-- Lifted from #30666
+theorem Ideal.IsMaximal.ne_bot_of_isIntegral_int {R : Type*} [CommRing R]
+    [CharZero R] [Algebra.IsIntegral ℤ R] (I : Ideal R) [I.IsMaximal] : I ≠ ⊥ :=
+  Ring.ne_bot_of_isMaximal_of_not_isField ‹_› fun h ↦ Int.not_isField
+    (isField_of_isIntegral_of_isField (FaithfulSMul.algebraMap_injective ℤ R) h)
 
 end Algebra
 
