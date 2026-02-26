@@ -1,5 +1,54 @@
 import Mathlib.NumberTheory.RamificationInertia.Galois
 
+section isgaloisgroup
+
+variable (G : Type*) [Group G] (A₁ A₂ B : Type*) [Semiring B] [CommSemiring A₁] [CommSemiring A₂]
+  [Algebra A₁ B] [Algebra A₂ B] [FaithfulSMul A₁ B] [FaithfulSMul A₂ B] [MulSemiringAction G B]
+  [h₁ : IsGaloisGroup G A₁ B] [h₂ : IsGaloisGroup G A₂ B]
+
+/--
+If `B/A₁` and `B/A₂` are Galois with the same Galois group, then `A₁ ≃+* A₂`.
+-/
+noncomputable def IsGaloisGroup.ringEquiv :
+    A₁ ≃+* A₂ :=
+  haveI hc₁ : ∀ x : A₁, ∃ y : A₂, algebraMap A₂ B y = algebraMap A₁ B x :=
+    fun x ↦ h₂.isInvariant.isInvariant (algebraMap A₁ B x) (fun g ↦ by rw [smul_algebraMap])
+  haveI hc₂ : ∀ x : A₂, ∃ y : A₁, algebraMap A₁ B y = algebraMap A₂ B x :=
+    fun x ↦ h₁.isInvariant.isInvariant (algebraMap A₂ B x) (fun g ↦ by rw [smul_algebraMap])
+  { toFun := fun x ↦ (hc₁ x).choose
+    invFun := fun x ↦ (hc₂ x).choose
+    map_mul' _ _ := by
+      apply FaithfulSMul.algebraMap_injective A₂ B
+      rw [(hc₁ _).choose_spec, map_mul, map_mul, (hc₁ _).choose_spec, (hc₁ _).choose_spec]
+    map_add' _ _ := by
+      apply FaithfulSMul.algebraMap_injective A₂ B
+      rw [(hc₁ _).choose_spec, map_add, map_add, (hc₁ _).choose_spec, (hc₁ _).choose_spec]
+    left_inv _ := by
+      apply FaithfulSMul.algebraMap_injective A₁ B
+      rw [(hc₂ _).choose_spec, (hc₁ _).choose_spec]
+    right_inv _ := by
+      apply FaithfulSMul.algebraMap_injective A₂ B
+      rw [(hc₁ _).choose_spec, (hc₂ _).choose_spec] }
+
+@[simp]
+theorem IsGaloisGroup.ringEquiv_map_apply (x : A₁) :
+    algebraMap A₂ B (IsGaloisGroup.ringEquiv G A₁ A₂ B x) = algebraMap A₁ B x := by
+  have hc : ∀ x : A₁, ∃ y : A₂, algebraMap A₂ B y = algebraMap A₁ B x :=
+    fun x ↦ h₂.isInvariant.isInvariant (algebraMap A₁ B x) (fun g ↦ by rw [smul_algebraMap])
+  exact (hc x).choose_spec
+
+@[simp]
+theorem IsGaloisGroup.ringEquiv_symm_map_apply (x : A₂) :
+    algebraMap A₁ B ((IsGaloisGroup.ringEquiv G A₁ A₂ B).symm x) = algebraMap A₂ B x := by
+  have hc : ∀ x : A₂, ∃ y : A₁, algebraMap A₁ B y = algebraMap A₂ B x :=
+    fun x ↦ h₁.isInvariant.isInvariant (algebraMap A₂ B x) (fun g ↦ by rw [smul_algebraMap])
+  exact (hc x).choose_spec
+
+end isgaloisgroup
+
+
+#exit
+
 section misc
 
 instance (M R S : Type*) {T : Type*} [SMul M R] [SMul M S] [SMul R S] [Monoid M]
