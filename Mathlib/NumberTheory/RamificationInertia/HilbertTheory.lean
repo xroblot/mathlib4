@@ -15,6 +15,7 @@ public import Mathlib.NumberTheory.NumberField.Discriminant.Different
 public import Mathlib.FieldTheory.IntermediateField.Adjoin.Defs
 
 public import Mathlib.MWE
+-- public import Mathlib.ExtendTop
 
 /-!
 
@@ -1108,4 +1109,3 @@ theorem NumberField.linearDisjoint_of_isCoprime_discr (L : Type*) [Field L]
   rwa [h] at this
 
 end applications
-

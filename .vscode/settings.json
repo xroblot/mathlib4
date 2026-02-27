@@ -20,5 +20,8 @@
   "files.readonlyInclude": {
     "**/.elan/**": true,
     "**/.lake/**": true
-  }
+  },
+  "claudeCode.environmentVariables": [
+    
+  ]
 }
