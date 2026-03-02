@@ -13,77 +13,106 @@ variable {K L : Type*} [Field K] [Field L] [Algebra K L] (F : IntermediateField 
   (M : Type*) [Field M] [Algebra K M] [Algebra L M] [IsScalarTower K L M]
 
 /--
-Doscs.
+Docs.
 -/
-def extendTop : IntermediateField K M := F.map (Algebra.algHom K L M)
+abbrev extendTop : IntermediateField K M := F.map (Algebra.algHom K L M)
 
-namespace ExtendTop
+/--
+Docs.
+-/
+@[simps! apply_coe]
+noncomputable def extendTopEquiv : F ≃ₐ[K] (F.extendTop M) := F.equivMap (Algebra.algHom K L M)
 
-noncomputable instance algebra : Algebra F (F.extendTop M) :=
-  (F.equivMap (Algebra.algHom K L M)).toRingHom.toAlgebra
+namespace extendTop
+
+noncomputable instance algebra : Algebra F (F.extendTop M) where
+  smul s x := by
+    have y := mem_map.mp x.prop
+    refine ⟨s • x, ?_⟩
+    refine ⟨s • y.choose, ?_, ?_⟩
+    · rw [Algebra.smul_def]
+      refine F.mul_mem ?_ y.choose_spec.1
+      simp only [algebraMap_apply, SetLike.coe_mem]
+    · rw [RingHom.coe_coe, Algebra.smul_def, map_mul, y.choose_spec.2]
+      change algebraMap L M _ * _ = _
+      rw [← IsScalarTower.algebraMap_apply F L M, Algebra.smul_def]
+  algebraMap := (algebraMap F M).codRestrict (F.extendTop M) (by
+    intro x
+    refine ⟨x, x.prop, ?_⟩
+    rw [IsScalarTower.algebraMap_apply F L M]
+    rfl)
+  commutes' _ _ := CommRing.mul_comm _ _
+  smul_def' c x := by
+    rw [Subtype.ext_iff]
+    convert_to c • (x : M) = _
+    rw [MulMemClass.coe_mul, RingHom.codRestrict_apply, ← Algebra.smul_def]
 
 instance : IsScalarTower F (F.extendTop M) M := IsScalarTower.of_algebraMap_eq' rfl
 
-instance : IsScalarTower K F (F.extendTop M) := IsScalarTower.to₁₂₃ K F (F.extendTop M) M
+variable (R S T : Type*) [CommRing R] [CommRing S] [Algebra S F]
 
-variable (R S T : Type*) [CommSemiring S] [Algebra S F]
+variable [Algebra S M] [IsScalarTower S F M]
 
--- Cannot be an instance because of possible diamond with `IntermediateField.algebra'`
-noncomputable instance algebra' : Algebra S (F.extendTop M) :=
-  ((algebraMap F (F.extendTop M)).comp (algebraMap S F)).toAlgebra
+noncomputable instance algebra' : Algebra S (F.extendTop M) where
+  smul s x := by
+    refine ⟨s • x, ?_⟩
+    rw [Algebra.smul_def]
+    refine (F.extendTop M).mul_mem ?_ x.prop
+    simp [IsScalarTower.algebraMap_apply S F M,
+      IsScalarTower.algebraMap_apply F (F.extendTop M) M]
+  algebraMap := ((algebraMap S M).codRestrict (F.extendTop M) (by
+      intro x
+      rw [Algebra.algebraMap_eq_smul_one, ← smul_one_smul F x (1 : M),
+        ← Algebra.algebraMap_eq_smul_one, IsScalarTower.algebraMap_apply F (F.extendTop M) M]
+      simp))
+  commutes' _ _ := Subtype.ext <| by simp [Algebra.commutes]
+  smul_def' s x := Subtype.ext <| by
+    convert_to s • (x : M) = _
+    rw [MulMemClass.coe_mul, RingHom.codRestrict_apply, ← Algebra.smul_def]
+
+-- Check there is no diamond
+example [Algebra S K] [IsScalarTower S K M] :
+    ((F.extendTop M).algebra' : Algebra S (F.extendTop M)) =
+      (algebra' F M S : Algebra S (F.extendTop M)) := rfl
 
 -- Check there is no diamond
 example : (algebra _ _ : Algebra F (F.extendTop M)) =
-  (algebra' _ _ _ : Algebra F (F.extendTop M)) := rfl
+    (algebra' _ _ _ : Algebra F (F.extendTop M)) := rfl
 
-instance :
-    letI := algebra' F M S
-    IsScalarTower S F (F.extendTop M) :=
-  let := algebra' F M S
-  IsScalarTower.of_algebraMap_eq' rfl
+instance : IsScalarTower S (F.extendTop M) M := IsScalarTower.of_algebraMap_eq' rfl
 
-instance instIsScalarTower' [Algebra S M] [IsScalarTower S F M] :
-    IsScalarTower S (F.extendTop M) M := IsScalarTower.to₁₃₄ S F (F.extendTop M) M
+instance : IsScalarTower S F (F.extendTop M) := IsScalarTower.to₁₂₃ S F (F.extendTop M) M
 
-instance [CommSemiring R] [Algebra R K] [Algebra R F] : IsScalarTower R K (F.extendTop M) := sorry
+instance [Algebra R S] [Algebra R F] [Algebra R M] [IsScalarTower R F M] [IsScalarTower R S M] :
+    IsScalarTower R S (F.extendTop M) := IsScalarTower.to₁₂₃ R S (F.extendTop M) M
 
--- There is one diamond possibility
-theorem aux [CommRing R] [Algebra R K] [Algebra R M] [Algebra R L] [IsScalarTower R K L]
-    [IsScalarTower R K M] [IsScalarTower R F M] :
-    ((F.extendTop M).algebra' : Algebra R (F.extendTop M)) =
-      (algebra' F M R : Algebra R (F.extendTop M)) := by
-  ext r x
-  rw [SetLike.val_smul_of_tower, Algebra.smul_def, @Algebra.smul_def, MulMemClass.coe_mul,
-    @IsScalarTower.algebraMap_apply R (F.extendTop M) M _ _ _ (algebra' F M R) _ _
-    (instIsScalarTower' F M R) r]
+/--
+Docs.
+-/
+@[simps! apply_coe]
+noncomputable def _root_.IntermediateField.extendTopEquiv' : F ≃ₐ[S] (F.extendTop M) :=
+  AlgEquiv.ofBijective (Algebra.algHom S F (F.extendTop M)) (extendTopEquiv F M).bijective
+
+instance isFractionRing [IsFractionRing S F] :
+    IsFractionRing S (F.extendTop M) :=
+  .of_algEquiv (R := S) (L := F.extendTop M) (K := F) <| F.extendTopEquiv' M S
+
+instance isIntegralClosure [Algebra R F] [Algebra R M] [IsScalarTower R F M]
+    [IsIntegralClosure S R F] :
+    IsIntegralClosure S R (F.extendTop M) := by
+  refine .of_algEquiv S R F (B' := F.extendTop M) (F.extendTopEquiv' M R) ?_
+  ext
+  simp only [AlgEquiv.toRingEquiv_eq_coe, RingEquiv.toRingHom_eq_coe,
+    AlgEquiv.toRingEquiv_toRingHom, RingHom.coe_comp, RingHom.coe_coe, Function.comp_apply,
+    extendTopEquiv'_apply_coe]
+  rw [← IsScalarTower.algebraMap_apply]
   rfl
 
-theorem isFractionRing [CommSemiring R] [Algebra R K] [Algebra R S] [Algebra R F] [Algebra R M]
-    [IsScalarTower R S F] [IsScalarTower R K F] [IsScalarTower R K M] [IsFractionRing S F] :
-    IsFractionRing S (F.extendTop M) :=
-  .of_algEquiv _ _ _ <| ((F.equivMap (Algebra.algHom K L M)).restrictScalars R).extendScalars S
-
-theorem isIntegralClosure [Algebra S M] [IsScalarTower S F M] [CommRing R] [Algebra R K] [Algebra R M] [Algebra R L]
-    [IsScalarTower R K L] [IsScalarTower R K M] [IsScalarTower R F M] [IsIntegralClosure S R F] :
-    IsIntegralClosure S R (F.extendTop M) := by
-  refine .of_algEquiv S R F (B' := F.extendTop M) ?_ ?_
-  · convert (F.equivMap (Algebra.algHom K L M)).restrictScalars R
-    exact (aux _ _ _).symm
-  · ext x
-    have := IsScalarTower.algebraMap_apply S (F.extendTop M) M x
-    convert this.symm
-    simp
-  
-    simp [extendTop]
-
-    apply FaithfulSMul.algebraMap_injective _ M
 
 
+#exit
 
-
-variable (T : Type*) [CommRing T] [Algebra R T] [Algebra T L] [Algebra T M]
-
-instance : Module.Finite T (integralClosure T M) := sorry
+instance : Module.Finite S (integralClosure S M) := sorry
 
 instance : Algebra R (integralClosure T M) :=
   ((algebraMap T _).comp (algebraMap R T)).toAlgebra
