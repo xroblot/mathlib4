@@ -17,6 +17,7 @@ theorem IsIntegralClosure.of_mulEquiv (e : R' ≃+* R)
   · simp_rw [RingEquiv.isIntegral_iff e h]
     exact IsIntegralClosure.isIntegral_iff
 
+
 end
 
 section
@@ -27,6 +28,8 @@ theorem IsIntegral.map_iff {R A : Type*} [CommRing R] [CommRing A] [Algebra R A]
     IsIntegral R (f b) ↔ IsIntegral R b :=
   ⟨fun h ↦ AlgEquiv.coe_coe_symm_apply_coe_apply f b ▸ map (AlgEquivClass.toAlgEquiv f).symm h,
     fun h ↦ map f h⟩
+
+#find_home! IsIntegral.map_iff
 
 variable (A R B B' : Type*) [CommRing R] [CommSemiring A] [CommRing B] [Algebra R B]
   [Algebra A B] [CommRing B'] [Algebra R B'] [Algebra A B'] [IsIntegralClosure A R B]

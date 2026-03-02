@@ -5,16 +5,10 @@ Authors: Xavier Roblot
 -/
 module
 
-public import Mathlib.FieldTheory.Galois.IsGaloisGroup
-public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.FieldTheory.Finite.GaloisField
-public import Mathlib.LinearAlgebra.FreeModule.IdealQuotient
-public import Mathlib.RingTheory.NormalClosure
-public import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients
 public import Mathlib.NumberTheory.NumberField.Discriminant.Different
-public import Mathlib.FieldTheory.IntermediateField.Adjoin.Defs
+public import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients
 
-public import Mathlib.MWE
 public import Mathlib.ExtendTop
 
 /-!
@@ -743,7 +737,7 @@ theorem Ideal.ramificationIdx_sup_eq_one [PerfectField K] [PerfectField L]
   have : Module.IsTorsionFree B C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
   have : Module.IsTorsionFree B₁ C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
   have : Module.IsTorsionFree B₂ C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
-  have : IsIntegralClosure B A F' := .of_algEquiv B A (F.extendTop N) _ (e.restrictScalars A) rfl
+  have : IsIntegralClosure B A F' := .of_algEquiv B (e.restrictScalars A) rfl
   obtain ⟨Q₀, _, _⟩ := Ideal.exists_maximal_ideal_liesOver_of_isIntegral (S := C₀) Q
   have : Q₀.LiesOver p := LiesOver.trans Q₀ Q p
   have : Q₀.LiesOver P₁ := LiesOver.trans Q₀ Q P₁
@@ -790,6 +784,7 @@ set_option maxHeartbeats 600000 in
 -- This result needs some help to compile
 include F₁ F₂ C Q in
 theorem Ideal.ramificationIdx_inertiaDeg_sup_eq_one [PerfectField K] [PerfectField L]
+    [Ring.HasFiniteQuotients C]
     (h₁ : ramificationIdx (algebraMap A B₁) p P₁ = 1 ∧ inertiaDeg p P₁ = 1)
     (h₂ : ramificationIdx (algebraMap A B₂) p P₂ = 1 ∧ inertiaDeg p P₂ = 1) (hp : p ≠ ⊥) :
     ramificationIdx (algebraMap A B) p P = 1 ∧ inertiaDeg p P = 1 := by
@@ -857,7 +852,7 @@ theorem Ideal.ramificationIdx_inertiaDeg_sup_eq_one [PerfectField K] [PerfectFie
   have : Module.IsTorsionFree B C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
   have : Module.IsTorsionFree B₁ C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
   have : Module.IsTorsionFree B₂ C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
-  have : IsIntegralClosure B A F' := .of_algEquiv B A (F.extendTop N) _ (e.restrictScalars A) rfl
+  have : IsIntegralClosure B A F' := .of_algEquiv B (e.restrictScalars A) rfl
   obtain ⟨Q₀, _, _⟩ := Ideal.exists_maximal_ideal_liesOver_of_isIntegral (S := C₀) Q
   have : Q₀.LiesOver p := LiesOver.trans Q₀ Q p
   have : Q₀.LiesOver P₁ := LiesOver.trans Q₀ Q P₁
@@ -876,19 +871,6 @@ example {K : Type*} [Field K] [NumberField K] (F₁ F₂ : IntermediateField ℚ
     (h₂ : ramificationIdx (algebraMap ℤ (𝓞 F₂)) p P₂ = 1) (hp : p ≠ ⊥) :
     ramificationIdx (algebraMap ℤ (𝓞 ↥(F₁ ⊔ F₂))) p P = 1 :=
   Ideal.ramificationIdx_sup_eq_one ℚ K F₁ F₂ P Q h₁ h₂ hp
-
--- instance {ι K : Type*} [Field K] [CharZero K] (s : Finset ι) (F : ι → IntermediateField ℚ K)
---     [∀ i, NumberField (F i)] :
---     NumberField (s.sup F : IntermediateField ℚ K) where
---   to_finiteDimensional := by
---     classical
---     induction s using Finset.induction with
---     | empty =>
---         rw [Finset.sup_empty]
---         infer_instance
---     | insert i s hi h =>
---         rw [Finset.sup_insert]
---         exact IntermediateField.finiteDimensional_sup (F i) (s.sup F)
 
 theorem NumberField.not_dvd_discr_finsetSup_of_not_dvd_discr (ι K : Type*) [Field K] [NumberField K]
     (F : ι → IntermediateField ℚ K) [∀ i, NumberField (F i)] {p : ℕ} (hp : p.Prime) (s : Finset ι)

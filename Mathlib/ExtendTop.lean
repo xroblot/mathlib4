@@ -1,9 +1,7 @@
 module
 
 public import Mathlib.FieldTheory.IntermediateField.Basic
-public import Mathlib.RingTheory.Localization.FractionRing
-public import Mathlib.RingTheory.AlgebraTower
-public import Mathlib.MWE
+public import Mathlib.RingTheory.IntegralClosure.IsIntegralClosure.Basic
 
 @[expose] public section
 
@@ -100,7 +98,7 @@ instance isFractionRing [IsFractionRing S F] :
 instance isIntegralClosure [Algebra R F] [Algebra R M] [IsScalarTower R F M]
     [IsIntegralClosure S R F] :
     IsIntegralClosure S R (F.extendTop M) := by
-  refine .of_algEquiv S R F (B' := F.extendTop M) (F.extendTopEquiv' M R) ?_
+  refine .of_algEquiv S (F.extendTopEquiv' M R) ?_
   ext
   simp only [AlgEquiv.toRingEquiv_eq_coe, RingEquiv.toRingHom_eq_coe,
     AlgEquiv.toRingEquiv_toRingHom, RingHom.coe_comp, RingHom.coe_coe, Function.comp_apply,
@@ -108,34 +106,4 @@ instance isIntegralClosure [Algebra R F] [Algebra R M] [IsScalarTower R F M]
   rw [← IsScalarTower.algebraMap_apply]
   rfl
 
-
-
-#exit
-
-instance : Module.Finite S (integralClosure S M) := sorry
-
-instance : Algebra R (integralClosure T M) :=
-  ((algebraMap T _).comp (algebraMap R T)).toAlgebra
-
-instance toto : IsScalarTower R T (integralClosure T M) := IsScalarTower.of_algebraMap_eq' rfl
-
-instance [Module.Finite R T] : Module.Finite R (integralClosure T M) := by
-  convert Module.Finite.trans T (integralClosure T M)
-  infer_instance
-  convert toto M R T
-  ext
-  sorry
-  infer_instance
-
-
-
--- have : Module.IsTorsionFree A C₀ :
-
-
-
-
-
-
-end IntermediateField.ExtendTop
-
-#lint
+end IntermediateField.extendTop
