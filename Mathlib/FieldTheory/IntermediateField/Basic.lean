@@ -456,6 +456,10 @@ def map (f : L →ₐ[K] L') (S : IntermediateField K L) : IntermediateField K L
     exact ⟨x⁻¹, S.inv_mem hx, map_inv₀ f x⟩
 
 @[simp]
+theorem mem_map {f : L →ₐ[K] L'} {S : IntermediateField K L} {x : L'} :
+    x ∈ S.map f ↔ ∃ y ∈ S, f y = x := Subalgebra.mem_map
+
+@[simp]
 theorem coe_map (f : L →ₐ[K] L') : (S.map f : Set L') = f '' S :=
   rfl
 

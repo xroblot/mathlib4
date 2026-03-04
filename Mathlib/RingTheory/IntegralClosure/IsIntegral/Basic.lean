@@ -72,6 +72,12 @@ theorem IsIntegral.map {B C F : Type*} [Ring B] [Ring C] [Algebra R B] [Algebra 
   rw [IsIntegral, ← ((AlgHomClass.toAlgHom f).restrictScalars R).comp_algebraMap]
   exact .map hb (RingHomClass.toRingHom f)
 
+theorem IsIntegral.map_iff {B C F : Type*} [Ring B] [Ring C] [Algebra R B] [Algebra A B]
+    [Algebra R C] [IsScalarTower R A B] [Algebra A C] [IsScalarTower R A C] [EquivLike F B C]
+    [AlgEquivClass F A B C] {f : F} {b : B} :
+    IsIntegral R (f b) ↔ IsIntegral R b :=
+  ⟨fun h ↦ AlgEquiv.coe_coe_symm_apply_coe_apply f b ▸ map (AlgEquivClass.toAlgEquiv f).symm h,
+    fun h ↦ map f h⟩
 section
 
 variable {A B : Type*} [Ring A] [Ring B] [Algebra R A] [Algebra R B]

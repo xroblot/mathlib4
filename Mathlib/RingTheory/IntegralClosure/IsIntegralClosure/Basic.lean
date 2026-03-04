@@ -418,6 +418,29 @@ theorem isField [Algebra R A] [IsScalarTower R A B] [IsDomain A] (hR : IsField R
   have := IsIntegralClosure.isIntegral_algebra R (A := A) B
   isField_of_isIntegral_of_isField' hR
 
+theorem of_mulEquiv {R' : Type*} [CommRing R'] [Algebra R' B] (e : R' ≃+* R)
+    (h : (algebraMap R B).comp e.toRingHom = algebraMap R' B) :
+    IsIntegralClosure A R' B := by
+  refine { algebraMap_injective := ?_, isIntegral_iff := ?_ }
+  · exact IsIntegralClosure.algebraMap_injective A R B
+  · simp_rw [RingEquiv.isIntegral_iff e h]
+    exact IsIntegralClosure.isIntegral_iff
+
+theorem of_algEquiv {B' : Type*} [CommRing B'] [Algebra R B'] [Algebra A B'] (e : B ≃ₐ[R] B')
+    (h : algebraMap A B' = e.toRingHom.comp (algebraMap A B)) :
+    IsIntegralClosure A R B' := by
+  refine { algebraMap_injective := ?_, isIntegral_iff := ?_ }
+  · rw [h]
+    simp only [RingEquiv.toRingHom_eq_coe, RingHom.coe_comp, RingHom.coe_coe,
+      EmbeddingLike.comp_injective]
+    exact IsIntegralClosure.algebraMap_injective A R B
+  · intro x
+    have := IsIntegral.map_iff (f := e.symm) (b := x)  (R := R)
+    rw [← this, IsIntegralClosure.isIntegral_iff (A := A) (R := R)]
+    simp only [h, AlgEquiv.toRingEquiv_eq_coe, RingEquiv.toRingHom_eq_coe,
+      AlgEquiv.toRingEquiv_toRingHom, RingHom.coe_comp, RingHom.coe_coe, Function.comp_apply,
+      AlgEquiv.eq_symm_apply]
+
 section lift
 
 variable (B) {S : Type*} [CommRing S] [Algebra R S]
