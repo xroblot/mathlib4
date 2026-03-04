@@ -538,7 +538,7 @@ theorem Ideal.ramificationIdx_sup_eq_one_of_isGalois [IsGalois K L] [MulSemiring
   rwa [IntermediateField.le_isInertiaField_iff _ K _ (E := E) (B := C)  (p := p)
     (P := Q) (𝓟F := P) (F := F₁ ⊔ F₂) _ hp] at this
 
-set_option maxHeartbeats 500000 in
+set_option maxHeartbeats 600000 in
 -- This result needs some help to compile
 include F₁ F₂ C Q in
 theorem Ideal.ramificationIdx_sup_eq_one [PerfectField K] [PerfectField L]
