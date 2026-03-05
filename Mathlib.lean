@@ -4196,6 +4196,7 @@ public import Mathlib.Dynamics.TopologicalEntropy.NetEntropy
 public import Mathlib.Dynamics.TopologicalEntropy.Semiconj
 public import Mathlib.Dynamics.TopologicalEntropy.Subset
 public import Mathlib.Dynamics.Transitive
+public import Mathlib.ExtendTop
 public import Mathlib.FieldTheory.AbelRuffini
 public import Mathlib.FieldTheory.AbsoluteGaloisGroup
 public import Mathlib.FieldTheory.AlgebraicClosure
@@ -4984,6 +4985,7 @@ public import Mathlib.Logic.Small.List
 public import Mathlib.Logic.Small.Set
 public import Mathlib.Logic.Unique
 public import Mathlib.Logic.UnivLE
+public import Mathlib.MWE
 public import Mathlib.MeasureTheory.Category.MeasCat
 public import Mathlib.MeasureTheory.Constructions.AddChar
 public import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
@@ -6617,6 +6619,7 @@ public import Mathlib.RingTheory.ZMod
 public import Mathlib.RingTheory.ZMod.Torsion
 public import Mathlib.RingTheory.ZMod.UnitsCyclic
 public import Mathlib.RingTheory.ZariskisMainTheorem
+public import Mathlib.Sandbox
 public import Mathlib.SetTheory.Cardinal.Aleph
 public import Mathlib.SetTheory.Cardinal.Arithmetic
 public import Mathlib.SetTheory.Cardinal.Basic
@@ -6795,6 +6798,7 @@ public import Mathlib.Tactic.InferParam
 public import Mathlib.Tactic.Inhabit
 public import Mathlib.Tactic.IntervalCases
 public import Mathlib.Tactic.IrreducibleDef
+public import Mathlib.Tactic.IsScalarTower
 public import Mathlib.Tactic.Lemma
 public import Mathlib.Tactic.Lift
 public import Mathlib.Tactic.Linarith

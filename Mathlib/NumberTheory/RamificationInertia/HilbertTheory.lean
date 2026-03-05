@@ -9,6 +9,7 @@ public import Mathlib.FieldTheory.Finite.GaloisField
 public import Mathlib.NumberTheory.NumberField.Discriminant.Different
 public import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients
 
+public import Mathlib.Tactic.IsScalarTower
 public import Mathlib.ExtendTop
 
 /-!
@@ -566,33 +567,35 @@ theorem Ideal.ramificationIdx_sup_eq_one [PerfectField K] [PerfectField L]
   algebraize [(algebraMap F₁ N).comp (algebraMap B₁ F₁)]
   algebraize [(algebraMap F₂ N).comp (algebraMap B₂ F₂)]
   have : Module.IsTorsionFree A C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
-  have : IsScalarTower A L N := IsScalarTower.to₁₃₄ A K L N
-  have : IsScalarTower A C N := IsScalarTower.to₁₂₄ A C L N
-  have : IsScalarTower A C₀ N := IsScalarTower.to₁₃₄ A C C₀ N
-  have : IsScalarTower A F N := IsScalarTower.to₁₃₄ A K F N
-  have : IsScalarTower A B N := IsScalarTower.to₁₂₄ A B F N
+  have : IsScalarTower A L N := by scalar_tower
+  -- have : IsScalarTower A L N := IsScalarTower.to₁₃₄ A K L N
+  -- have : IsScalarTower A C N := IsScalarTower.to₁₂₄ A C L N
+  have : IsScalarTower A C₀ N := by scalar_tower -- IsScalarTower.to₁₃₄ A C C₀ N
+  have : IsScalarTower A F N := by scalar_tower -- IsScalarTower.to₁₃₄ A K F N
+  -- have : IsScalarTower A B N := IsScalarTower.to₁₂₄ A B F N
   have : Module.Finite A C₀ := Module.Finite.trans C C₀
+  have : IsScalarTower A C₀ N := by scalar_tower
   let : MulSemiringAction Gal(N/K) C₀ := IsIntegralClosure.MulSemiringAction A K N C₀
   let F' := (F₁.extendTop N) ⊔ (F₂.extendTop N)
   let e : (F.extendTop N) ≃ₐ[K] F' := equivOfEq <| F₁.map_sup F₂ (Algebra.algHom K L N)
   algebraize [e.toRingHom.comp (algebraMap B (F.extendTop N))]
   have : IsFractionRing B F' :=
     .of_algEquiv B (F.extendTop N) _ <| (e.restrictScalars A).extendScalars B
-  have : IsScalarTower B F' N := IsScalarTower.of_algebraMap_eq' rfl
-  have : IsScalarTower B L N := IsScalarTower.to₁₃₄ B F L N
-  have : IsScalarTower A C N := IsScalarTower.to₁₂₄ A C L N
-  have : IsScalarTower A B C₀ := IsScalarTower.to₁₂₄ A B C C₀
-  have : IsScalarTower B C N := IsScalarTower.to₁₂₄ B C L N
-  have : IsScalarTower B C₀ N := IsScalarTower.to₁₃₄ B C C₀ N
-  have : IsScalarTower B₁ L N := IsScalarTower.to₁₃₄ B₁ F₁ L N
-  have : IsScalarTower B₁ C N := IsScalarTower.to₁₂₄ B₁ C L N
-  have : IsScalarTower B₁ C₀ N := IsScalarTower.to₁₃₄ B₁ C C₀ N
-  have : IsScalarTower B₂ L N := IsScalarTower.to₁₃₄ B₂ F₂ L N
-  have : IsScalarTower B₂ C N := IsScalarTower.to₁₂₄ B₂ C L N
-  have : IsScalarTower B₂ C₀ N := IsScalarTower.to₁₃₄ B₂ C C₀ N
-  have : IsScalarTower A B C₀ := IsScalarTower.to₁₂₄ A B C C₀
-  have : IsScalarTower A B₁ C₀ := IsScalarTower.to₁₂₄ A B₁ C C₀
-  have : IsScalarTower A B₂ C₀ := IsScalarTower.to₁₂₄ A B₂ C C₀
+  -- have : IsScalarTower B F' N := IsScalarTower.of_algebraMap_eq' rfl
+  -- have : IsScalarTower B L N := IsScalarTower.to₁₃₄ B F L N
+  -- have : IsScalarTower A C N := IsScalarTower.to₁₂₄ A C L N
+  -- have : IsScalarTower A B C₀ := IsScalarTower.to₁₂₄ A B C C₀
+  -- have : IsScalarTower B C N := IsScalarTower.to₁₂₄ B C L N
+  -- have : IsScalarTower B C₀ N := IsScalarTower.to₁₃₄ B C C₀ N
+  -- have : IsScalarTower B₁ L N := IsScalarTower.to₁₃₄ B₁ F₁ L N
+  -- have : IsScalarTower B₁ C N := IsScalarTower.to₁₂₄ B₁ C L N
+  -- have : IsScalarTower B₁ C₀ N := IsScalarTower.to₁₃₄ B₁ C C₀ N
+  -- have : IsScalarTower B₂ L N := IsScalarTower.to₁₃₄ B₂ F₂ L N
+  -- have : IsScalarTower B₂ C N := IsScalarTower.to₁₂₄ B₂ C L N
+  -- have : IsScalarTower B₂ C₀ N := IsScalarTower.to₁₃₄ B₂ C C₀ N
+  -- have : IsScalarTower A B C₀ := IsScalarTower.to₁₂₄ A B C C₀
+  -- have : IsScalarTower A B₁ C₀ := IsScalarTower.to₁₂₄ A B₁ C C₀
+  -- have : IsScalarTower A B₂ C₀ := IsScalarTower.to₁₂₄ A B₂ C C₀
   have : Module.IsTorsionFree B C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
   have : Module.IsTorsionFree B₁ C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
   have : Module.IsTorsionFree B₂ C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
@@ -637,6 +640,8 @@ theorem Ideal.ramificationIdx_inertiaDeg_sup_eq_one_of_isGalois [IsGalois K L]
   have := sup_le h₁ h₂
   rwa [IntermediateField.le_isDecompositionField_iff _ K _ (D := D) (B := C) (𝓞D := 𝓞D) (p := p)
     (P := Q) (𝓟F := P) (F := F₁ ⊔ F₂) _ hp] at this
+
+#exit
 
 set_option maxHeartbeats 600000 in
 -- This result needs some help to compile

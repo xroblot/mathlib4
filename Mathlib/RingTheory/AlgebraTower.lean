@@ -207,8 +207,14 @@ def AlgEquiv.extendScalars (e : C ≃ₐ[A] D) :
   letI : Algebra B D := (e.toAlgHom.restrictDomain B).toRingHom.toAlgebra
   { __ := e.toAlgHom.extendScalars B
     invFun := e.symm
-    left_inv _ := by simp
-    right_inv _ := by simp }
+    left_inv _ := by simp only [toAlgHom_eq_coe, AlgHom.toRingHom_eq_coe,
+      RingHom.toMonoidHom_eq_coe, AlgHom.toRingHom_toMonoidHom, OneHom.toFun_eq_coe,
+      MonoidHom.toOneHom_coe, MonoidHom.coe_coe, AlgHom.extendScalars_apply, AlgHom.coe_coe,
+      symm_apply_apply]
+    right_inv _ := by simp only [toAlgHom_eq_coe, AlgHom.toRingHom_eq_coe,
+      RingHom.toMonoidHom_eq_coe, AlgHom.toRingHom_toMonoidHom, OneHom.toFun_eq_coe,
+      MonoidHom.toOneHom_coe, MonoidHom.coe_coe, AlgHom.extendScalars_apply, AlgHom.coe_coe,
+      apply_symm_apply] }
 
 @[simp]
 theorem AlgEquiv.extendScalars_apply (e : C ≃ₐ[A] D) (x : C) :
