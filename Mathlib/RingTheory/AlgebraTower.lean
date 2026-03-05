@@ -201,6 +201,7 @@ def AlgHom.extendScalars : @AlgHom B C D _ _ _ _ (f.restrictDomain B).toRingHom.
 theorem AlgHom.extendScalars_apply (x : C) :
     f.extendScalars B x = f x := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Extend the scalars of an `AlgEquiv`. -/
 def AlgEquiv.extendScalars (e : C ≃ₐ[A] D) :
      @AlgEquiv B C D _ _ _ _ (e.toAlgHom.restrictDomain B).toRingHom.toAlgebra :=

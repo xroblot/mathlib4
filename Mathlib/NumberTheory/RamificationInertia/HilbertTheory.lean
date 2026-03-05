@@ -436,21 +436,25 @@ open IntermediateField
 variable [MulSemiringAction Gal(L/K) B] [FiniteDimensional K L] [IsGalois K L]
   {F : IntermediateField K L}
 
+set_option backward.isDefEq.respectTransparency false in
 theorem isDecompositionField_iff_fixingSubgroup :
     IsDecompositionField K L P F ↔ F.fixingSubgroup = stabilizer Gal(L/K) P := by
   rw [isDecompositionField_iff, IsGaloisGroup.subgroup_iff, ← IntermediateField.fixedField,
     IsGalois.fixedField_eq_iff_fixingSubgroup_eq]
 
+set_option backward.isDefEq.respectTransparency false in
 theorem isInertiaField_iff_fixingSubgroup :
     IsInertiaField K L P F ↔ F.fixingSubgroup = inertia Gal(L/K) P := by
   rw [isInertiaField_iff, IsGaloisGroup.subgroup_iff, ← IntermediateField.fixedField,
     IsGalois.fixedField_eq_iff_fixingSubgroup_eq]
 
+set_option backward.isDefEq.respectTransparency false in
 variable (D E : IntermediateField K L) (𝓞D 𝓞E : Type*) [hD : IsDecompositionField K L P D]
   [IsInertiaField K L P E] [Algebra B L] [hSD : SMulDistribClass Gal(L/K) B L]
 
 variable (F)
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Let `D` be the decomposition field of `P` in `L/K` and let `F` be a subextension of `L/K`.
 Then, the decomposition field of `P` in `L/F` is the compositum `DF`.

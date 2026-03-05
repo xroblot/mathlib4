@@ -276,6 +276,7 @@ theorem card_fixingSubgroup_eq_finrank [Finite G] [IsGaloisGroup G K L] :
     Nat.card (fixingSubgroup G (F : Set L)) = Module.finrank F L :=
   card_eq_finrank ..
 
+set_option backward.isDefEq.respectTransparency false in
 open IntermediateField in
 theorem fixedPoints_of_isGaloisGroup (F : IntermediateField K L) [hGKL : IsGaloisGroup G K L]
     (H : Subgroup G) [hHFL : IsGaloisGroup H F L] :

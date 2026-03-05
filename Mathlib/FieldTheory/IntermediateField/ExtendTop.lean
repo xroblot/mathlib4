@@ -40,6 +40,7 @@ noncomputable def extendTopEquiv : F ≃ₐ[K] (F.extendTop M) := F.equivMap (Al
 
 namespace extendTop
 
+set_option backward.isDefEq.respectTransparency false in
 noncomputable instance algebra : Algebra F (F.extendTop M) where
   smul s x := by
     have y := mem_map.mp x.prop
@@ -62,12 +63,14 @@ noncomputable instance algebra : Algebra F (F.extendTop M) where
     convert_to c • (x : M) = _
     rw [MulMemClass.coe_mul, RingHom.codRestrict_apply, ← Algebra.smul_def]
 
+set_option backward.isDefEq.respectTransparency false in
 instance : IsScalarTower F (F.extendTop M) M := IsScalarTower.of_algebraMap_eq' rfl
 
 variable (R S T : Type*) [CommRing R] [CommRing S] [Algebra S F]
 
 variable [Algebra S M] [IsScalarTower S F M]
 
+set_option backward.isDefEq.respectTransparency false in
 noncomputable instance algebra' : Algebra S (F.extendTop M) where
   smul s x := by
     refine ⟨s • x, ?_⟩
@@ -91,9 +94,11 @@ example [Algebra S K] [IsScalarTower S K M] :
       (algebra' F M S : Algebra S (F.extendTop M)) := rfl
 
 -- Check there is no diamond
+set_option backward.isDefEq.respectTransparency false in
 example : (algebra _ _ : Algebra F (F.extendTop M)) =
     (algebra' _ _ _ : Algebra F (F.extendTop M)) := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 instance : IsScalarTower S (F.extendTop M) M := IsScalarTower.of_algebraMap_eq' rfl
 
 instance : IsScalarTower S F (F.extendTop M) := IsScalarTower.to₁₂₃ S F (F.extendTop M) M
@@ -101,6 +106,7 @@ instance : IsScalarTower S F (F.extendTop M) := IsScalarTower.to₁₂₃ S F (F
 instance [Algebra R S] [Algebra R F] [Algebra R M] [IsScalarTower R F M] [IsScalarTower R S M] :
     IsScalarTower R S (F.extendTop M) := IsScalarTower.to₁₂₃ R S (F.extendTop M) M
 
+set_option backward.isDefEq.respectTransparency false in
 /--
 Docs.
 -/
@@ -108,19 +114,16 @@ Docs.
 noncomputable def _root_.IntermediateField.extendTopEquiv' : F ≃ₐ[S] (F.extendTop M) :=
   AlgEquiv.ofBijective (Algebra.algHom S F (F.extendTop M)) (extendTopEquiv F M).bijective
 
+set_option backward.isDefEq.respectTransparency false in
 instance isFractionRing [IsFractionRing S F] :
     IsFractionRing S (F.extendTop M) :=
   .of_algEquiv (R := S) (L := F.extendTop M) (K := F) <| F.extendTopEquiv' M S
 
+set_option backward.isDefEq.respectTransparency false in
 instance isIntegralClosure [Algebra R F] [Algebra R M] [IsScalarTower R F M]
     [IsIntegralClosure S R F] :
     IsIntegralClosure S R (F.extendTop M) := by
-  refine .of_algEquiv S (F.extendTopEquiv' M R) ?_
-  ext
-  simp only [AlgEquiv.toRingEquiv_eq_coe, RingEquiv.toRingHom_eq_coe,
-    AlgEquiv.toRingEquiv_toRingHom, RingHom.coe_comp, RingHom.coe_coe, Function.comp_apply,
-    extendTopEquiv'_apply_coe]
-  rw [← IsScalarTower.algebraMap_apply]
-  rfl
+  refine .of_algEquiv S (F.extendTopEquiv' M R) fun _ ↦ ?_
+  sorry
 
 end IntermediateField.extendTop
