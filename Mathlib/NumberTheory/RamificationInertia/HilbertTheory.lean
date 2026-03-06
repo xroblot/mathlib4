@@ -8,7 +8,7 @@ module
 public import Mathlib.FieldTheory.Finite.GaloisField
 public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients
-public import Mathlib.NumberTheory.NumberField.Discriminant.Different
+-- public import Mathlib.NumberTheory.NumberField.Discriminant.Different
 public import Mathlib.FieldTheory.IntermediateField.ExtendTop
 
 /-!
@@ -448,12 +448,15 @@ theorem isInertiaField_iff_fixingSubgroup :
   rw [isInertiaField_iff, IsGaloisGroup.subgroup_iff, ← IntermediateField.fixedField,
     IsGalois.fixedField_eq_iff_fixingSubgroup_eq]
 
+
+variable (D E : IntermediateField K L) (𝓞D 𝓞E : Type*) [Algebra B L]
+  [hSD : SMulDistribClass Gal(L/K) B L]
+
 set_option backward.isDefEq.respectTransparency false in
-variable (D E : IntermediateField K L) (𝓞D 𝓞E : Type*) [hD : IsDecompositionField K L P D]
-  [IsInertiaField K L P E] [Algebra B L] [hSD : SMulDistribClass Gal(L/K) B L]
+variable [hD : IsDecompositionField K L P D] [IsInertiaField K L P E]
+
 
 variable (F)
-
 set_option backward.isDefEq.respectTransparency false in
 /--
 Let `D` be the decomposition field of `P` in `L/K` and let `F` be a subextension of `L/K`.
@@ -673,23 +676,20 @@ theorem Ideal.ramificationIdx_sup_eq_one [PerfectField K] [PerfectField L]
   algebraize [e.toRingHom.comp (algebraMap B (F.extendTop N))]
   have : IsFractionRing B F' :=
     .of_algEquiv B (F.extendTop N) _ <| (e.restrictScalars A).extendScalars B
-  have : IsScalarTower A B C₀ := by
-    solve_by_elim only [*, IsScalarTower.to₁₂₄, IsScalarTower.to₁₃₄, IsScalarTower.to₁₂₃,
-      IsScalarTower.of_algebraMap_eq' rfl]
-  -- have : IsScalarTower B L N := IsScalarTower.to₁₃₄ B F L N
-  -- have : IsScalarTower A C N := IsScalarTower.to₁₂₄ A C L N
-  -- have : IsScalarTower A B C₀ := IsScalarTower.to₁₂₄ A B C C₀
-  -- have : IsScalarTower B C N := IsScalarTower.to₁₂₄ B C L N
-  -- have : IsScalarTower B C₀ N := IsScalarTower.to₁₃₄ B C C₀ N
-  -- have : IsScalarTower B₁ L N := IsScalarTower.to₁₃₄ B₁ F₁ L N
-  -- have : IsScalarTower B₁ C N := IsScalarTower.to₁₂₄ B₁ C L N
-  -- have : IsScalarTower B₁ C₀ N := IsScalarTower.to₁₃₄ B₁ C C₀ N
-  -- have : IsScalarTower B₂ L N := IsScalarTower.to₁₃₄ B₂ F₂ L N
-  -- have : IsScalarTower B₂ C N := IsScalarTower.to₁₂₄ B₂ C L N
-  -- have : IsScalarTower B₂ C₀ N := IsScalarTower.to₁₃₄ B₂ C C₀ N
-  -- have : IsScalarTower A B C₀ := IsScalarTower.to₁₂₄ A B C C₀
-  -- have : IsScalarTower A B₁ C₀ := IsScalarTower.to₁₂₄ A B₁ C C₀
-  -- have : IsScalarTower A B₂ C₀ := IsScalarTower.to₁₂₄ A B₂ C C₀
+  have : IsScalarTower B L N := IsScalarTower.to₁₃₄ B F L N
+  have : IsScalarTower A C N := IsScalarTower.to₁₂₄ A C L N
+  have : IsScalarTower A B C₀ := IsScalarTower.to₁₂₄ A B C C₀
+  have : IsScalarTower B C N := IsScalarTower.to₁₂₄ B C L N
+  have : IsScalarTower B C₀ N := IsScalarTower.to₁₃₄ B C C₀ N
+  have : IsScalarTower B₁ L N := IsScalarTower.to₁₃₄ B₁ F₁ L N
+  have : IsScalarTower B₁ C N := IsScalarTower.to₁₂₄ B₁ C L N
+  have : IsScalarTower B₁ C₀ N := IsScalarTower.to₁₃₄ B₁ C C₀ N
+  have : IsScalarTower B₂ L N := IsScalarTower.to₁₃₄ B₂ F₂ L N
+  have : IsScalarTower B₂ C N := IsScalarTower.to₁₂₄ B₂ C L N
+  have : IsScalarTower B₂ C₀ N := IsScalarTower.to₁₃₄ B₂ C C₀ N
+  have : IsScalarTower A B C₀ := IsScalarTower.to₁₂₄ A B C C₀
+  have : IsScalarTower A B₁ C₀ := IsScalarTower.to₁₂₄ A B₁ C C₀
+  have : IsScalarTower A B₂ C₀ := IsScalarTower.to₁₂₄ A B₂ C C₀
   have : Module.IsTorsionFree B C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
   have : Module.IsTorsionFree B₁ C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
   have : Module.IsTorsionFree B₂ C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀

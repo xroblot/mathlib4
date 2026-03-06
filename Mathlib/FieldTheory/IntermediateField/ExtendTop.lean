@@ -43,7 +43,7 @@ namespace extendTop
 set_option backward.isDefEq.respectTransparency false in
 noncomputable instance algebra : Algebra F (F.extendTop M) where
   smul s x := by
-    have y := mem_map.mp x.prop
+    have y := (mem_map _).mp x.prop
     refine ⟨s • x, ?_⟩
     refine ⟨s • y.choose, ?_, ?_⟩
     · rw [Algebra.smul_def]
