@@ -42,10 +42,11 @@ def tryWithIntermediate (goal : MVarId) (lemmaName : Name)
     paired with how to arrange `A B C D` into explicit arguments. -/
 def intermediaryLemmas : List (Name × (Expr → Expr → Expr → Expr → Array Expr)) :=
   [(``IsScalarTower.to₁₂₃, fun A B C D => #[A, B, C, D]),
-   (``IsScalarTower.to₁₂₄, fun A B C D => #[A, B, D, C]),
-   (``IsScalarTower.to₁₃₄, fun A B C D => #[A, D, B, C])]
+   (``IsScalarTower.to₁₃₄, fun A B C D => #[A, D, B, C]),
+   (``IsScalarTower.to₁₂₄, fun A B C D => #[A, B, D, C])]
 
-partial def proveIST (goal : MVarId) : MetaM Unit := do
+partial def proveIST (goal : MVarId) (depth : Nat := 10) : MetaM Unit := do
+  if depth = 0 then throwError "scalar_tower: max depth reached"
   goal.withContext do
     -- Step 1: Try global instance synthesis.
     let saved ← getMCtx
@@ -78,17 +79,20 @@ partial def proveIST (goal : MVarId) : MetaM Unit := do
     let B := goalArgs[1]!
     let C := goalArgs[2]!
     -- Collect raw candidates: Sort-typed locals, plus type arguments extracted from
-    -- Algebra/SMul/IsScalarTower hypotheses (to find coerced types like ↥F).
+    -- structure/class hypotheses (covers Algebra, SMul, IST, Field, Module, etc.,
+    -- including coerced types like ↥F from hypotheses such as [Field ↥F]).
+    let env ← getEnv
     let mut rawCandidates : Array Expr := #[]
     for decl in ← getLCtx do
       if decl.isImplementationDetail then continue
       if decl.type.isSort then
         rawCandidates := rawCandidates.push decl.toExpr
-      else
-        let ty := decl.type
-        if ty.isAppOf ``Algebra || ty.isAppOf ``SMul || ty.isAppOf ``IsScalarTower then
-          for arg in ty.getAppArgs do
-            if (← inferType arg).isSort then
+      else if let Expr.const name _ := decl.type.getAppFn then
+        if isStructure env name then
+          for arg in decl.type.getAppArgs do
+            let argTy ← inferType arg
+            -- Only add type-valued arguments (Sort but not Prop).
+            if argTy.isSort && !argTy.isProp then
               rawCandidates := rawCandidates.push arg
     -- Filter out A, B, C (would cause infinite recursion) and deduplicate,
     -- to avoid an explosion of tryWithIntermediate attempts in large contexts.
@@ -104,7 +108,7 @@ partial def proveIST (goal : MVarId) : MetaM Unit := do
         let saved ← getMCtx
         try
           let subgoals ← tryWithIntermediate goal lemmaName mkArgs D
-          for sg in subgoals do proveIST sg
+          for sg in subgoals do proveIST sg (depth - 1)
           return
         catch _ => setMCtx saved
     throwError "scalar_tower: failed to prove {← ppExpr (← goal.getType)}"

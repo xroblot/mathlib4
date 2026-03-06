@@ -559,6 +559,7 @@ theorem Ideal.ramificationIdx_sup_eq_one [PerfectField K] [PerfectField L]
   have : IsDedekindDomain C₀ := integralClosure.isDedekindDomain C L N
   have : IsFractionRing C₀ N := integralClosure.isFractionRing_of_finite_extension L N
   have : FaithfulSMul C C₀ := Module.IsTorsionFree.to_faithfulSMul
+  let : Algebra C C₀ := by exact C₀.algebra'
   algebraize [(algebraMap C C₀).comp (algebraMap A C)]
   algebraize [(algebraMap C C₀).comp (algebraMap B C)]
   algebraize [(algebraMap C C₀).comp (algebraMap B₁ C)]
@@ -569,8 +570,8 @@ theorem Ideal.ramificationIdx_sup_eq_one [PerfectField K] [PerfectField L]
   have : Module.IsTorsionFree A C₀ := Module.IsTorsionFree.trans_faithfulSMul _ C C₀
   have : IsScalarTower A L N := by scalar_tower
   -- have : IsScalarTower A L N := IsScalarTower.to₁₃₄ A K L N
-  -- have : IsScalarTower A C N := IsScalarTower.to₁₂₄ A C L N
-  have : IsScalarTower A C₀ N := by scalar_tower -- IsScalarTower.to₁₃₄ A C C₀ N
+  have : IsScalarTower A C N := by scalar_tower -- IsScalarTower.to₁₂₄ A C L N
+--  have : IsScalarTower A C₀ N := by sorry -- IsScalarTower.to₁₃₄ A C C₀ N
   have : IsScalarTower A F N := by scalar_tower -- IsScalarTower.to₁₃₄ A K F N
   -- have : IsScalarTower A B N := IsScalarTower.to₁₂₄ A B F N
   have : Module.Finite A C₀ := Module.Finite.trans C C₀

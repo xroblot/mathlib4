@@ -1,8 +1,31 @@
-module
 
-public import Mathlib.NumberTheory.NumberField.Basic
 
-@[expose] public section
+import Mathlib.NumberTheory.NumberField.Basic
+import Mathlib.Tactic.IsScalarTower
+
+set_option linter.style.header false
+
+variable {K L A C} [Field K] [Field L] [Algebra K L] [CommRing A] [Algebra A K] [IsFractionRing A K]
+  [CommRing C] [Algebra A C] [Algebra A L] [Algebra C L] [IsFractionRing C L] [IsScalarTower A C L]
+  [IsScalarTower A K L]
+
+set_option linter.style.header false
+
+example : True := by
+  let N := IntermediateField.normalClosure K L (AlgebraicClosure L)
+  let : Algebra L N := normalClosure.algebra K L (AlgebraicClosure L)
+  algebraize [(algebraMap L N).comp (algebraMap C L)]
+  let C₀ := integralClosure C N
+  let : Algebra C C₀ := by exact C₀.algebra'
+  let : Algebra C N := ((algebraMap L N).comp (algebraMap C L)).toAlgebra
+  let : Algebra A C₀ := ((algebraMap C C₀).comp (algebraMap A C)).toAlgebra
+  have : IsScalarTower A C₀ N := by scalar_tower
+  sorry
+
+
+
+
+#exit
 
 section
 
