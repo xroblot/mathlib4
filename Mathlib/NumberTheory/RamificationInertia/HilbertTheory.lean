@@ -498,11 +498,59 @@ variable [IsFractionRing B L] (𝓞F : Type*) [CommRing 𝓞F] [IsIntegrallyClos
   [Algebra 𝓞F B] [Algebra.IsIntegral 𝓞F B] [Algebra 𝓞F L]
   [IsScalarTower 𝓞F F L] [IsScalarTower 𝓞F B L] (𝓟F : Ideal 𝓞F) [P.LiesOver 𝓟F]
 
+set_option maxHeartbeats 1000000 in
 set_option backward.isDefEq.respectTransparency false in
 theorem isDecompositionField_inf [FaithfulSMul B L] [MulSemiringAction Gal(L/F) B]
     [MulSemiringAction Gal(F/K) 𝓞F] [SMulDistribClass Gal(L/F) B L]
     [hD : IsDecompositionField K L P D] [IsGalois K F] :
     IsDecompositionField K F 𝓟F (D ⊓ F : IntermediateField K L) := by
+  let H : Subgroup Gal(L/K) := stabilizer Gal(L/K) P ⊔ F.fixingSubgroup
+  have : IsGaloisGroup F.fixingSubgroup F L := sorry
+  have : IsGaloisGroup H ↥(D ⊓ F) L := by
+    rw [IsGaloisGroup.subgroup_iff, ← fixedField, IsGalois.fixedField_eq_iff_fixingSubgroup_eq,
+      fixingSubgroup_inf, (isDecompositionField_iff_fixingSubgroup K L P).mp hD]
+  let e : stabilizer Gal(F/K) 𝓟F ≃* Subgroup.map (QuotientGroup.mk' F.fixingSubgroup) H := by
+    unfold H
+    let f := QuotientGroup.quotientInfEquivProdNormalQuotient (stabilizer Gal(L/K) P)
+      F.fixingSubgroup
+    refine MulEquiv.trans ?_ (MulEquiv.trans f ?_)
+    · refine MulEquiv.symm ?_
+      let g : stabilizer Gal(L/K) P →* stabilizer Gal(F/K) 𝓟F := by
+        let φ : Gal(L/K) →* Gal(F/K) := AlgEquiv.restrictNormalHom F
+        let ψ := (φ.restrict (stabilizer Gal(L/K) P)).codRestrict (stabilizer Gal(F/K) 𝓟F) ?_
+        sorry
+        · intro ⟨g, hg⟩
+          refine mem_stabilizer_iff.mpr ?_
+          simp [φ]
+          rw [mem_stabilizer_iff] at hg
+          have := congr_arg (Ideal.comap (algebraMap 𝓞F B)) hg
+          rw [← under_def, ← under_def, ← over_def P 𝓟F] at this
+          convert this
+          rw [← compHom_smul_def]
+          apply?
+
+#exit
+          rw [pointwise_smul_eq_comap] at this
+          rw [MulSemiringAction.toRingAut_apply] at this
+          have t₀ := Ideal.comap_comap (I := P) (f := algebraMap 𝓞F B)
+            (g := (MulSemiringAction.toRingEquiv Gal(L/K) B g).symm)
+          erw [t₀] at this
+
+          have := under_def 𝓞F P
+
+      refine QuotientGroup.liftEquiv _ (φ := g) ?_ ?_
+
+      sorry
+    · sorry
+  have := IsGaloisGroup.quotientMap Gal(L/K) K L F F.fixingSubgroup (D ⊓ F) H inf_le_right
+  refine (isDecompositionField_iff _ _ _ _).mpr <| IsGaloisGroup.of_mulEquiv (hG := this) e ?_
+
+
+
+
+
+#exit
+
   let f : Gal(fixedField F.fixingSubgroup/K) ≃* Gal(F/K) := by
     have := IsGalois.fixedField_fixingSubgroup F
     refine AlgEquiv.autCongr <| equivOfEq <| IsGalois.fixedField_fixingSubgroup F
@@ -519,10 +567,7 @@ theorem isDecompositionField_inf [FaithfulSMul B L] [MulSemiringAction Gal(L/F) 
     exact IsGalois.fixedField_fixingSubgroup F
 
 
-  let H : Subgroup Gal(L/K) := stabilizer Gal(L/K) P ⊔ F.fixingSubgroup
-  have : IsGaloisGroup H ↥(D ⊓ F) L := by
-    rw [IsGaloisGroup.subgroup_iff, ← fixedField, IsGalois.fixedField_eq_iff_fixingSubgroup_eq,
-      fixingSubgroup_inf, (isDecompositionField_iff_fixingSubgroup K L P).mp hD]
+
   let e := IsGalois.normalAutEquivQuotient F.fixingSubgroup
   let A := e.mapSubgroup H
   rw [isDecompositionField_iff]
