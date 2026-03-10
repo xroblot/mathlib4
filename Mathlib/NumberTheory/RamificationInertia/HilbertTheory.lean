@@ -9,6 +9,8 @@ public import Mathlib.FieldTheory.Finite.GaloisField
 public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients
 
+public import Mathlib.Sandbox
+
 /-!
 
 # Decomposition and Inertia fields
@@ -506,9 +508,13 @@ theorem isDecompositionField_inf [FaithfulSMul B L] [MulSemiringAction Gal(L/F) 
     IsDecompositionField K F 𝓟F (D ⊓ F : IntermediateField K L) := by
   let H : Subgroup Gal(L/K) := stabilizer Gal(L/K) P ⊔ F.fixingSubgroup
   have : IsGaloisGroup F.fixingSubgroup F L := sorry
+  have : SMulDistribClass Gal(F/K) 𝓞F F := sorry
   have : IsGaloisGroup H ↥(D ⊓ F) L := by
     rw [IsGaloisGroup.subgroup_iff, ← fixedField, IsGalois.fixedField_eq_iff_fixingSubgroup_eq,
       fixingSubgroup_inf, (isDecompositionField_iff_fixingSubgroup K L P).mp hD]
+  have := IsGaloisGroup.quotientMap Gal(L/K) K L F F.fixingSubgroup (D ⊓ F) H inf_le_right
+  rw [isDecompositionField_iff]
+
   let e : stabilizer Gal(F/K) 𝓟F ≃* Subgroup.map (QuotientGroup.mk' F.fixingSubgroup) H := by
     unfold H
     let f := QuotientGroup.quotientInfEquivProdNormalQuotient (stabilizer Gal(L/K) P)
@@ -518,16 +524,24 @@ theorem isDecompositionField_inf [FaithfulSMul B L] [MulSemiringAction Gal(L/F) 
       let g : stabilizer Gal(L/K) P →* stabilizer Gal(F/K) 𝓟F := by
         let φ : Gal(L/K) →* Gal(F/K) := AlgEquiv.restrictNormalHom F
         let ψ := (φ.restrict (stabilizer Gal(L/K) P)).codRestrict (stabilizer Gal(F/K) 𝓟F) ?_
-        sorry
+        · exact ψ
         · intro ⟨g, hg⟩
           refine mem_stabilizer_iff.mpr ?_
           simp [φ]
           rw [mem_stabilizer_iff] at hg
           have := congr_arg (Ideal.comap (algebraMap 𝓞F B)) hg
-          rw [← under_def, ← under_def, ← over_def P 𝓟F] at this
-          convert this
-          rw [← compHom_smul_def]
-          apply?
+          rw [Ideal.comap_smul_eq_restrictNormalHom_smul_comap F] at this
+          rwa [← under_def, ← over_def P 𝓟F] at this
+      refine QuotientGroup.liftEquiv _ (φ := g) ?_ ?_
+      · intro ⟨g, hg⟩
+        refine ⟨⟨?_, ?_⟩, ?_⟩
+
+
+
+
+        sorry
+      · ext
+        rw [MonoidHom.ker_codRestrict, MonoidHom.ker_restrict, restrictNormalHom_ker]
 
 #exit
           rw [pointwise_smul_eq_comap] at this
