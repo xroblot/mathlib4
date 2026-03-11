@@ -452,6 +452,10 @@ instance : SMul (G ⧸ N) F where
 lemma coe_quotient_smul (g : G) (x : F) :
     ((g : G ⧸ N) • x : F) = g • (x : L) := rfl
 
+theorem toto (g : G ⧸ N) (x : F) :
+    (g • x : F) = g.out • (x : L) := by
+  rw [← coe_quotient_smul G K L F N, QuotientGroup.out_eq']
+
 set_option backward.isDefEq.respectTransparency false in
 instance : MulSemiringAction (G ⧸ N) F where
   one_smul _ := Subtype.ext <| by rw [← QuotientGroup.mk_one, coe_quotient_smul, one_smul]

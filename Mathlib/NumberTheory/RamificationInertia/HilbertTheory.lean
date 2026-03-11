@@ -482,7 +482,7 @@ Let `E` be the inertia field of `P` in `L/K` and let `F` be a subextension of `L
 Then, the inertia field of `P` in `L/F` is the compositum `EF`.
 -/
 instance isInertiaField_sup [FaithfulSMul B L] [MulSemiringAction Gal(L/F) B]
-    [SMulDistribClass Gal(L/F) B L] [hE : IsInertiaField K L P E]  :
+    [SMulDistribClass Gal(L/F) B L] [hE : IsInertiaField K L P E] :
     IsInertiaField F L P (E ⊔ F : IntermediateField K L) := by
   let H : Subgroup Gal(L/K) := inertia Gal(L/K) P ⊓ F.fixingSubgroup
   have : IsGaloisGroup H ↥(E ⊔ F) L := by
@@ -500,104 +500,66 @@ variable [IsFractionRing B L] (𝓞F : Type*) [CommRing 𝓞F] [IsIntegrallyClos
   [Algebra 𝓞F B] [Algebra.IsIntegral 𝓞F B] [Algebra 𝓞F L]
   [IsScalarTower 𝓞F F L] [IsScalarTower 𝓞F B L] (𝓟F : Ideal 𝓞F) [P.LiesOver 𝓟F]
 
-set_option maxHeartbeats 1000000 in
 set_option backward.isDefEq.respectTransparency false in
-theorem isDecompositionField_inf [FaithfulSMul B L] [MulSemiringAction Gal(L/F) B]
-    [MulSemiringAction Gal(F/K) 𝓞F] [SMulDistribClass Gal(L/F) B L]
-    [hD : IsDecompositionField K L P D] [IsGalois K F] :
+/--
+Let `D` be the decomposition field of `P` in `L/K` and let `F` be a subextension of `L/K`.
+Then, the decomposition field of `𝓟F` in `F/K` is `D ⊓ F` where `𝓟F` is the prime of `F`
+below `P`.
+-/
+theorem isDecompositionField_inf [MulSemiringAction Gal(L/F) B] [SMulDistribClass Gal(L/F) B L]
+    [hD : IsDecompositionField K L P D] [IsFractionRing 𝓞F F] [MulSemiringAction Gal(F/K) 𝓞F]
+    [SMulDistribClass Gal(F/K) 𝓞F F] [P.IsPrime] [IsGalois K F] :
     IsDecompositionField K F 𝓟F (D ⊓ F : IntermediateField K L) := by
   let H : Subgroup Gal(L/K) := stabilizer Gal(L/K) P ⊔ F.fixingSubgroup
-  have : IsGaloisGroup F.fixingSubgroup F L := sorry
-  have : SMulDistribClass Gal(F/K) 𝓞F F := sorry
+  have : IsGaloisGroup F.fixingSubgroup F L := IsGaloisGroup.intermediateField _ _ _ _
   have : IsGaloisGroup H ↥(D ⊓ F) L := by
     rw [IsGaloisGroup.subgroup_iff, ← fixedField, IsGalois.fixedField_eq_iff_fixingSubgroup_eq,
       fixingSubgroup_inf, (isDecompositionField_iff_fixingSubgroup K L P).mp hD]
-  have := IsGaloisGroup.quotientMap Gal(L/K) K L F F.fixingSubgroup (D ⊓ F) H inf_le_right
-  rw [isDecompositionField_iff]
-
-  let e : stabilizer Gal(F/K) 𝓟F ≃* Subgroup.map (QuotientGroup.mk' F.fixingSubgroup) H := by
-    unfold H
-    let f := QuotientGroup.quotientInfEquivProdNormalQuotient (stabilizer Gal(L/K) P)
-      F.fixingSubgroup
-    refine MulEquiv.trans ?_ (MulEquiv.trans f ?_)
-    · refine MulEquiv.symm ?_
-      let g : stabilizer Gal(L/K) P →* stabilizer Gal(F/K) 𝓟F := by
-        let φ : Gal(L/K) →* Gal(F/K) := AlgEquiv.restrictNormalHom F
-        let ψ := (φ.restrict (stabilizer Gal(L/K) P)).codRestrict (stabilizer Gal(F/K) 𝓟F) ?_
-        · exact ψ
-        · intro ⟨g, hg⟩
-          refine mem_stabilizer_iff.mpr ?_
-          simp [φ]
-          rw [mem_stabilizer_iff] at hg
-          have := congr_arg (Ideal.comap (algebraMap 𝓞F B)) hg
-          rw [Ideal.comap_smul_eq_restrictNormalHom_smul_comap F] at this
-          rwa [← under_def, ← over_def P 𝓟F] at this
-      refine QuotientGroup.liftEquiv _ (φ := g) ?_ ?_
-      · intro ⟨g, hg⟩
-        refine ⟨⟨?_, ?_⟩, ?_⟩
-
-
-
-
-        sorry
-      · ext
-        rw [MonoidHom.ker_codRestrict, MonoidHom.ker_restrict, restrictNormalHom_ker]
-
-#exit
-          rw [pointwise_smul_eq_comap] at this
-          rw [MulSemiringAction.toRingAut_apply] at this
-          have t₀ := Ideal.comap_comap (I := P) (f := algebraMap 𝓞F B)
-            (g := (MulSemiringAction.toRingEquiv Gal(L/K) B g).symm)
-          erw [t₀] at this
-
-          have := under_def 𝓞F P
-
-      refine QuotientGroup.liftEquiv _ (φ := g) ?_ ?_
-
-      sorry
-    · sorry
+  let e : stabilizer Gal(F/K) 𝓟F ≃* Subgroup.map (QuotientGroup.mk' F.fixingSubgroup) H :=
+      ((QuotientGroup.liftEquiv _ (Ideal.stabilizerMapOfLiesOver_surjective K L F P 𝓟F)
+        (by rw [Ideal.stabilizerMapOfLiesOver_ker])).symm).trans
+      ((QuotientGroup.quotientInfEquivProdNormalQuotient (stabilizer Gal(L/K) P)
+        F.fixingSubgroup).trans (QuotientGroup.subgroupOfEquivMapQuotient _ _))
   have := IsGaloisGroup.quotientMap Gal(L/K) K L F F.fixingSubgroup (D ⊓ F) H inf_le_right
   refine (isDecompositionField_iff _ _ _ _).mpr <| IsGaloisGroup.of_mulEquiv (hG := this) e ?_
+  intro g x
+  obtain ⟨g, rfl⟩ := Ideal.stabilizerMapOfLiesOver_surjective K L F P 𝓟F g
+  rw [MulEquiv.trans_apply, MulEquiv.trans_apply, QuotientGroup.liftEquiv_symm_apply_map,
+    QuotientGroup.quotientInfEquivProdNormalQuotient_coe_apply, subgroup_smul_def,
+    QuotientGroup.subgroupOfEquivMapQuotient_coe_apply]
+  simp [Subtype.ext_iff, subgroup_smul_def, AlgEquiv.restrictNormalHom_apply]
 
-
-
-
-
-#exit
-
-  let f : Gal(fixedField F.fixingSubgroup/K) ≃* Gal(F/K) := by
-    have := IsGalois.fixedField_fixingSubgroup F
-    refine AlgEquiv.autCongr <| equivOfEq <| IsGalois.fixedField_fixingSubgroup F
-  let e := (IsGalois.normalAutEquivQuotient F.fixingSubgroup).trans f
-  let g := e.symm.subgroupMap (stabilizer Gal(F/K) 𝓟F)
-  have := IsGaloisGroup.of_mulEquiv g ?_
-
-  refine (isDecompositionField_iff K (↥F) 𝓟F ↥(D ⊓ F)).mpr ?_
-  refine IsGaloisGroup.of_mulEquiv (e.symm.subgroupMap _) ?_
-
-
-#exit
-  have : fixedField F.fixingSubgroup = F := by
-    exact IsGalois.fixedField_fixingSubgroup F
-
-
-
-  let e := IsGalois.normalAutEquivQuotient F.fixingSubgroup
-  let A := e.mapSubgroup H
-  rw [isDecompositionField_iff]
-
-  let e : H ≃* stabilizer Gal(F/K) 𝓟F := sorry
-  have := IsGaloisGroup.of_mulEquiv (A := ↥(D ⊓ F)) (B := L) (G := H)
-    (H := (stabilizer Gal(↥F/K) 𝓟F))
-
-  let e : stabilizer Gal(L/F) P ≃* H := by
-    refine (MulEquiv.trans ?_ ((stabilizer F.fixingSubgroup P).equivMapOfInjective _
-      F.fixingSubgroup.subtype_injective)).trans <| MulEquiv.subgroupCongr <| by ext; simp [H]
-    refine stabilizerEquiv P F.fixingSubgroupEquiv.symm fun σ x ↦ ?_
-    apply FaithfulSMul.algebraMap_injective B L
-    simp [algebraMap.smul', fixingSubgroupEquiv_symm_apply_apply]
-  exact (isDecompositionField_iff _ _ P _).mpr <| IsGaloisGroup.of_mulEquiv e fun g x ↦ rfl
-  sorry
+set_option backward.isDefEq.respectTransparency false in
+/--
+Let `E` be the inertia field of `P` in `L/K` and let `F` be a subextension of `L/K`.
+Then, the inertia field of `𝓟F` in `F/K` is `E ⊓ F` where `𝓟F` is the prime of `F`
+below `P`.
+-/
+theorem isInertiaField_inf [IsIntegrallyClosed A] [Algebra A K] [IsFractionRing A K]
+    [Algebra A L] [Algebra.IsIntegral A B] [Algebra A 𝓞F] [IsScalarTower A 𝓞F B]
+    [IsScalarTower A K L] [IsScalarTower A B L]
+    [MulSemiringAction Gal(L/F) B] [SMulDistribClass Gal(L/F) B L]
+    [hE : IsInertiaField K L P E] [IsFractionRing 𝓞F F] [MulSemiringAction Gal(F/K) 𝓞F]
+    [SMulDistribClass Gal(F/K) 𝓞F F] [P.IsMaximal] [IsGalois K F] (p : Ideal A) [P.LiesOver p] :
+    IsInertiaField K F 𝓟F (E ⊓ F : IntermediateField K L) := by
+  let H : Subgroup Gal(L/K) := inertia Gal(L/K) P ⊔ F.fixingSubgroup
+  have : IsGaloisGroup F.fixingSubgroup F L := IsGaloisGroup.intermediateField _ _ _ _
+  have : IsGaloisGroup H ↥(E ⊓ F) L := by
+    rw [IsGaloisGroup.subgroup_iff, ← fixedField, IsGalois.fixedField_eq_iff_fixingSubgroup_eq,
+      fixingSubgroup_inf, (isInertiaField_iff_fixingSubgroup K L P).mp hE]
+  let e : inertia Gal(F/K) 𝓟F ≃* Subgroup.map (QuotientGroup.mk' F.fixingSubgroup) H :=
+      ((QuotientGroup.liftEquiv _ (Ideal.inertiaMapOfLiesOver_surjective K L F P 𝓟F p)
+        (by rw [Ideal.inertiaMapOfLiesOver_ker])).symm).trans
+      ((QuotientGroup.quotientInfEquivProdNormalQuotient (inertia Gal(L/K) P)
+        F.fixingSubgroup).trans (QuotientGroup.subgroupOfEquivMapQuotient _ _))
+  have := IsGaloisGroup.quotientMap Gal(L/K) K L F F.fixingSubgroup (E ⊓ F) H inf_le_right
+  refine (isInertiaField_iff _ _ _ _).mpr <| IsGaloisGroup.of_mulEquiv (hG := this) e ?_
+  intro g x
+  obtain ⟨g, rfl⟩ := Ideal.inertiaMapOfLiesOver_surjective K L F P 𝓟F p g
+  rw [MulEquiv.trans_apply, MulEquiv.trans_apply, QuotientGroup.liftEquiv_symm_apply_map,
+    QuotientGroup.quotientInfEquivProdNormalQuotient_coe_apply, subgroup_smul_def,
+    QuotientGroup.subgroupOfEquivMapQuotient_coe_apply]
+  simp [Subtype.ext_iff, subgroup_smul_def, AlgEquiv.restrictNormalHom_apply]
 
 set_option backward.isDefEq.respectTransparency false in
 /--
