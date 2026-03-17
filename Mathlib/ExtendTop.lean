@@ -23,9 +23,11 @@ noncomputable def extendTopEquiv : F ≃ₐ[K] (F.extendTop M) := F.equivMap (Al
 
 namespace extendTop
 
+set_option backward.isDefEq.respectTransparency false
+
 noncomputable instance algebra : Algebra F (F.extendTop M) where
   smul s x := by
-    have y := mem_map.mp x.prop
+    have y := (mem_map _).mp x.prop
     refine ⟨s • x, ?_⟩
     refine ⟨s • y.choose, ?_, ?_⟩
     · rw [Algebra.smul_def]
@@ -98,11 +100,9 @@ instance isFractionRing [IsFractionRing S F] :
 instance isIntegralClosure [Algebra R F] [Algebra R M] [IsScalarTower R F M]
     [IsIntegralClosure S R F] :
     IsIntegralClosure S R (F.extendTop M) := by
-  refine .of_algEquiv S (F.extendTopEquiv' M R) ?_
-  ext
-  simp only [AlgEquiv.toRingEquiv_eq_coe, RingEquiv.toRingHom_eq_coe,
-    AlgEquiv.toRingEquiv_toRingHom, RingHom.coe_comp, RingHom.coe_coe, Function.comp_apply,
-    extendTopEquiv'_apply_coe]
+  refine .of_algEquiv S (F.extendTopEquiv' M R) fun x ↦ ?_
+  rw [@Subtype.ext_iff]
+  simp only [extendTopEquiv'_apply_coe]
   rw [← IsScalarTower.algebraMap_apply]
   rfl
 

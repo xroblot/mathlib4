@@ -482,6 +482,7 @@ theorem Int.ideal_span_absNorm_eq_self (J : Ideal ℤ) :
   simp
 
 -- Lifted from #30666
+set_option backward.isDefEq.respectTransparency false in
 @[simp]
 theorem Int.prime_absNorm (J : Ideal ℤ) :
     (absNorm J).Prime ↔ Prime J := by
