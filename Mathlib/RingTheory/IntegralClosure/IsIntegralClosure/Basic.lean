@@ -43,7 +43,6 @@ theorem IsIntegral.isUnit [Field R] [Ring S] [IsDomain S] [Algebra R S] {x : S}
   (FiniteDimensional.isUnit R (K := adjoin R {x})
     (x := ⟨x, subset_adjoin rfl⟩) <| mt Subtype.ext_iff.mp h0).map (adjoin R {x}).val
 
-set_option backward.isDefEq.respectTransparency false in
 /-- A commutative domain that is an integral algebra over a field is a field. -/
 theorem isField_of_isIntegral_of_isField' [CommRing R] [CommRing S] [IsDomain S]
     [Algebra R S] [Algebra.IsIntegral R S] (hR : IsField R) : IsField S where
@@ -429,20 +428,13 @@ theorem of_mulEquiv {R' : Type*} [CommRing R'] [Algebra R' B] (e : R' ≃+* R)
   · simp_rw [RingEquiv.isIntegral_iff e h]
     exact IsIntegralClosure.isIntegral_iff
 
-theorem of_algEquiv {B' : Type*} [CommRing B'] [Algebra R B'] [Algebra A B'] (e : B ≃ₐ[R] B')
-    (h : algebraMap A B' = e.toRingHom.comp (algebraMap A B)) :
-    IsIntegralClosure A R B' := by
-  refine { algebraMap_injective := ?_, isIntegral_iff := ?_ }
-  · rw [h]
-    simp only [RingEquiv.toRingHom_eq_coe, RingHom.coe_comp, RingHom.coe_coe,
-      EmbeddingLike.comp_injective]
-    exact IsIntegralClosure.algebraMap_injective A R B
-  · intro x
-    have := IsIntegral.map_iff (f := e.symm) (b := x)  (R := R)
-    rw [← this, IsIntegralClosure.isIntegral_iff (A := A) (R := R)]
-    simp only [h, AlgEquiv.toRingEquiv_eq_coe, RingEquiv.toRingHom_eq_coe,
-      AlgEquiv.toRingEquiv_toRingHom, RingHom.coe_comp, RingHom.coe_coe, Function.comp_apply,
-      AlgEquiv.eq_symm_apply]
+theorem of_algEquiv {S : Type*} [CommRing S] [Algebra A S] [Algebra R S]
+    (f : B ≃ₐ[R] S) (h : ∀ x, algebraMap A S x = f (algebraMap A B x)) :
+    IsIntegralClosure A R S where
+  algebraMap_injective :=
+    funext_iff.2 h ▸ f.injective.comp (IsIntegralClosure.algebraMap_injective A R B)
+  isIntegral_iff {x} := by simp [← isIntegral_algEquiv f.symm,
+    IsIntegralClosure.isIntegral_iff (A := A), h, ← f.symm.injective.eq_iff]
 
 section lift
 

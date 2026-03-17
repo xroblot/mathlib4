@@ -216,9 +216,7 @@ namespace IsDedekindDomain
 
 variable [IsDedekindDomain S]
 
-
-
-theorem ramificationIdx_eq_normalizedFactors_count [DecidableEq (Ideal S)]
+theorem ramificationIdx_eq_normalizedFactors_count
     (hp0 : map f p ≠ ⊥) (hP : P.IsPrime)
     (hP0 : P ≠ ⊥) : ramificationIdx f p P = (normalizedFactors (map f p)).count P := by
   have hPirr := (Ideal.prime_of_isPrime hP0 hP).irreducible
@@ -239,7 +237,7 @@ theorem ramificationIdx_eq_multiplicity (hp : map f p ≠ ⊥) (hP : P.IsPrime) 
     ← UniqueFactorizationMonoid.emultiplicity_eq_count_normalizedFactors _ hp, normalize_eq]
   exact irreducible_iff_prime.mpr <| prime_of_isPrime hP₂ hP
 
-theorem ramificationIdx_eq_factors_count [DecidableEq (Ideal S)]
+theorem ramificationIdx_eq_factors_count
     (hp0 : map f p ≠ ⊥) (hP : P.IsPrime) (hP0 : P ≠ ⊥) :
     ramificationIdx f p P = (factors (map f p)).count P := by
   rw [IsDedekindDomain.ramificationIdx_eq_normalizedFactors_count hp0 hP hP0,
@@ -294,6 +292,47 @@ theorem ramificationIdx_le_ramificationIdx [IsDomain R] [Algebra R S] [Module.Is
       contrapose! this
       exact ramificationIdx_eq_zero (by rwa [not_bddAbove_iff] at this)
     exact ramificationIdx_ne_zero_of_liesOver _ hp
+
+theorem emultiplicity_map_eq_zero_of_ne [IsDedekindDomain R] [Algebra R S] {v : Ideal R}
+    {w : Ideal S} {p : Ideal R} (hv : Irreducible v) (hp : Prime p) (hvp : v ≠ p) [w.LiesOver v] :
+    emultiplicity w (p.map (algebraMap R S)) = 0 := by
+  refine emultiplicity_eq_zero.2 fun h ↦ hvp.symm ?_
+  rw [Ideal.dvd_iff_le, Ideal.map_le_iff_le_comap, ← under_def, ← Ideal.over_def w v] at h
+  exact ((isPrime_of_prime hp).isMaximal hp.ne_zero).eq_of_le (isPrime_of_prime hv.prime).ne_top h
+
+/-- Use the more general result `emultiplicity_map_eq_ramificationIdx_mul`.
+This is a helper lemma. -/
+private theorem emultiplicity_map_eq_ramificationIdx_mul_of_prime [IsDedekindDomain R] [Algebra R S]
+    [FaithfulSMul R S] {v : Ideal R} {w : Ideal S} {p : Ideal R}
+    (hv : Irreducible v) (hp : Prime p) (hw : Irreducible w) (hw_bot : w ≠ ⊥)
+    [w.LiesOver v] : emultiplicity w (p.map (algebraMap R S)) =
+      v.ramificationIdx (algebraMap R S) w * emultiplicity v p := by
+  have hp_bot : p.map (algebraMap R S) ≠ ⊥ := map_ne_bot_of_ne_bot hp.ne_zero
+  by_cases hvp : v = p
+  · simp [hvp, (FiniteMultiplicity.of_prime_left hp hp.ne_zero).emultiplicity_self,
+      ramificationIdx_eq_normalizedFactors_count hp_bot (isPrime_of_prime hw.prime) hw_bot,
+      emultiplicity_eq_count_normalizedFactors hw hp_bot]
+  · rw [emultiplicity_eq_zero_of_irreducible_ne hv hp.irreducible hvp, mul_zero,
+      emultiplicity_map_eq_zero_of_ne hv hp hvp]
+
+/-- If `v` is an irreducible ideal of `R`, `w` is an irreducible ideal of `S` lying over `v`, and
+`I` is an ideal of `R`, then the multiplicity of `w` in `I.map (algebraMap R S)` is given by
+the multiplicity of `v` in `I` multiplied by the ramification index of `w` over `v`. -/
+theorem emultiplicity_map_eq_ramificationIdx_mul [IsDedekindDomain R] [Algebra R S]
+    [FaithfulSMul R S] {v : Ideal R} {w : Ideal S} {I : Ideal R} (h : I ≠ ⊥)
+    (hv : Irreducible v) (hw : Irreducible w) (hw_bot : w ≠ ⊥) [w.LiesOver v] :
+    emultiplicity w (I.map (algebraMap R S)) =
+      v.ramificationIdx (algebraMap R S) w * emultiplicity v I := by
+  induction I using induction_on_prime with
+  | h₁ => aesop
+  | h₂ I hI =>
+    obtain rfl : I = ⊤ := by simpa using hI
+    simp_rw [Ideal.map_top, emultiplicity_eq_count_normalizedFactors hw top_ne_bot,
+      emultiplicity_eq_count_normalizedFactors hv h, ← Ideal.one_eq_top, normalizedFactors_one]
+    simp
+  | h₃ I p hI hp IH =>
+    rw [Ideal.map_mul, emultiplicity_mul hw.prime, emultiplicity_mul hv.prime, IH hI, mul_add,
+      emultiplicity_map_eq_ramificationIdx_mul_of_prime hv hp hw hw_bot]
 
 end IsDedekindDomain
 
@@ -657,7 +696,6 @@ noncomputable def powQuotSuccInclusion (i : ℕ) :
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
-set_option backward.isDefEq.respectTransparency false in
 theorem powQuotSuccInclusion_injective (i : ℕ) :
     Function.Injective (powQuotSuccInclusion p P i) := by
   rw [← LinearMap.ker_eq_bot, LinearMap.ker_eq_bot']
@@ -665,7 +703,6 @@ theorem powQuotSuccInclusion_injective (i : ℕ) :
   rw [Subtype.ext_iff] at hx0 ⊢
   rwa [powQuotSuccInclusion_apply_coe] at hx0
 
-set_option backward.isDefEq.respectTransparency false in
 /-- `S ⧸ P` embeds into the quotient by `P^(i+1) ⧸ P^e` as a subspace of `P^i ⧸ P^e`.
 See `quotientToQuotientRangePowQuotSucc` for this as a linear map,
 and `quotientRangePowQuotSuccInclusionEquiv` for this as a linear equivalence.
@@ -682,7 +719,6 @@ noncomputable def quotientToQuotientRangePowQuotSuccAux {i : ℕ} {a : S} (a_mem
     rw [powQuotSuccInclusion_apply_coe, Subtype.coe_mk, Submodule.coe_sub, Subtype.coe_mk,
       Subtype.coe_mk, map_mul, map_sub, mul_sub]
 
-set_option backward.isDefEq.respectTransparency false in
 theorem quotientToQuotientRangePowQuotSuccAux_mk {i : ℕ} {a : S} (a_mem : a ∈ P ^ i) (x : S) :
     quotientToQuotientRangePowQuotSuccAux p P a_mem (Submodule.Quotient.mk x) =
       Submodule.Quotient.mk ⟨_, Ideal.mem_map_of_mem _ (Ideal.mul_mem_right x _ a_mem)⟩ := by
@@ -691,7 +727,6 @@ theorem quotientToQuotientRangePowQuotSuccAux_mk {i : ℕ} {a : S} (a_mem : a �
 section
 variable [hfp : NeZero (ramificationIdx (algebraMap R S) p P)]
 
-set_option backward.isDefEq.respectTransparency false in
 /-- `S ⧸ P` embeds into the quotient by `P^(i+1) ⧸ P^e` as a subspace of `P^i ⧸ P^e`. -/
 noncomputable def quotientToQuotientRangePowQuotSucc
     {i : ℕ} {a : S} (a_mem : a ∈ P ^ i) :
@@ -712,13 +747,11 @@ noncomputable def quotientToQuotientRangePowQuotSucc
       Algebra.smul_def, Quotient.algebraMap_quotient_pow_ramificationIdx]
     ring
 
-set_option backward.isDefEq.respectTransparency false in
 theorem quotientToQuotientRangePowQuotSucc_mk {i : ℕ} {a : S} (a_mem : a ∈ P ^ i) (x : S) :
     quotientToQuotientRangePowQuotSucc p P a_mem (Submodule.Quotient.mk x) =
       Submodule.Quotient.mk ⟨_, Ideal.mem_map_of_mem _ (Ideal.mul_mem_right x _ a_mem)⟩ :=
   quotientToQuotientRangePowQuotSuccAux_mk p P a_mem x
 
-set_option backward.isDefEq.respectTransparency false in
 theorem quotientToQuotientRangePowQuotSucc_injective [IsDedekindDomain S] [P.IsPrime]
     {i : ℕ} (hi : i < e) {a : S} (a_mem : a ∈ P ^ i) (a_notMem : a ∉ P ^ (i + 1)) :
     Function.Injective (quotientToQuotientRangePowQuotSucc p P a_mem) := fun x =>
@@ -738,7 +771,6 @@ theorem quotientToQuotientRangePowQuotSucc_injective [IsDedekindDomain S] [P.IsP
               ((Submodule.sub_mem_iff_right _ hz).mp (Pe_le_Pi1 h))).resolve_left
           a_notMem
 
-set_option backward.isDefEq.respectTransparency false in
 theorem quotientToQuotientRangePowQuotSucc_surjective [IsDedekindDomain S]
     (hP0 : P ≠ ⊥) [hP : P.IsPrime] {i : ℕ} (hi : i < e) {a : S} (a_mem : a ∈ P ^ i)
     (a_notMem : a ∉ P ^ (i + 1)) :
@@ -768,7 +800,6 @@ theorem quotientToQuotientRangePowQuotSucc_surjective [IsDedekindDomain S]
     have := (P ^ (i + 1)).zero_mem
     contradiction
 
-set_option backward.isDefEq.respectTransparency false in
 /-- Quotienting `P^i / P^e` by its subspace `P^(i+1) ⧸ P^e` is
 `R ⧸ p`-linearly isomorphic to `S ⧸ P`. -/
 noncomputable def quotientRangePowQuotSuccInclusionEquiv [IsDedekindDomain S]
@@ -783,7 +814,6 @@ noncomputable def quotientRangePowQuotSuccInclusionEquiv [IsDedekindDomain S]
   · exact quotientToQuotientRangePowQuotSucc_injective p P hi a_mem a_notMem
   · exact quotientToQuotientRangePowQuotSucc_surjective p P hP hi a_mem a_notMem
 
-set_option backward.isDefEq.respectTransparency false in
 /-- Since the inclusion `(P^(i + 1) / P^e) ⊂ (P^i / P^e)` has a kernel isomorphic to `P / S`,
 `[P^i / P^e : R / p] = [P^(i+1) / P^e : R / p] + [P / S : R / p]` -/
 theorem rank_pow_quot_aux [IsDedekindDomain S] [p.IsMaximal] [P.IsPrime] (hP0 : P ≠ ⊥)
@@ -1062,13 +1092,16 @@ theorem ramificationIdx_algebra_tower [IsDedekindDomain S] [IsDedekindDomain T]
   exact ramificationIdx_tower hg0 hfg hg
 
 theorem ramificationIdx_algebra_tower' [IsDedekindDomain S] [IsDedekindDomain T] [IsDomain R]
-    [Module.IsTorsionFree R S] [Module.IsTorsionFree S T] [Module.IsTorsionFree R T]
-    (p : Ideal R) (P : Ideal S) (Q : Ideal T) [P.IsPrime] [Q.IsPrime] [Q.LiesOver P]
-    [P.LiesOver p] :
+    [Module.IsTorsionFree R S] [Module.IsTorsionFree S T] (p : Ideal R) (P : Ideal S) (Q : Ideal T)
+    [Q.IsPrime] [Q.LiesOver P] [P.LiesOver p] :
     ramificationIdx (algebraMap R T) p Q =
       ramificationIdx (algebraMap R S) p P * ramificationIdx (algebraMap S T) P Q := by
-  by_cases hp : p = ⊥
-  · rw [hp, ramificationIdx_bot, ramificationIdx_bot, zero_mul]
+  obtain rfl | hp := eq_or_ne p ⊥
+  · simp
+  have : P.IsPrime := Ideal.over_def Q P ▸ Ideal.IsPrime.under S Q
+  have : Module.IsTorsionFree R T := by
+    refine Module.IsTorsionFree.of_smul_eq_zero fun r m h ↦ ?_
+    rwa [algebra_compatible_smul S, smul_eq_zero, FaithfulSMul.algebraMap_eq_zero_iff] at h
   have hP : P ≠ ⊥ := ne_bot_of_liesOver_of_ne_bot hp _
   exact ramificationIdx_algebra_tower (map_ne_bot_of_ne_bot hP) (map_ne_bot_of_ne_bot hp)
     <| map_le_iff_le_comap.mpr <| le_of_eq <| over_def Q P
