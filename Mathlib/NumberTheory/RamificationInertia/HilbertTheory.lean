@@ -813,6 +813,12 @@ theorem NumberField.not_dvd_discr_finsetSup_of_not_dvd_discr (ι K : Type*) [Fie
         not_dvd_discr_iff_forall_liesOver _ (𝓞 ↥(F₁ ⊔ F₂)) (Nat.prime_iff_prime_int.mp hp)]
       intro P hP₁ hP₂
       have hP : P ≠ ⊥ := IsMaximal.ne_bot_of_isIntegral_int P
+      have : Module.Finite ℤ (𝓞 ↥(F₁ ⊔ F₂)) := by
+        exact Module.IsNoetherian.finite ℤ (𝓞 ↥(F₁ ⊔ F₂))
+      have : Algebra.FiniteType ℤ (𝓞 ↥(F₁ ⊔ F₂)) := by
+        exact Module.Finite.finiteType (𝓞 ↥(F₁ ⊔ F₂))
+      have : Algebra.EssFiniteType ℤ (𝓞 ↥(F₁ ⊔ F₂)) := by
+        exact Algebra.EssFiniteType.of_finiteType ℤ (𝓞 ↥(F₁ ⊔ F₂))
       refine (Algebra.isUnramifiedAt_iff_of_isDedekindDomain hP).mpr ?_
       let p := under ℤ P
       have hp' : p ≠ ⊥ := under_ne_bot ℤ hP
