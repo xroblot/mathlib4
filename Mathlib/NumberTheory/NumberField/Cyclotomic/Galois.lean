@@ -12,6 +12,9 @@ public import Mathlib.NumberTheory.MulChar.Duality
 public import Mathlib.NumberTheory.NumberField.Cyclotomic.Ideal
 public import Mathlib.NumberTheory.NumberField.Ideal.Basic
 public import Mathlib.NumberTheory.RamificationInertia.HilbertTheory
+public import Mathlib.RingTheory.Ideal.Galois
+
+public import Mathlib.Sandbox
 
 /-!
 # Galois theory for cyclotomic fields
@@ -108,7 +111,7 @@ open Ideal
 Let `K = ℚ(ζₙ)` with `n = p ^ k * m` where `p` is prime and `¬ p ∣ m`. Then the subfield
 `F = ℚ(ζₘ)` is the inertia field of any prime `P` of `𝓞 K` lying over `p`.
 -/
-theorem isInertiaField (m p k : ℕ) (hn : n = p ^ k * m) [hp : Fact (p.Prime)] (hm : ¬ p ∣ m)
+theorem isInertiaField {m p k : ℕ} (hn : n = p ^ k * m) [hp : Fact (p.Prime)] (hm : ¬ p ∣ m)
     (F : IntermediateField ℚ K) [hF : IsCyclotomicExtension {m} ℚ F] (P : Ideal (𝓞 K))
     [P.IsMaximal] [P.LiesOver (span {(p : ℤ)})] :
     IsInertiaField ℚ K P F := by
@@ -268,5 +271,39 @@ theorem mem_intermediateFieldEquivSubgroupChar_iff_conductor_dvd (F : Intermedia
     EmbeddingLike.map_eq_one_iff, AlgEquiv.restrictNormal_eq_one_iff,
     IntermediateField.mem_fixingSubgroup_iff, Units.ext_iff, toUnitHom_eq, coe_equivToUnitHom,
     Units.val_one]
+
+set_option backward.isDefEq.respectTransparency false in
+theorem ramificationIdxIn_eq_relIndex (F : IntermediateField ℚ K) {p : ℕ} [hp : Fact (p.Prime)] :
+    ramificationIdxIn (span {(p : ℤ)}) (𝓞 F) =
+      (subgroupOfCoprimeConductor R n p).relIndex (intermediateFieldEquivSubgroupChar n K R F) := by
+  have hp' : span {(p : ℤ)} ≠ ⊥ := by simpa using hp.out.ne_zero
+  obtain ⟨k, m, hm, hn⟩ := Nat.exists_eq_pow_mul_and_not_dvd (NeZero.ne n) p hp.out.ne_one
+  have : NeZero m := ⟨by aesop⟩
+  obtain ⟨ζ, hζ⟩ := hK.1 rfl (NeZero.ne n)
+  have hζ' := IsPrimitiveRoot.pow (NeZero.pos n) hζ hn
+  let E := ℚ⟮ζ ^ p ^ k⟯
+  have := (isCyclotomicExtension_singleton_iff_eq_adjoin m ℚ K E hζ').mpr rfl
+  obtain ⟨Q, _, _⟩ := Ideal.exists_maximal_ideal_liesOver_of_isIntegral (S := 𝓞 K) (span {(p : ℤ)})
+  let P : Ideal (𝓞 F) := under (𝓞 F) Q
+  rw [← Ideal.card_inertia_eq_ramificationIdxIn _ hp' P (G := Gal(F/ℚ))]
+  rw [Nat.card_congr (QuotientGroup.quotientKerEquivOfSurjective
+    (Ideal.inertiaMapOfLiesOver ℚ K F Q P)
+      (inertiaMapOfLiesOver_surjective ℚ K F Q P (span {(p : ℤ)}))).symm.toEquiv]
+  rw [Nat.card_congr <| Subgroup.quotientEquivOfEq (inertiaMapOfLiesOver_ker ℚ K Q P F)]
+  rw [← Subgroup.index_eq_card]
+  rw [← Subgroup.relIndex]
+  rw [← Subgroup.relIndex_map_map_of_injective _ _ (galEquivZMod n K).injective]
+  rw [← relIndex_subgroupOrderIsoSubgroupMulChar (R := R)]
+  rw [← (isInertiaField_iff_fixingSubgroup ℚ K Q).mp (isInertiaField n K hn hm E Q)]
+  change ((intermediateFieldEquivSubgroupChar n K R E).subgroupOf
+      (intermediateFieldEquivSubgroupChar n K R F)).index = _
+  congr with χ
+  rw [mem_intermediateFieldEquivSubgroupChar_iff_conductor_dvd n K R E
+    (Dvd.intro_left (p ^ k) hn.symm), mem_subgroupOfCoprimeConductor]
+  refine ⟨fun h ↦ Nat.Coprime.of_dvd_right h ((Nat.Prime.coprime_iff_not_dvd hp.out).mpr hm),
+    fun h ↦ ?_⟩
+  have : χ.conductor ∣ p ^ k * m := hn ▸ χ.conductor_dvd_level
+  rwa [Nat.Coprime.dvd_mul_left] at this
+  exact Nat.Prime.coprime_pow_of_not_dvd hp.out <| (Nat.Prime.coprime_iff_not_dvd hp.out).mp h
 
 end IsCyclotomicExtension.Rat
