@@ -222,12 +222,13 @@ theorem mem_subgroupGalEquivSubgroupChar_symm_iff (σ : Gal(K/ℚ))
     MulEquiv.coe_mapSubgroup, Subgroup.mem_map_equiv, MulEquiv.symm_symm,
     mem_subgroupOrderIsoSubgroupMulChar_symm_iff]
 
-theorem card_subgroupGalEquivSubgroupChar [IsMulCommutative Gal(K/ℚ)] (H : Subgroup Gal(K/ℚ)) :
+variable [IsAbelianGalois ℚ K]
+
+theorem card_subgroupGalEquivSubgroupChar (H : Subgroup Gal(K/ℚ)) :
     Nat.card (subgroupGalEquivSubgroupChar n K R H).ofDual = Nat.card (Gal(K/ℚ) ⧸ H) := by
   rw [subgroupGalEquivSubgroupChar, OrderIso.trans_apply, card_subgroupOrderIsoSubgroupMulChar]
+  have : H.Normal := sorry -- This shouldn't be needed
   exact Nat.card_congr (QuotientGroup.congr _ _ (galEquivZMod n K) rfl).symm.toEquiv
-
-variable [IsAbelianGalois ℚ K]
 
 /--
 The bijection between the intermediate fields of `ℚ(ζₙ)/ℚ` and the subgroups of the group
@@ -255,6 +256,46 @@ theorem card_intermediateFieldEquivSubgroupChar (F : IntermediateField ℚ K) :
     OrderDual.ofDual_toDual, card_subgroupGalEquivSubgroupChar, finrank_eq_fixingSubgroup_index,
     ← Subgroup.index_eq_card]
 
+-- variable (m : ℕ) [NeZero m] (L : Type*) [Field L] [NumberField L] [IsAbelianGalois ℚ L]
+--   [hL : IsCyclotomicExtension {m} ℚ L] [HasEnoughRootsOfUnity R (Monoid.exponent (ZMod m)ˣ)]
+
+-- example [Algebra K L] (hm : n ∣ m) (F : IntermediateField ℚ K) : 1 = 0 := by
+--   let e : K →ₐ[ℚ] L := Algebra.algHom ℚ K L
+--   let F' := IntermediateField.map e F
+--   let A := intermediateFieldEquivSubgroupChar m L R F'
+--   let B := intermediateFieldEquivSubgroupChar n K R F
+--   have : A = B.map (changeLevel hm) := by
+--     have : Fintype A := sorry
+--     have : Fintype (Subgroup.map (changeLevel hm) B) := sorry
+--     rw [eq_comm, SetLike.ext'_iff]
+--     apply Set.eq_of_subset_of_card_le
+--     · intro _ h
+--       rw [SetLike.mem_coe, Subgroup.mem_map] at h
+--       obtain ⟨χ, hχ, rfl⟩ := h
+
+
+--     · sorry
+
+--     rintro ⟨χ, ⟨hχ, rfl⟩⟩ σ hσ
+--     · intro χ hχ
+--     rw [Subgroup.mem_map]
+--     simp_rw [mem_intermediateFieldEquivSubgroupChar_iff]
+--     refine ⟨?_, ?_⟩
+--     · sorry
+--     · rintro ⟨χ, ⟨hχ, rfl⟩⟩ σ hσ
+--       rw [changeLevel_eq_cast_of_dvd]
+--       convert hχ (σ.restrictNormal K) ?_
+--       sorry
+--       rw [IntermediateField.mem_fixingSubgroup_iff]
+--       intro x hx
+--       apply FaithfulSMul.algebraMap_injective K L
+--       rw [AlgEquiv.restrictNormal_commutes]
+--       rw [IntermediateField.mem_fixingSubgroup_iff] at hσ
+--       rw [hσ]
+--       unfold F'
+--       -- This is in extendTop
+--       sorry
+
 set_option backward.isDefEq.respectTransparency false in
 /--
 Assume that `m ∣ n`, then the image of `ℚ(ζₘ) ⊆ ℚ(ζₙ)` by `intermediateFieldEquivSubgroupChar` is
@@ -264,7 +305,7 @@ theorem mem_intermediateFieldEquivSubgroupChar_iff_conductor_dvd (F : Intermedia
     {m : ℕ} [NeZero m] [IsGalois ℚ F] [IsCyclotomicExtension {m} ℚ F] (hdiv : m ∣ n)
     (χ : DirichletCharacter R n) :
     χ ∈ intermediateFieldEquivSubgroupChar n K R F ↔ χ.conductor ∣ m := by
-  simp_rw [← χ.mem_conductorSet_iff_conductor_dvd (NeZero.ne n) hdiv, χ.mem_conductorSet_iff,
+  simp_rw [← χ.mem_conductorSet_iff_conductor_dvd hdiv, χ.mem_conductorSet_iff,
     factorsThrough_iff_ker_unitsMap hdiv, mem_intermediateFieldEquivSubgroupChar_iff,
     SetLike.le_def, ← (galEquivZMod n K).forall_congr_right, MonoidHom.mem_ker,
     MulEquiv.toEquiv_eq_coe, EquivLike.coe_coe, ← (galEquivZMod_restrictNormal_apply n K F hdiv _),
@@ -305,5 +346,24 @@ theorem ramificationIdxIn_eq_relIndex (F : IntermediateField ℚ K) {p : ℕ} [h
   have : χ.conductor ∣ p ^ k * m := hn ▸ χ.conductor_dvd_level
   rwa [Nat.Coprime.dvd_mul_left] at this
   exact Nat.Prime.coprime_pow_of_not_dvd hp.out <| (Nat.Prime.coprime_iff_not_dvd hp.out).mp h
+
+open MulAction
+
+set_option backward.isDefEq.respectTransparency false in
+example [Nontrivial R] (F : IntermediateField ℚ K) {p : ℕ} [hp : Fact (p.Prime)] :
+    ramificationIdxIn (span {(p : ℤ)}) (𝓞 F) * inertiaDegIn (span {(p : ℤ)}) (𝓞 F) =
+      (subgroupOfPrimitiveMapToOne R n p).relIndex
+        (intermediateFieldEquivSubgroupChar n K R F) := by
+  have hp' : span {(p : ℤ)} ≠ ⊥ := by simpa using hp.out.ne_zero
+  obtain ⟨k, m, hm, hn⟩ := Nat.exists_eq_pow_mul_and_not_dvd (NeZero.ne n) p hp.out.ne_one
+  have : NeZero m := ⟨by aesop⟩
+  obtain ⟨ζ, hζ⟩ := hK.1 rfl (NeZero.ne n)
+  have hζ' := IsPrimitiveRoot.pow (NeZero.pos n) hζ hn
+  let E := ℚ⟮ζ ^ p ^ k⟯
+  have := (isCyclotomicExtension_singleton_iff_eq_adjoin m ℚ K E hζ').mpr rfl
+  obtain ⟨Q, _, _⟩ := Ideal.exists_maximal_ideal_liesOver_of_isIntegral (S := 𝓞 K) (span {(p : ℤ)})
+  let P : Ideal (𝓞 F) := under (𝓞 F) Q
+  let D := (FixedPoints.intermediateField (stabilizer Gal(K/ℚ) Q) : IntermediateField ℚ K)
+  sorry
 
 end IsCyclotomicExtension.Rat

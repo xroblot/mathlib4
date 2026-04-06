@@ -337,17 +337,16 @@ theorem conductor_dvd_of_mem_conductorSet {d : ℕ} [NeZero n] (hd : d ∈ χ.co
 
 /-- A divisor `d` of `n` belongs to the conductor set of `χ` if and only if the conductor of `χ`
 divides `d`. -/
-theorem mem_conductorSet_iff_conductor_dvd (hn : n ≠ 0) {d : ℕ} (hd : d ∣ n) :
-    d ∈ χ.conductorSet ↔ χ.conductor ∣ d := by
-  refine ⟨fun h ↦ conductor_dvd_of_mem_conductorSet χ hn h, fun h ↦ ?_⟩
-  have : NeZero n := ⟨hn⟩
-  exact χ.factorsThrough_conductor.mono χ h hd
+theorem mem_conductorSet_iff_conductor_dvd [NeZero n] {d : ℕ} (hd : d ∣ n) :
+    d ∈ χ.conductorSet ↔ χ.conductor ∣ d :=
+  ⟨conductor_dvd_of_mem_conductorSet χ, fun h ↦ χ.factorsThrough_conductor.mono χ h hd⟩
 
 private theorem conductor_inv_aux (χ : DirichletCharacter R n) :
     χ⁻¹.conductor ∣ χ.conductor := by
   obtain hn | hn := eq_or_ne n 0
   · rw [conductor_eq_zero_iff_level_eq_zero.mpr hn, conductor_eq_zero_iff_level_eq_zero.mpr hn]
-  rw [← mem_conductorSet_iff_conductor_dvd _ hn χ.conductor_dvd_level, mem_conductorSet_iff]
+  have : NeZero n := ⟨hn⟩
+  rw [← mem_conductorSet_iff_conductor_dvd _ χ.conductor_dvd_level, mem_conductorSet_iff]
   refine ⟨χ.conductor_dvd_level, χ.primitiveCharacter⁻¹, ?_⟩
   rw [MonoidHom.map_inv, changeLevel_primitiveCharacter]
 
@@ -379,10 +378,10 @@ lemma primitive_mul_isPrimitive {m : ℕ} (ψ : DirichletCharacter R m) :
   primitiveCharacter_isPrimitive _
 
 /-- The conductor of χ * ψ divides the lcm of the conductors of χ and ψ. -/
-theorem conductor_mul_dvd_lcm_conductor (hn : n ≠ 0) (χ ψ : DirichletCharacter R n) :
+theorem conductor_mul_dvd_lcm_conductor [NeZero n] (χ ψ : DirichletCharacter R n) :
     (χ * ψ).conductor ∣ χ.conductor.lcm ψ.conductor := by
   have h := Nat.lcm_dvd χ.conductor_dvd_level ψ.conductor_dvd_level
-  rw [← mem_conductorSet_iff_conductor_dvd _ hn h, mem_conductorSet_iff]
+  rw [← mem_conductorSet_iff_conductor_dvd _ h, mem_conductorSet_iff]
   refine ⟨h, χ.primitiveCharacter.mul ψ.primitiveCharacter, ?_⟩
   rw [mul, MonoidHom.map_mul, ← changeLevel_trans, ← changeLevel_trans,
     changeLevel_primitiveCharacter, changeLevel_primitiveCharacter]
@@ -394,9 +393,9 @@ def subgroupOfCoprimeConductor [NeZero n] (d : ℕ) :
     Subgroup (DirichletCharacter R n) where
   carrier := {χ | d.Coprime χ.conductor}
   mul_mem' hχ hψ := by
-    apply Nat.Coprime.of_dvd_right (conductor_mul_dvd_lcm_conductor (NeZero.ne n) _ _)
+    apply Nat.Coprime.of_dvd_right (conductor_mul_dvd_lcm_conductor _ _)
     exact (Nat.Coprime.mul_right hχ hψ).coprime_div_right <| Nat.gcd_dvd_mul _ _
-  one_mem' := by simp [conductor_one (NeZero.ne n)]
+  one_mem' := by simp [conductor_one]
   inv_mem' hχ := by rwa [Set.mem_setOf, conductor_inv]
 
 @[simp]
