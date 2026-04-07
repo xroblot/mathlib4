@@ -13,6 +13,7 @@ public import Mathlib.NumberTheory.NumberField.Cyclotomic.Ideal
 public import Mathlib.NumberTheory.NumberField.Ideal.Basic
 public import Mathlib.NumberTheory.RamificationInertia.HilbertTheory
 public import Mathlib.RingTheory.Ideal.Galois
+public import Mathlib.NumberTheory.DirichletCharacter.Orthogonality
 
 public import Mathlib.Sandbox
 
@@ -227,7 +228,6 @@ variable [IsAbelianGalois ℚ K]
 theorem card_subgroupGalEquivSubgroupChar (H : Subgroup Gal(K/ℚ)) :
     Nat.card (subgroupGalEquivSubgroupChar n K R H).ofDual = Nat.card (Gal(K/ℚ) ⧸ H) := by
   rw [subgroupGalEquivSubgroupChar, OrderIso.trans_apply, card_subgroupOrderIsoSubgroupMulChar]
-  have : H.Normal := sorry -- This shouldn't be needed
   exact Nat.card_congr (QuotientGroup.congr _ _ (galEquivZMod n K) rfl).symm.toEquiv
 
 /--
@@ -255,6 +255,21 @@ theorem card_intermediateFieldEquivSubgroupChar (F : IntermediateField ℚ K) :
     IsGalois.intermediateFieldEquivSubgroup_apply, OrderIso.dual_apply, OrderDual.ofDual_toDual,
     OrderDual.ofDual_toDual, card_subgroupGalEquivSubgroupChar, finrank_eq_fixingSubgroup_index,
     ← Subgroup.index_eq_card]
+
+theorem index_intermediateFieldEquivSubgroupChar (F : IntermediateField ℚ K) :
+    (intermediateFieldEquivSubgroupChar n K R F).index = Module.finrank F K := by
+  rw [← mul_right_inj' (Module.finrank_pos (R := ℚ) (M := F)).ne', Module.finrank_mul_finrank,
+    ← card_intermediateFieldEquivSubgroupChar n K R, Subgroup.card_mul_index,
+    card_eq_card_units_of_hasEnoughRootsOfUnity, finrank n K, Nat.card_eq_fintype_card,
+    ZMod.card_units_eq_totient]
+
+theorem relIndex_intermediateFieldEquivSubgroupChar (F F' : IntermediateField ℚ K) [IsDomain R] :
+    (intermediateFieldEquivSubgroupChar n K R F).relIndex
+      (intermediateFieldEquivSubgroupChar n K R F') = Module.finrank ↥(F ⊓ F') F' := by
+  have : IsScalarTower ↥(F ⊓ F') F' K := IsScalarTower.of_algebraMap_eq' rfl
+  have : (intermediateFieldEquivSubgroupChar n K R F').index ≠ 0 := Subgroup.index_ne_zero_of_finite
+  rw [← mul_left_inj' this, Subgroup.relIndex_mul_index', index_intermediateFieldEquivSubgroupChar,
+    Module.finrank_mul_finrank, ← OrderIso.map_inf, index_intermediateFieldEquivSubgroupChar]
 
 -- variable (m : ℕ) [NeZero m] (L : Type*) [Field L] [NumberField L] [IsAbelianGalois ℚ L]
 --   [hL : IsCyclotomicExtension {m} ℚ L] [HasEnoughRootsOfUnity R (Monoid.exponent (ZMod m)ˣ)]
@@ -314,7 +329,53 @@ theorem mem_intermediateFieldEquivSubgroupChar_iff_conductor_dvd (F : Intermedia
     Units.val_one]
 
 set_option backward.isDefEq.respectTransparency false in
-theorem ramificationIdxIn_eq_relIndex (F : IntermediateField ℚ K) {p : ℕ} [hp : Fact (p.Prime)] :
+theorem intermediateFieldEquivSubgroupChar_isInertiaField (p : ℕ) [hp : Fact (p.Prime)]
+    (E : IntermediateField ℚ K) (P : Ideal (𝓞 K)) [P.IsMaximal]
+    [P.LiesOver (span {(p : ℤ)})] [hE : IsInertiaField ℚ K P E] :
+    intermediateFieldEquivSubgroupChar n K R E = subgroupOfCoprimeConductor R n p := by
+  have hp' : span {(p : ℤ)} ≠ ⊥ := by simpa using hp.out.ne_zero
+  obtain ⟨k, m, hm, hn⟩ := Nat.exists_eq_pow_mul_and_not_dvd (NeZero.ne n) p hp.out.ne_one
+  have hm' : m ∣ n := dvd_of_mul_left_eq (p ^ k) hn.symm
+  have : NeZero m := ⟨by aesop⟩
+  obtain ⟨ζ, hζ⟩ := hK.1 rfl (NeZero.ne n)
+  have hζ' := IsPrimitiveRoot.pow (NeZero.pos n) hζ hn
+  let E' := ℚ⟮ζ ^ p ^ k⟯
+  have := (isCyclotomicExtension_singleton_iff_eq_adjoin m ℚ K E' hζ').mpr rfl
+  have : IsGalois ℚ E' := IsCyclotomicExtension.isGalois {m} ℚ E'
+  rw [← IsGalois.fixedField_fixingSubgroup E, (isInertiaField_iff_fixingSubgroup ℚ K P).mp hE,
+    ← (isInertiaField_iff_fixingSubgroup ℚ K P).mp (isInertiaField n K hn hm E' P),
+    IsGalois.fixedField_fixingSubgroup]
+  ext χ
+  rw [mem_intermediateFieldEquivSubgroupChar_iff_conductor_dvd n K R E' hm',
+    mem_subgroupOfCoprimeConductor]
+  refine ⟨fun h ↦ Nat.Coprime.of_dvd_right h ((Nat.Prime.coprime_iff_not_dvd hp.out).mpr hm),
+    fun h ↦ ?_⟩
+  have : χ.conductor ∣ p ^ k * m := hn ▸ χ.conductor_dvd_level
+  rwa [Nat.Coprime.dvd_mul_left] at this
+  exact Nat.Prime.coprime_pow_of_not_dvd hp.out <| (Nat.Prime.coprime_iff_not_dvd hp.out).mp h
+
+set_option backward.isDefEq.respectTransparency false in
+theorem ramificationIdxIn_eq_relIndex [IsDomain R] (F : IntermediateField ℚ K) {p : ℕ}
+    [hp : Fact (p.Prime)] :
+    ramificationIdxIn (span {(p : ℤ)}) (𝓞 F) =
+      (subgroupOfCoprimeConductor R n p).relIndex (intermediateFieldEquivSubgroupChar n K R F) := by
+  have hp' : span {(p : ℤ)} ≠ ⊥ := by simpa using hp.out.ne_zero
+  obtain ⟨Q, _, _⟩ := Ideal.exists_maximal_ideal_liesOver_of_isIntegral (S := 𝓞 K) (span {(p : ℤ)})
+  let P : Ideal (𝓞 F) := under (𝓞 F) Q
+  let E := (FixedPoints.intermediateField (inertia Gal(K/ℚ) Q) : IntermediateField ℚ K)
+  have : IsInertiaField ℚ K Q E := sorry
+  have : IsInertiaField ℚ F P ↥(E ⊓ F) := sorry
+  rw [← IsInertiaField.rank_left ℤ ℚ F P ↥(E ⊓ F)]
+  rw [← relIndex_intermediateFieldEquivSubgroupChar n K R]
+  rw [intermediateFieldEquivSubgroupChar_isInertiaField n K R p E Q]
+  exact hp'
+
+#exit
+
+  rw [← Ideal.card_inertia_eq_ramificationIdxIn _ hp' P (G := Gal(F/ℚ))]
+
+set_option backward.isDefEq.respectTransparency false in
+theorem ramificationIdxIn_eq_relIndex' (F : IntermediateField ℚ K) {p : ℕ} [hp : Fact (p.Prime)] :
     ramificationIdxIn (span {(p : ℤ)}) (𝓞 F) =
       (subgroupOfCoprimeConductor R n p).relIndex (intermediateFieldEquivSubgroupChar n K R F) := by
   have hp' : span {(p : ℤ)} ≠ ⊥ := by simpa using hp.out.ne_zero
@@ -347,7 +408,7 @@ theorem ramificationIdxIn_eq_relIndex (F : IntermediateField ℚ K) {p : ℕ} [h
   rwa [Nat.Coprime.dvd_mul_left] at this
   exact Nat.Prime.coprime_pow_of_not_dvd hp.out <| (Nat.Prime.coprime_iff_not_dvd hp.out).mp h
 
-open MulAction
+open MulAction Pointwise
 
 set_option backward.isDefEq.respectTransparency false in
 example [Nontrivial R] (F : IntermediateField ℚ K) {p : ℕ} [hp : Fact (p.Prime)] :
@@ -364,6 +425,13 @@ example [Nontrivial R] (F : IntermediateField ℚ K) {p : ℕ} [hp : Fact (p.Pri
   obtain ⟨Q, _, _⟩ := Ideal.exists_maximal_ideal_liesOver_of_isIntegral (S := 𝓞 K) (span {(p : ℤ)})
   let P : Ideal (𝓞 F) := under (𝓞 F) Q
   let D := (FixedPoints.intermediateField (stabilizer Gal(K/ℚ) Q) : IntermediateField ℚ K)
+  have : IsDecompositionField ℚ F P ↥(D ⊓ F) := sorry
+  have : D ⊓ F ≤ E := sorry
+  have : IsDecompositionField ℚ F P ↥(E ⊓ D ⊓ F) := sorry
+  have := IsDecompositionField.rank_left ℤ ℚ F P ↥(E ⊓ D ⊓ F) (p := span {(p : ℤ)}) ?_
+  rw [← this]
+
+
   sorry
 
 end IsCyclotomicExtension.Rat

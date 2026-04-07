@@ -5,6 +5,24 @@ public import Mathlib.NumberTheory.MulChar.Duality
 public import Mathlib.Data.ZMod.Coprime
 public import Mathlib.Data.Nat.Factorization.Basic
 
+@[expose] public section
+
+@[to_additive]
+theorem Subgroup.center_eq_top_of_isMulCommutative (G : Type*) [Group G] [IsMulCommutative G] :
+    Subgroup.center G = ⊤ :=
+  (eq_top_iff' (center G)).mpr fun x ↦ mem_center_iff.mpr fun y ↦ mul_comm' y x
+
+open Subgroup in
+@[to_additive]
+theorem commutator_eq_bot_of_isMulCommutative (G : Type*) [Group G] [IsMulCommutative G] :
+    commutator G = ⊥ :=
+  (commutator_eq_bot_iff_center_eq_top G).mpr <| center_eq_top_of_isMulCommutative G
+
+@[to_additive]
+instance {G : Type*} [Group G] [IsMulCommutative G] (H : Subgroup G) :
+    H.Normal :=
+  Subgroup.Normal.of_commutator_le G <| commutator_eq_bot_of_isMulCommutative G ▸ bot_le
+
 @[to_additive]
 theorem Subgroup.relIndex_mul_index' {G : Type*} [Group G] (H K : Subgroup G) :
     (H.relIndex K) * K.index = (H ⊓ K).index := by
