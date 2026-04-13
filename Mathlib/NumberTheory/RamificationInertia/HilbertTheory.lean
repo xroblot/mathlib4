@@ -9,6 +9,8 @@ public import Mathlib.FieldTheory.Finite.GaloisField
 public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients
 
+public import Mathlib.Sandbox
+
 /-!
 
 # Decomposition and Inertia fields
@@ -266,6 +268,35 @@ theorem primesOver_eq_singleton [hP : P.IsPrime] [Finite (stabilizer Gal(L/K) P)
   obtain ⟨σ, rfl⟩ := exists_smul_eq_of_isGaloisGroup 𝓟D P Q (stabilizer Gal(L/K) P)
   exact σ.prop
 
+include D in
+theorem primesOver_eq_singleton_of_algebra [hP : P.IsPrime] [Finite (stabilizer Gal(L/K) P)]
+    [IsIntegrallyClosed 𝓞D] [Algebra.IsIntegral 𝓞D B] (𝓞F : Type*) [CommRing 𝓞F]
+    (𝓟F : Ideal (𝓞F)) [Algebra 𝓞D 𝓞F] [Algebra 𝓞F B] [IsScalarTower 𝓞D 𝓞F B]
+    [hPF : P.LiesOver 𝓟F] :
+    primesOver 𝓟F B = {P} := by
+  refine Set.eq_singleton_iff_unique_mem.mpr ⟨⟨hP, hPF⟩, ?_⟩
+  rintro Q ⟨hQ₁, hQ₂⟩
+  let 𝓟D := under 𝓞D 𝓟F
+  have : P.LiesOver 𝓟D := LiesOver.trans P 𝓟F 𝓟D
+  have : Q ∈ 𝓟D.primesOver B := ⟨hQ₁, LiesOver.trans Q 𝓟F 𝓟D⟩
+  rwa [primesOver_eq_singleton K L P D 𝓞D 𝓟D] at this
+
+include D in
+theorem restrictNormal_mem_stabilizer_iff [hP : P.IsPrime] [Finite (stabilizer Gal(L/K) P)]
+    [IsIntegrallyClosed 𝓞D] [Algebra.IsIntegral 𝓞D B] (F 𝓞F : Type*) [Field F] [Algebra K F]
+    [Algebra F L] [IsScalarTower K F L]
+    [IsGalois K F]
+    [CommRing 𝓞F] (𝓟F : Ideal (𝓞F)) [Algebra 𝓞D 𝓞F] [Algebra 𝓞F B] [IsScalarTower 𝓞D 𝓞F B]
+    [MulSemiringAction Gal(F/K) 𝓞F] [Algebra 𝓞F L] [IsScalarTower 𝓞F B L]
+    [Algebra 𝓞F F] [IsScalarTower 𝓞F F L] [SMulDistribClass Gal(F/K) 𝓞F F]
+    [hPF : P.LiesOver 𝓟F] (σ : Gal(L/K)) :
+    σ.restrictNormal F ∈ stabilizer Gal(F/K) 𝓟F ↔ σ ∈ stabilizer Gal(L/K) P := by
+  rw [mem_stabilizer_iff, mem_stabilizer_iff, over_def P 𝓟F, ← Ideal.under_smul' K 𝓞F F]
+  refine ⟨fun h ↦ ?_, fun h ↦ by rw [h]⟩
+  suffices σ • P ∈ 𝓟F.primesOver B by
+    rwa [primesOver_eq_singleton_of_algebra K L P D 𝓞D 𝓞F 𝓟F] at this
+  exact ⟨IsPrime.smul σ,  (liesOver_iff (σ • P) 𝓟F).mpr (by rw [h, ← over_def P 𝓟F])⟩
+
 variable [FiniteDimensional K L] [IsGalois K L] [IsDedekindDomain A] [IsDedekindDomain B]
   [Ring.HasFiniteQuotients A] [Module.Finite A B] [Module.IsTorsionFree A B] [Algebra A 𝓞D]
   [Module.Finite A 𝓞D] [IsScalarTower A 𝓞D B] [IsDedekindDomain 𝓞D] [𝓟D.IsMaximal]
@@ -505,10 +536,18 @@ theorem isInertiaField_iff_fixingSubgroup :
   rw [isInertiaField_iff, IsGaloisGroup.subgroup_iff, ← IntermediateField.fixedField,
     IsGalois.fixedField_eq_iff_fixingSubgroup_eq]
 
-variable (D E : IntermediateField K L) (𝓞D 𝓞E : Type*) [Algebra B L]
-  [hSD : SMulDistribClass Gal(L/K) B L]
+variable (D E : IntermediateField K L) (𝓞D 𝓞E : Type*)
 
-variable (F)
+theorem isDecompositionField_le_isInertiaField [hD : IsDecompositionField K L P D]
+    [hE : IsInertiaField K L P E] :
+    D ≤ E := by
+  rw [← IsGalois.intermediateFieldEquivSubgroup.le_iff_le,
+    IsGalois.intermediateFieldEquivSubgroup_apply, IsGalois.intermediateFieldEquivSubgroup_apply,
+    OrderDual.toDual_le_toDual, (isDecompositionField_iff_fixingSubgroup K L P).mp hD,
+    (isInertiaField_iff_fixingSubgroup K L P).mp hE]
+  exact inertia_le_stabilizer P
+
+variable [Algebra B L] [hSD : SMulDistribClass Gal(L/K) B L] (F)
 
 set_option backward.isDefEq.respectTransparency false in
 /--

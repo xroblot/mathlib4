@@ -4,8 +4,36 @@ public import Mathlib.NumberTheory.DirichletCharacter.Basic
 public import Mathlib.NumberTheory.MulChar.Duality
 public import Mathlib.Data.ZMod.Coprime
 public import Mathlib.Data.Nat.Factorization.Basic
+public import Mathlib.FieldTheory.Normal.Defs
 
 @[expose] public section
+
+open Pointwise in
+theorem Ideal.under_smul' (F A K B L : Type*) [Field F] [Field K] [Field L] [Algebra F K]
+    [Algebra F L] [Algebra K L] [IsScalarTower F K L] [Normal F K]
+    [CommRing A] [CommRing B]
+    [Algebra A B] [Algebra A K] [Algebra A L] [Algebra B L] [MulSemiringAction Gal(K/F) A]
+    [SMulDistribClass Gal(K/F) A K] [MulSemiringAction Gal(L/F) B] [SMulDistribClass Gal(L/F) B L]
+    [FaithfulSMul B L]
+    [IsScalarTower A K L] [IsScalarTower A B L]
+    (P : Ideal B) (g : Gal(L/F)) :
+    under A (g • P) = (g.restrictNormal K) • (under A P) := by
+  ext a
+  rw [mem_comap, mem_pointwise_smul_iff_inv_smul_mem, mem_pointwise_smul_iff_inv_smul_mem,
+    mem_comap]
+  have := AlgEquiv.algebraMap_restrictNormalHom_smul' (F := F) (K₁ := L) (E := K) (A := A)
+    (B := B) a g⁻¹
+  rw [← this]
+  rw [map_inv]
+  rfl
+
+
+-- theorem MonoidHom.forall_mem_zpowers_eq_one_iff {G M : Type*} [Group G] [DivisionMonoid M] (g : G)
+--     (f : G →* M) :
+--     (∀ x ∈ Subgroup.zpowers g, f x = 1) ↔ f g = 1 := by
+--   refine ⟨fun h ↦ h g (Subgroup.mem_zpowers g), ?_⟩
+--   rintro h x ⟨z, rfl⟩
+--   rw [MonoidHom.map_zpow, h, one_zpow]
 
 @[to_additive]
 theorem Subgroup.center_eq_top_of_isMulCommutative (G : Type*) [Group G] [IsMulCommutative G] :

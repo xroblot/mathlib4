@@ -149,11 +149,12 @@ section stabilizer
 open Pointwise MulAction Ideal
 
 variable (p : ℕ) [hp : Fact (Nat.Prime p)] (P : Ideal (𝓞 K)) [P.IsMaximal]
-  [P.LiesOver (Ideal.span {(p : ℤ)})] (hn : p.Coprime n)
+  [P.LiesOver (Ideal.span {(p : ℤ)})]
 
 attribute [local instance] Ideal.Quotient.field
 
-theorem mem_zpowers_galEquivZMod_of_mem_stabilizer {σ : Gal(K/ℚ)} (hσ : σ ∈ stabilizer Gal(K/ℚ) P) :
+theorem mem_zpowers_galEquivZMod_of_mem_stabilizer_of_coprime (hn : p.Coprime n) {σ : Gal(K/ℚ)}
+    (hσ : σ ∈ stabilizer Gal(K/ℚ) P) :
     galEquivZMod n K σ ∈ Subgroup.zpowers (ZMod.unitOfCoprime p hn) := by
   have hζ := IsCyclotomicExtension.zeta_spec n ℚ K
   let τ := IsFractionRing.stabilizerHom Gal(K/ℚ) (Ideal.span {(p : ℤ)}) P
@@ -176,7 +177,7 @@ theorem mem_zpowers_galEquivZMod_of_mem_stabilizer {σ : Gal(K/ℚ)} (hσ : σ �
     ← h₀.eq_orderOf, ← ZMod.natCast_eq_natCast_iff', Nat.cast_pow, ← ZMod.coe_unitOfCoprime p hn,
     ← Units.val_pow_eq_pow_val, ZMod.natCast_zmod_val, ← Units.ext_iff, eq_comm] at hi
 
-theorem galEquivZMod_stabilizer :
+theorem galEquivZMod_stabilizer_of_coprime (hn : p.Coprime n) :
     (galEquivZMod n K).mapSubgroup (stabilizer Gal(K/ℚ) P) =
       Subgroup.zpowers (ZMod.unitOfCoprime p hn) := by
   classical
@@ -184,7 +185,7 @@ theorem galEquivZMod_stabilizer :
   apply SetLike.ext'
   refine Set.eq_of_subset_of_card_le ?_ ?_
   · rintro _ ⟨σ, hσ, rfl⟩
-    exact mem_zpowers_galEquivZMod_of_mem_stabilizer n K p P hn hσ
+    exact mem_zpowers_galEquivZMod_of_mem_stabilizer_of_coprime n K p P hn hσ
   · replace hn : ¬ p ∣ n := (Nat.Prime.coprime_iff_not_dvd hp.out).mp hn
     rw [Fintype.card_eq_nat_card, Fintype.card_eq_nat_card, SetLike.coe_sort_coe, Nat.card_zpowers,
       MulEquiv.mapSubgroup_apply, Subgroup.coe_map]
@@ -194,9 +195,47 @@ theorem galEquivZMod_stabilizer :
       ramificationIdxIn_eq_of_not_dvd p K hn, one_mul, ← orderOf_injective _ Units.coeHom_injective,
       Units.coeHom_apply, ZMod.coe_unitOfCoprime]
 
+set_option backward.isDefEq.respectTransparency false in
+open IntermediateField Pointwise in
+theorem galEquivZMod_stabilizer {k m : ℕ} (hn : n = p ^ k * m) (hm : p.Coprime m) :
+    (galEquivZMod n K).mapSubgroup (stabilizer Gal(K/ℚ) P) =
+      (Subgroup.zpowers (ZMod.unitOfCoprime p hm)).comap
+        (ZMod.unitsMap (Dvd.intro_left (p ^ k) hn.symm)) := by
+  have : NeZero m := ⟨by aesop⟩
+  ext c
+  obtain ⟨ζ, hζ⟩ := hK.1 rfl (NeZero.ne n)
+  have hζ' := IsPrimitiveRoot.pow (NeZero.pos n) hζ hn
+  let E := ℚ⟮ζ ^ p ^ k⟯
+  have : IsAbelianGalois ℚ K := isAbelianGalois {n} ℚ K
+  let P₀ := under (𝓞 E) P
+  have := (IntermediateField.isCyclotomicExtension_singleton_iff_eq_adjoin m ℚ K E hζ').mpr rfl
+  have : IsInertiaField ℚ K P E := isInertiaField n K hn (hp.out.coprime_iff_not_dvd.mp hm) E P
+  have := galEquivZMod_stabilizer_of_coprime m E p P₀ hm
+  rw [← this]
+  have := galEquivZMod_restrictNormal_apply n K E (Dvd.intro_left (p ^ k) hn.symm)
+    ((galEquivZMod n K).symm c)
+  rw [MulEquiv.apply_symm_apply] at this
+  rw [Subgroup.mem_comap]
+  rw [← this]
+  rw [@MulEquiv.coe_mapSubgroup]
+  rw [@Subgroup.mem_map_equiv]
+  rw [@MulEquiv.coe_mapSubgroup]
+  rw [@Subgroup.mem_map_equiv]
+  rw [@MulEquiv.symm_apply_apply]
+  let D := (FixedPoints.intermediateField (stabilizer Gal(K/ℚ) P) : IntermediateField ℚ K)
+  let : Algebra D E :=
+    (inclusion (isDecompositionField_le_isInertiaField ℚ K P D E)).toRingHom.toAlgebra
+  have : IsScalarTower (𝓞 D) (𝓞 E) (𝓞 K) := IsScalarTower.of_algebraMap_eq' rfl
+  rw [IsDecompositionField.restrictNormal_mem_stabilizer_iff ℚ K P D (𝓞 D)]
+
+
+    -- have := stabilizerMapOfLiesOver_surjective ℚ K F P P₀ ⟨τ, ?_⟩
+    -- simp only [MulEquiv.mapSubgroup_apply, Subgroup.mem_map, mem_stabilizer_iff, MonoidHom.coe_coe,
+    --   autEquivPow_apply, OneHom.toFun_eq_coe, MonoidHom.toOneHom_coe]
+
 end stabilizer
 
-open MulChar DirichletCharacter IntermediateField
+open MulChar DirichletCharacter IntermediateField MulAction Pointwise
 
 variable (R : Type*) [CommRing R] [HasEnoughRootsOfUnity R (Monoid.exponent (ZMod n)ˣ)]
 
@@ -355,6 +394,125 @@ theorem intermediateFieldEquivSubgroupChar_isInertiaField (p : ℕ) [hp : Fact (
   exact Nat.Prime.coprime_pow_of_not_dvd hp.out <| (Nat.Prime.coprime_iff_not_dvd hp.out).mp h
 
 set_option backward.isDefEq.respectTransparency false in
+example [Nontrivial R] (p : ℕ) [hp : Fact (p.Prime)] (D : IntermediateField ℚ K)
+    (P : Ideal (𝓞 K)) [P.IsMaximal] [P.LiesOver (span {(p : ℤ)})]
+    [hD : IsDecompositionField ℚ K P D] :
+    intermediateFieldEquivSubgroupChar n K R D = subgroupOfPrimitiveMapToOne R n p := by
+  have hp' : span {(p : ℤ)} ≠ ⊥ := by simpa using hp.out.ne_zero
+  obtain ⟨k, m, hm, hn⟩ := Nat.exists_eq_pow_mul_and_not_dvd (NeZero.ne n) p hp.out.ne_one
+  have hm' : m ∣ n := dvd_of_mul_left_eq (p ^ k) hn.symm
+  have : NeZero m := ⟨by aesop⟩
+  have := galEquivZMod_stabilizer n K p P hn (hp.out.coprime_iff_not_dvd.mpr hm)
+  simp at this
+--  have := (subgroupOrderIsoSubgroupMulChar (ZMod n) R).congr_arg this
+--  have := OrderDual.ofDual.congr_arg this
+  unfold intermediateFieldEquivSubgroupChar
+  simp [subgroupGalEquivSubgroupChar]
+  rw [(isDecompositionField_iff_fixingSubgroup ℚ K P).mp hD]
+  rw [this]
+  ext χ
+  simp only [mem_subgroupOrderIsoSubgroupMulChar_iff, Subgroup.mem_comap,
+    mem_subgroupOfPrimitiveMapToOne_iff]
+
+
+
+
+  refine ⟨?_, ?_⟩
+  · intro h
+    obtain ⟨a, ha⟩ := ZMod.unitsMap_surjective (Dvd.intro_left (p ^ k) hn.symm)
+      (ZMod.unitOfCoprime p (hp.out.coprime_iff_not_dvd.mpr hm))
+    obtain ⟨x, hx⟩ := ZMod.intCast_surjective a.val
+    have : (p : ZMod χ.conductor) = x := by
+      refine (ZMod.natCast_eq_iff χ.conductor p ↑x).mpr ?_
+      sorry
+    rw [this, χ.primitiveCharacter_apply_of_isCoprime, hx]
+    exact h a ⟨1, by simp [ha]⟩
+    refine IsCoprime.symm ((fun n m ↦ (ZMod.coe_int_isUnit_iff_isCoprime n m).mp) x n ?_)
+
+    rw [hx]
+    exact Units.isUnit a
+
+#exit
+
+    have hχ : χ.conductor ∣ m := sorry
+
+
+    have t0 := Units.ext_iff.mp ha
+    have t1 := (ZMod.castHom hχ (ZMod χ.conductor)).congr_arg t0
+    simp only [ZMod.castHom_apply, ZMod.coe_unitOfCoprime, map_natCast] at t1
+    rw [← t1]
+
+    obtain ⟨x, hx⟩ := ZMod.intCast_surjective a.val
+    rw [← hx] at this
+    rw [← χ.primitiveCharacter_apply_of_isCoprime] at this
+    have t0 : χ.conductor ∣ n := sorry
+    have t1 := (ZMod.castHom t0 (ZMod χ.conductor)).congr_arg hx
+    simp at t1
+    rw [t1] at this
+
+    let f : ℤ →+* ZMod m := by exact Int.castRingHom (ZMod m)
+    have : Function.Surjective ((↑) : ℤ → ZMod m) := by exact ZMod.intCast_surjective
+
+    have : χ.conductor ∣ m := sorry
+    rw [Units.ext_iff] at ha
+    rw [ZMod.coe_unitOfCoprime] at ha
+    have := (ZMod.castHom this (ZMod χ.conductor)).congr_arg ha
+    simp at this
+    rw [← this]
+
+    rw [ZMod.unitsMap_val]
+    rw [χ.primitiveCharacter_apply_of_isCoprime]
+    convert this
+    rw [@ZMod.intCast_cast]
+    rw?
+    sorry
+
+
+  ·
+    sorry
+
+
+
+  rw [← IsGalois.fixedField_fixingSubgroup D, (isDecompositionField_iff_fixingSubgroup ℚ K P).mp hD,
+    intermediateFieldEquivSubgroupChar]
+  rw [OrderIso.trans_apply]
+  rw [IsGalois.intermediateFieldEquivSubgroup_apply]
+  rw [@OrderIso.trans_apply]
+  rw [@OrderIso.dualDual_symm_apply]
+  rw [@OrderIso.dual_apply]
+  rw [@OrderDual.ofDual_toDual]
+
+
+
+  rw [mem_subgroupOfPrimitiveMapToOne_iff]
+  obtain ⟨ζ, hζ⟩ := hK.1 rfl (NeZero.ne n)
+  have hζ' := IsPrimitiveRoot.pow (NeZero.pos n) hζ hn
+  let E := ℚ⟮ζ ^ p ^ k⟯
+  have := (isCyclotomicExtension_singleton_iff_eq_adjoin m ℚ K E hζ').mpr rfl
+--  have : IsGalois ℚ E := IsCyclotomicExtension.isGalois {m} ℚ E
+  have : D ≤ E := sorry
+
+  ext χ
+  rw [mem_subgroupOfPrimitiveMapToOne_iff, mem_intermediateFieldEquivSubgroupChar_iff,
+    (isDecompositionField_iff_fixingSubgroup ℚ K P).mp hD,
+    ← (galEquivZMod n K).symm.toEquiv.forall_congr_right]
+  simp_rw [MulEquiv.toEquiv_eq_coe, MulEquiv.toEquiv_symm, MulEquiv.coe_toEquiv_symm]
+  simp_rw [← Subgroup.mem_map_equiv, ← MulEquiv.coe_mapSubgroup, MulEquiv.apply_symm_apply]
+  simp_rw [galEquivZMod_stabilizer n K p P sorry, MulEquiv.apply_symm_apply]
+  convert_to χ (ZMod.unitOfCoprime p sorry : (ZMod n)ˣ) = 1 ↔ χ.primitiveCharacter p = 1
+  · sorry
+  rw [ZMod.coe_unitOfCoprime, ← Int.cast_natCast, ← primitiveCharacter_apply_of_isCoprime χ,
+    Int.cast_natCast]
+
+
+
+
+
+  sorry
+
+
+
+set_option backward.isDefEq.respectTransparency false in
 theorem ramificationIdxIn_eq_relIndex [IsDomain R] (F : IntermediateField ℚ K) {p : ℕ}
     [hp : Fact (p.Prime)] :
     ramificationIdxIn (span {(p : ℤ)}) (𝓞 F) =
@@ -363,7 +521,6 @@ theorem ramificationIdxIn_eq_relIndex [IsDomain R] (F : IntermediateField ℚ K)
   obtain ⟨Q, _, _⟩ := Ideal.exists_maximal_ideal_liesOver_of_isIntegral (S := 𝓞 K) (span {(p : ℤ)})
   let P : Ideal (𝓞 F) := under (𝓞 F) Q
   let E := (FixedPoints.intermediateField (inertia Gal(K/ℚ) Q) : IntermediateField ℚ K)
-  have : IsInertiaField ℚ K Q E := sorry
   have : IsInertiaField ℚ F P ↥(E ⊓ F) := sorry
   rw [← IsInertiaField.rank_left ℤ ℚ F P ↥(E ⊓ F)]
   rw [← relIndex_intermediateFieldEquivSubgroupChar n K R]
@@ -408,7 +565,7 @@ theorem ramificationIdxIn_eq_relIndex' (F : IntermediateField ℚ K) {p : ℕ} [
   rwa [Nat.Coprime.dvd_mul_left] at this
   exact Nat.Prime.coprime_pow_of_not_dvd hp.out <| (Nat.Prime.coprime_iff_not_dvd hp.out).mp h
 
-open MulAction Pointwise
+open  Pointwise
 
 set_option backward.isDefEq.respectTransparency false in
 example [Nontrivial R] (F : IntermediateField ℚ K) {p : ℕ} [hp : Fact (p.Prime)] :
