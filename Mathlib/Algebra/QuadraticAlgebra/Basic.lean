@@ -58,12 +58,15 @@ def omega : QuadraticAlgebra R a b :=
 scoped notation "ω" => omega
 
 @[simp]
-theorem omega_re : (ω : QuadraticAlgebra R a b).re = 0 :=
+theorem re_omega : (ω : QuadraticAlgebra R a b).re = 0 :=
   rfl
 
 @[simp]
-theorem omega_im : (ω : QuadraticAlgebra R a b).im = 1 :=
+theorem im_omega : (ω : QuadraticAlgebra R a b).im = 1 :=
   rfl
+
+@[deprecated (since := "2026-08-10")] alias omega_re := re_omega
+@[deprecated (since := "2026-08-10")] alias omega_im := im_omega
 
 end
 
@@ -255,6 +258,10 @@ theorem norm_one : norm (1 : QuadraticAlgebra R a b) = 1 := by simp [norm]
 @[simp]
 theorem norm_algebraMap (r : R) : norm (algebraMap R (QuadraticAlgebra R a b) r) = r ^ 2 := by
   simp [norm_def, pow_two]
+
+theorem norm_smul (r : R) (z : QuadraticAlgebra R a b) :
+    norm (r • z) = r ^ 2 * norm z := by
+  rw [Algebra.smul_def, map_mul, norm_algebraMap]
 
 @[simp]
 theorem norm_natCast (n : ℕ) : norm (n : QuadraticAlgebra R a b) = n ^ 2 := by
