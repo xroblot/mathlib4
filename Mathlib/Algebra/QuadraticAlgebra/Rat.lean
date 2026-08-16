@@ -37,8 +37,8 @@ theorem exists_squarefree_algEquiv (a b : ℚ) (hd : discr a b ≠ 0) :
   have hr : r ≠ 0 := by
     intro rfl
     exact hd (by simpa using hc)
-  exact ⟨d, hd', ⟨(algEquivDiscrZero a b).trans
-    (mapEquiv (d : ℚ) 0 (Units.mk0 r hr) 0 (by simpa [Units.val_mk0] using hc) (by ring))⟩⟩
+  exact ⟨d, hd', ⟨(algEquivDiscrZero a b).trans (changeGeneratorEquiv (d : ℚ) 0 (Units.mk0 r hr) 0
+    (by simpa [Units.val_mk0] using hc) (by ring))⟩⟩
 
 /-- For squarefree integers `d₁`, `d₂`, the standard forms `QuadraticAlgebra ℚ d₁ 0` and
 `QuadraticAlgebra ℚ d₂ 0` are isomorphic if and only if `d₁ = d₂`. -/

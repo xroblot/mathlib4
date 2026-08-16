@@ -7,23 +7,6 @@ public import Mathlib.RingTheory.IntegralClosure.IntegrallyClosed
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.Data.Nat.Squarefree
 
-lemma Int.sq_emod_four (b : ℤ) : b ^ 2 % 4 = b % 2 := by
-  rcases even_or_odd' b with ⟨k, rfl | rfl⟩ <;> grind
-
-theorem Int.sq_emod_four_eq_one_of_odd {x : ℤ} (hx : Odd x) : x ^ 2 % 4 = 1 := by
-  grind [sq_emod_four]
-
-theorem Int.sq_emod_four_eq_zero_of_even {x : ℤ} (hx : Even x) : x ^ 2 % 4 = 0 := by
-  grind [sq_emod_four]
-
-theorem Int.squarefree_iff_forall_prime (D : ℤ) :
-    Squarefree D ↔ ∀ p : ℕ, p.Prime → ¬ (p : ℤ) ^ 2 ∣ D := by
-  have bridge : ∀ p : ℕ, (p : ℤ) ^ 2 ∣ D ↔ p * p ∣ D.natAbs := fun p => by
-    rw [show ((p : ℤ) ^ 2) = ((p * p : ℕ) : ℤ) by push_cast; ring, Int.natCast_dvd]
-  rw [← Int.squarefree_natAbs, Nat.squarefree_iff_prime_squarefree]
-  exact ⟨fun h p hp hdvd => h p hp ((bridge p).mp hdvd),
-         fun h x hx hdvd => h x hx ((bridge x).mpr hdvd)⟩
-
 theorem Nat.forall_prime_iff_two_and_odd {P : ℕ → Prop} :
     (∀ p, Nat.Prime p → P p) ↔ P 2 ∧ ∀ p, Nat.Prime p → Odd p → P p := by
   refine ⟨fun h ↦ ⟨h 2 Nat.prime_two, fun p hp _ ↦ h p hp⟩, fun h p hp ↦ ?_⟩
@@ -38,13 +21,6 @@ Skeleton following `~/Desktop/Claude/plan_cloture_integrale.md`. `QuadraticAlgeb
 ring-of-integers object; three independent relations to `QA ℚ ↑a ↑b`: structure (§1), density
 (§2), maximality (§3). Bridge to the standard form `QA ℚ d 0` in §4, standard forms in §5.
 -/
-
-/-- The fraction ring `K` of `R` is a field iff `R` is an integral domain. -/
-theorem IsFractionRing.isDomain_iff_isField (R K : Type*) [CommRing R] [CommRing K] [Algebra R K]
-    [IsFractionRing R K] : IsDomain R ↔ IsField K := by
-  refine ⟨fun h ↦ (IsFractionRing.toField R).toIsField K, fun h ↦ ?_⟩
-  let := h.toField
-  exact IsDomain.of_faithfulSMul _ K
 
 /-- If `algebraMap A B` is injective, `A` is the integral closure of `R` in `B` iff an element
 of `B` is integral over `R` exactly when it lies in the image of `A`. -/
@@ -179,7 +155,7 @@ instance [Fact (¬ IsSquare (discr a b))] : IsDomain (QuadraticAlgebra ℤ a b) 
 
 theorem isDomain_iff :
     IsDomain (QuadraticAlgebra ℤ a b) ↔ ¬ IsSquare (discr a b) := by
-  simp [IsFractionRing.isDomain_iff_isField _ (QuadraticAlgebra ℚ a b),
+  simp [IsFractionRing.isDomain_iff_isField (K := QuadraticAlgebra ℚ a b),
     isField_iff_not_isSquare_discr, discr_eq_discr]
 
 /-! ## §3 Maximality — the arithmetic core -/
