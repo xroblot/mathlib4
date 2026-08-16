@@ -9,6 +9,8 @@ public import Mathlib.NumberTheory.FundamentalDiscriminant
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.Data.Nat.Squarefree
 
+@[expose] public section
+
 theorem Nat.forall_prime_iff_two_and_odd {P : ℕ → Prop} :
     (∀ p, Nat.Prime p → P p) ↔ P 2 ∧ ∀ p, Nat.Prime p → Odd p → P p := by
   refine ⟨fun h ↦ ⟨h 2 Nat.prime_two, fun p hp _ ↦ h p hp⟩, fun h p hp ↦ ?_⟩
@@ -297,3 +299,9 @@ theorem isFundamental_half {d : ℤ} (hd : Squarefree d) (h : d % 4 = 1) :
 end Int
 
 end QuadraticAlgebra
+
+section NumberField
+
+instance {a b : ℚ} [Fact (∀ r, r ^ 2 ≠ a + b * r)] : NumberField (QuadraticAlgebra ℚ a b) where
+
+end NumberField
