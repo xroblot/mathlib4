@@ -482,6 +482,19 @@ def changeGeneratorEquiv (a b : R) (u : Rˣ) (k : R) {a' b' : R}
   left_inv _ := by ext <;> simp [mul_assoc]
   right_inv _ := by ext <;> simp [mul_assoc]
 
+/-- Equal parameters give the same quadratic algebra, as an isomorphism which is the identity
+on `re` and `im`. -/
+@[simps]
+def equivOfEq {a b a' b' : R} (ha : a = a') (hb : b = b') :
+    QuadraticAlgebra R a b ≃ₐ[R] QuadraticAlgebra R a' b' where
+  toFun z := ⟨z.re, z.im⟩
+  invFun z := ⟨z.re, z.im⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+  map_mul' _ _ := by ext <;> simp [ha, hb]
+  map_add' _ _ := by ext <;> simp
+  commutes' _ := by ext <;> simp
+
 @[deprecated (since := "2026-08-14")] alias map := changeGenerator
 @[deprecated (since := "2026-08-14")] alias map_omega := changeGenerator_omega
 @[deprecated (since := "2026-08-14")] alias map_injective := changeGenerator_injective
