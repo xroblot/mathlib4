@@ -258,17 +258,21 @@ theorem NumberField.nonempty_algEquiv_iff_discr_eq :
 
 /-! ### The concrete fields `ℚ(√d)`
 
-The `Fact` is supplied by a `haveI` in the statement itself, so no binder leaks into the
-signature: the caller gets `4 * d` and `d` with no instance obligation. -/
+`QuadraticAlgebra ℚ (d : ℚ) 0` is a field, hence a number field, exactly when `d` is not a
+rational square, hence the `[Fact (¬ IsSquare (d : ℚ))]` instance of the results below. -/
 
 section concrete
 
-theorem Int.not_isSquare_of_squarefree (hd : Squarefree d) (hd1 : d ≠ 1) :
+/-- A squarefree integer other than `1` is not a square in `ℚ`.
+
+This is the source of the `Fact (¬ IsSquare (d : ℚ))` instance that makes `ℚ(√d)` a number
+field in the results below. -/
+theorem Squarefree.not_isSquare_intCast (hd : Squarefree d) (hd₁ : d ≠ 1) :
     ¬ IsSquare (d : ℚ) := by
   rw [Rat.isSquare_intCast_iff]
   rintro ⟨r, rfl⟩
   obtain h | h := Int.isUnit_iff.mp (Squarefree.isUnit_of_pow le_rfl ((pow_two r) ▸ hd)) <;>
-  simp [h] at hd1 ⊢
+  simp [h] at hd₁ ⊢
 
 /-- When the parameters are already those of the maximal order, the discriminant of the model
 is the discriminant of the quadratic algebra. -/
@@ -285,41 +289,48 @@ theorem NumberField.discr_quadraticAlgebra_eq {a b : ℤ}
   refine discr_eq_quadraticAlgebra_discr ?_
   exact (Int.algEquivIntegralClosure h).toRingEquiv.symm
 
-theorem NumberField.discr_sqrtd (hd₁ : Squarefree d) (hd₂ : d % 4 = 2 ∨ d % 4 = 3) :
-    haveI : Fact (¬ IsSquare (d : ℚ)) :=
-      ⟨Rat.isSquare_intCast_iff.not.mpr <| Int.not_isSquare_of_squarefree hd₁ (by grind)⟩
+/-- The discriminant of `ℚ(√d)` is `4 * d` when `d` is squarefree and `d ≡ 2, 3 [ZMOD 4]`.
+
+Note that the `Fact` instance is what tells Mathlib that `QuadraticAlgebra ℚ (d : ℚ) 0` is a
+number field, so that its discriminant is defined. It is easily deduced from the other
+hypotheses using `Squarefree.not_isSquare_intCast`. -/
+theorem NumberField.discr_sqrtd [Fact (¬ IsSquare (d : ℚ))]
+    (hd₁ : Squarefree d) (hd₂ : d % 4 = 2 ∨ d % 4 = 3) :
     discr (QuadraticAlgebra ℚ (d : ℚ) 0) = 4 * d := by
   have h₁ : QuadraticAlgebra.discr d 0 = 4 * d := by simp [discr_def]
   have h₂ : (QuadraticAlgebra.discr d 0).IsFundamentalDiscr :=
     h₁ ▸ Int.isFundamentalDiscr_four_mul.mpr ⟨hd₁, hd₂⟩
   simpa [discr_def] using discr_quadraticAlgebra_eq h₂ (by grind)
 
-theorem NumberField.discr_half (hd : Squarefree d) (hd1 : d ≠ 1) (h : d % 4 = 1) :
-    haveI : Fact (¬ IsSquare (d : ℚ)) :=
-      ⟨Rat.isSquare_intCast_iff.not.mpr <| Int.not_isSquare_of_squarefree hd (by grind)⟩
-    discr (QuadraticAlgebra ℚ (d : ℚ) 0) = d := by
-  have : Fact (¬ IsSquare (d : ℚ)) :=
-      ⟨Rat.isSquare_intCast_iff.not.mpr <| Int.not_isSquare_of_squarefree hd (by grind)⟩
-  have h_eq : QuadraticAlgebra.discr (d : ℚ) 0 =
-      2 ^ 2 * QuadraticAlgebra.discr (((d - 1) / 4 : ℤ) : ℚ) 1 := by
-    rw [discr_def, discr_def, Int.cast_div (Int.dvd_self_sub_of_emod_eq h) (by norm_num)]
-    grind
-  have : Fact (¬ IsSquare (QuadraticAlgebra.discr ((((d - 1) / 4 : ℤ) : ℚ)) 1)) := ⟨by
-    refine (IsSquare.mul (IsSquare.sq 2)).mt ?_
-    rw [← h_eq, ← isField_iff_not_isSquare_discr]
-    exact Field.toIsField _⟩
-  let e : QuadraticAlgebra ℚ (d : ℚ) 0 ≃ₐ[ℚ] QuadraticAlgebra ℚ ((d - 1) / 4 : ℤ) (1 : ℤ) :=
-    (nonempty_algEquiv_iff_of_invertible_two.mpr ⟨(isUnit_of_invertible 2).unit, h_eq⟩).some
-  rw [discr_eq_discr_of_algEquiv _ e, discr_quadraticAlgebra_eq , discr_def]
-  · lia
-  · rw [discr_def, one_pow, add_comm, Int.isFundamentalDiscr_four_mul_add_one]
-    grind
-  · grind [discr_def]
+/-- Every fundamental discriminant other than `1` is the discriminant of a quadratic field.
 
-/-- Every fundamental discriminant other than `1` is the discriminant of a quadratic field. -/
-theorem NumberField.discr_quadraticAlgebra (hD : Int.IsFundamentalDiscr D) (hD1 : D ≠ 1) :
-    haveI : Fact (¬ IsSquare (D : ℚ)) :=
-      ⟨Rat.isSquare_intCast_iff.not.mpr <| hD.eq_one_of_isSquare.mt hD1⟩
-    discr (QuadraticAlgebra ℚ (D : ℚ) 0) = D := sorry
+Note that the `Fact` instance is what tells Mathlib that `QuadraticAlgebra ℚ (D : ℚ) 0` is a
+number field, so that its discriminant is defined. It is easily deduced from the other
+hypotheses using `Int.IsFundamentalDiscr.eq_one_of_isSquare`. -/
+theorem NumberField.discr_quadraticAlgebra [Fact (¬ IsSquare (D : ℚ))]
+    (hD : Int.IsFundamentalDiscr D) (hD1 : D ≠ 1) :
+    discr (QuadraticAlgebra ℚ (D : ℚ) 0) = D := by
+  -- `QuadraticAlgebra ℤ (D / 4) (D % 4)` is the order of discriminant `D`, and `ℚ(√D)` is its
+  -- field of fractions: over `ℚ` the two discriminants differ by `2 ^ 2`.
+  have hd : QuadraticAlgebra.discr (D / 4) (D % 4) = D := hD.discr_ediv_four_emod_four
+  have h_eq : QuadraticAlgebra.discr (D : ℚ) 0 =
+      2 ^ 2 * QuadraticAlgebra.discr ((D / 4 : ℤ) : ℚ) ((D % 4 : ℤ) : ℚ) := by
+    rw [QuadraticAlgebra.Int.discr_intCast, hd, discr_def]
+    ring
+  have : Fact (¬ IsSquare (QuadraticAlgebra.discr ((D / 4 : ℤ) : ℚ) ((D % 4 : ℤ) : ℚ))) :=
+    ⟨by rw [QuadraticAlgebra.Int.discr_intCast, hd]; exact Fact.out⟩
+  let e : QuadraticAlgebra ℚ (D : ℚ) 0 ≃ₐ[ℚ] QuadraticAlgebra ℚ (D / 4 : ℤ) (D % 4 : ℤ) :=
+    (nonempty_algEquiv_iff_of_invertible_two.mpr ⟨(isUnit_of_invertible 2).unit, h_eq⟩).some
+  rw [discr_eq_discr_of_algEquiv _ e, discr_quadraticAlgebra_eq (by rwa [hd]) (by rwa [hd]), hd]
+
+/-- The discriminant of `ℚ(√d)` is `d` itself when `d` is squarefree and `d ≡ 1 [ZMOD 4]`.
+
+Note that the `Fact` instance is what tells Mathlib that `QuadraticAlgebra ℚ (d : ℚ) 0` is a
+number field, so that its discriminant is defined. It is easily deduced from the other
+hypotheses using `Squarefree.not_isSquare_intCast`. -/
+theorem NumberField.discr_half [Fact (¬ IsSquare (d : ℚ))]
+    (hd : Squarefree d) (hd1 : d ≠ 1) (h : d % 4 = 1) :
+    discr (QuadraticAlgebra ℚ (d : ℚ) 0) = d :=
+  discr_quadraticAlgebra (Int.isFundamentalDiscr_iff_squarefree.mpr (Or.inl ⟨h, hd⟩)) hd1
 
 end concrete
