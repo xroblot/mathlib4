@@ -16,6 +16,10 @@ convention `ω² = a + b·ω`), describes how it transforms under a change of ge
 the classification of quadratic algebras up to isomorphism together with a criterion, over a
 field, for `QuadraticAlgebra K a b` to be a field.
 
+The discriminant is the relevant invariant only when `2` is regular in `R`. In
+characteristic two it degenerates and is no longer useful; quadratic algebras are then
+classified by Artin-Schreier theory rather than by the discriminant.
+
 ## Main definitions
 
 * `QuadraticAlgebra.discr`: the discriminant `discr a b = b ^ 2 + 4 * a`.
@@ -227,5 +231,30 @@ theorem isField_iff_not_isSquare_discr [NeZero (2 : K)] {a b : K} :
 example {a b : ℚ} [Fact (¬ IsSquare (discr a b))] : Field (QuadraticAlgebra ℚ a b) := inferInstance
 
 end field
+
+section degenerate
+
+variable {K : Type*} [Field K]
+
+/-- If the discriminant is zero, `QuadraticAlgebra K a b` is the algebra of dual numbers
+`K[ε] = K[X] / (X ^ 2)`, in which `ε` is nilpotent of order two. -/
+def algEquivDualNumberOfDiscrZero [NeZero (2 : K)] {a b : K} (h : discr a b = 0) :
+    QuadraticAlgebra K a b ≃ₐ[K] DualNumber K :=
+  letI := invertibleOfNonzero (two_ne_zero (α := K))
+  (algEquivDiscrZero a b).trans (by rw [h]; exact algEquivDualNumber K)
+
+/-- If the discriminant is a nonzero square, `QuadraticAlgebra K a b` splits as `K × K`,
+via the two distinct roots `(b ± s) / 2` of `X ^ 2 - b * X - a`. -/
+noncomputable def algEquivProdOfDiscrSq [NeZero (2 : K)] {a b s : K} (hd : discr a b = s ^ 2)
+    (hs : s ≠ 0) : QuadraticAlgebra K a b ≃ₐ[K] K × K :=
+  letI := invertibleOfNonzero (two_ne_zero (α := K))
+  (algEquivDiscrZero a b).trans <| hd ▸ AlgEquiv.ofBijective
+    (lift ⟨(s, -s), by ext <;> simp <;> ring⟩)
+    (Function.bijective_iff_has_inverse.mpr
+      ⟨fun p ↦ ⟨2⁻¹ * (p.1 + p.2), 2⁻¹ * (p.1 - p.2) / s⟩,
+      fun _ ↦ by ext <;> simp [lift_apply_apply] <;> field_simp <;> ring,
+      fun _ ↦ by ext <;> simp [lift_apply_apply] <;> field_simp <;> ring⟩)
+
+end degenerate
 
 end QuadraticAlgebra
