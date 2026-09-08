@@ -620,6 +620,11 @@ example {a b : ℚ} [Fact (∀ r : ℚ, r ^ 2 ≠ a + b * r)] :
     (DivisionRing.toRatAlgebra : Algebra ℚ (QuadraticAlgebra ℚ a b)) = instAlgebra := by
   with_implicit rfl
 
+-- Over `ℤ`, the algebra structure of `QuadraticAlgebra.instAlgebra` and the one coming from the
+-- `Ring` structure through `Ring.toIntAlgebra` are the same instance.
+example {a b : ℤ} : (Ring.toIntAlgebra (QuadraticAlgebra ℤ a b)) = instAlgebra := by
+  with_implicit rfl
+
 end field
 
 end QuadraticAlgebra

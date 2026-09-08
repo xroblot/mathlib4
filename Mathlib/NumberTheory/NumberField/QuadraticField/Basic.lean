@@ -74,7 +74,6 @@ theorem discr_eq_quadraticAlgebra_discr {a b : ℤ}
   rw [← discr_eq_discr K ((QuadraticAlgebra.basis a b).map f.toIntAlgEquiv.symm),
     Module.Basis.coe_map, RingEquiv.symm_toIntAlgEquiv, AlgEquiv.coe_toLinearEquiv,
     ← Algebra.discr_eq_discr_of_algEquiv, ← Algebra.discr_quadraticAlgebra]
-  rfl
 
 variable (K)
 
