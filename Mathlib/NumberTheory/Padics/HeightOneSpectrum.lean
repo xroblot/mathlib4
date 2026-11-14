@@ -128,10 +128,8 @@ variable [IsDedekindDomain R] [IsFractionRing R ℚ]
 
 theorem valuation_equiv_padicValuation (v : HeightOneSpectrum R) :
     (v.valuation ℚ).IsEquiv (padicValuation (primesEquiv v)) := by
-  simp only [Valuation.isEquiv_iff_val_le_one, valuation_le_one_iff_den,
-    Rat.padicValuation_le_one_iff, primesEquiv_apply_coe, not_iff_not]
-  intro x
-  rw [← Int.cast_natCast, Int.cast_mem_ideal_iff, Int.natCast_dvd_natCast]
+  simp [Valuation.isEquiv_iff_val_le_one, valuation_le_one_iff_den,
+    Rat.padicValuation_le_one_iff, ← Int.natCast_dvd_natCast, ← Int.cast_mem_ideal_iff]
 
 open Valuation
 

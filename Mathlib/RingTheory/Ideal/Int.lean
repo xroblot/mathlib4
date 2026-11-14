@@ -89,10 +89,10 @@ theorem absNorm_under_eq_sInf :
     rw [← cast_natCast, cast_mem_ideal_iff, natCast_dvd_natCast] at h₂
     exact lt_iff_not_ge.mp h₀ <| Nat.le_of_dvd (Nat.sInf_mem (Set.nonempty_of_mem h₁)).1 h₂
 
-@[deprecated Ideal.absNorm_under_dvd_absNorm +typeChanged (since := "2026-10-24")]
+@[deprecated Ideal.absNorm_dvd_absNorm_of_liesOver +typeChanged (since := "2026-10-24")]
 theorem absNorm_under_dvd_absNorm {S : Type*} [CommRing S] [IsDedekindDomain S] (I : Ideal S) :
     absNorm (under ℤ I) ∣ absNorm I :=
-  Ideal.absNorm_under_dvd_absNorm I
+  Ideal.absNorm_dvd_absNorm_of_liesOver _ I
 
 theorem _root_.Ideal.ringChar_quot {S : Type*} [CommRing S] (I : Ideal S) :
     ringChar (S ⧸ I) = absNorm (under ℤ I) := by
@@ -148,15 +148,12 @@ noncomputable def primesEquiv : HeightOneSpectrum R ≃ Nat.Primes :=
 @[simp]
 theorem primesEquiv_apply_coe (v : HeightOneSpectrum R) :
     (primesEquiv v : ℕ) = absNorm (v.asIdeal.under ℤ) := by
-  rw [primesEquiv, Equiv.trans_apply, primesEquivInt_apply_coe, equivOfRingEquiv_apply_asIdeal,
-    under_def]
+  rw [primesEquiv, Equiv.trans_apply, primesEquivInt_apply_coe, equivOfRingEquiv_apply_asIdeal]
   congr; ext; simp
 
 @[simp]
 theorem primesEquiv_symm_apply_asIdeal (p : Nat.Primes) :
     (primesEquiv.symm p).asIdeal = span {(p : R)} := by
-  rw [primesEquiv, Equiv.symm_trans, Equiv.trans_apply, equivOfRingEquiv_symm_apply_asIdeal,
-    comap_coe, ← map_symm, primesEquivInt_symm_apply_asIdeal, map_span, Set.image_singleton,
-    map_natCast]
+  simp [primesEquiv, Ideal.map_span, ← map_symm, comap_coe, -AlgEquiv.toRingEquiv_toRingHom]
 
 end IsDedekindDomain.HeightOneSpectrum

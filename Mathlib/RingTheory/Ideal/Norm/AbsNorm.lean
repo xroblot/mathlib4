@@ -337,13 +337,16 @@ theorem absNorm_eq_one_iff {I : Ideal S} : absNorm I = 1 ↔ I = ⊤ := by
 theorem absNorm_dvd_absNorm_of_le {I J : Ideal S} (h : J ≤ I) : Ideal.absNorm I ∣ Ideal.absNorm J :=
   map_dvd absNorm (dvd_iff_le.mpr h)
 
-/-- The absolute norm of the ideal of `A` lying under `I` divides the absolute norm of `I`. -/
-theorem absNorm_under_dvd_absNorm {A : Type*} [CommRing A] [Algebra A S] [IsDedekindDomain A]
-    [Infinite A] (I : Ideal S) : absNorm (I.under A) ∣ absNorm I := by
-  obtain rfl | hI := eq_or_ne I ⊥
+/-- If the ideal `P` lies over the ideal `p` of `A`, then the absolute norm of `p` divides the
+absolute norm of `P`. -/
+theorem absNorm_dvd_absNorm_of_liesOver {A : Type*} [CommRing A] [Algebra A S]
+    [IsDedekindDomain A] [Infinite A] (p : Ideal A) (P : Ideal S) [P.LiesOver p] :
+    absNorm p ∣ absNorm P := by
+  obtain rfl | hP := eq_or_ne P ⊥
   · simp
-  rw [absNorm_of_ne_bot hI, absNorm_apply, Submodule.cardQuot_apply, Submodule.cardQuot_apply]
-  exact AddSubgroup.card_dvd_of_injective (quotientMap I (algebraMap A S) le_rfl)
+  rw [P.over_def p, absNorm_of_ne_bot hP, absNorm_apply, Submodule.cardQuot_apply,
+    Submodule.cardQuot_apply]
+  exact AddSubgroup.card_dvd_of_injective (quotientMap P (algebraMap A S) le_rfl)
     quotientMap_injective
 
 theorem irreducible_of_irreducible_absNorm {I : Ideal S} (hI : Irreducible (Ideal.absNorm I)) :
