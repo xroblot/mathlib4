@@ -102,6 +102,10 @@ theorem rootsOfUnity.coe_mkOfPowEq {ζ : M} {n : ℕ} [NeZero n] (h : ζ ^ n = 1
     ((rootsOfUnity.mkOfPowEq _ h : Mˣ) : M) = ζ :=
   rfl
 
+@[simp]
+theorem rootsOfUnity.pow_eq_one (ζ : rootsOfUnity k M) : ((ζ : Mˣ) : M) ^ k = 1 :=
+  (mem_rootsOfUnity' k _).mp ζ.prop
+
 theorem rootsOfUnity_le_of_dvd (h : k ∣ l) : rootsOfUnity k M ≤ rootsOfUnity l M := by
   obtain ⟨d, rfl⟩ := h
   intro ζ h

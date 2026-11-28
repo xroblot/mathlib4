@@ -59,10 +59,9 @@ roots of unity. -/
 theorem rootsOfUnityMapQuot_injective_of_notMem [IsDomain R] {n : ℕ} (hn : (n : R) ∉ I) :
     Function.Injective (I.rootsOfUnityMapQuot n) := by
   refine (injective_iff_map_eq_one _).mpr fun ζ h ↦ ?_
-  by_contra hζ
-  obtain ⟨c, hc⟩ := sub_one_dvd_natCast_of_pow_eq_one ((mem_rootsOfUnity' n _).mp ζ.prop)
-    (fun h₁ ↦ hζ (Subtype.ext (Units.ext h₁)))
-  refine hn (hc ▸ I.mul_mem_right c ?_)
+  contrapose hn
+  refine I.mem_of_dvd (sub_one_dvd_natCast_of_pow_eq_one (rootsOfUnity.pow_eq_one ζ)
+    (by simpa using hn)) ?_
   rw [← Ideal.Quotient.eq_zero_iff_mem, map_sub, map_one, sub_eq_zero]
   exact congr_arg Units.val h
 
@@ -78,11 +77,9 @@ namespace Ideal
 `I` is injective on the `n`-th roots of unity. -/
 theorem rootsOfUnityMapQuot_injective (n : ℕ) (hI₁ : absNorm I ≠ 1)
     (hI₂ : (absNorm I).Coprime n) :
-    Function.Injective (rootsOfUnityMapQuot I n) := by
-  refine rootsOfUnityMapQuot_injective_of_notMem I fun hn ↦ hI₁ <| absNorm_eq_one_iff.mpr <|
-    I.eq_top_iff_one.mpr ?_
-  obtain ⟨u, v, h⟩ := hI₂.cast (R := R)
-  exact h ▸ I.add_mem (I.mul_mem_left u (absNorm_mem I)) (I.mul_mem_left v hn)
+    Function.Injective (rootsOfUnityMapQuot I n) :=
+  rootsOfUnityMapQuot_injective_of_notMem I fun hn ↦ hI₁ <| absNorm_eq_one_iff.mpr <|
+    eq_top_of_natCast_mem_of_coprime hI₂ (absNorm_mem I) hn
 
 theorem rootsOfUnityMapQuot_inj (n : ℕ) (hI₁ : absNorm I ≠ 1)
     (hI₂ : (absNorm I).Coprime n) {x y : rootsOfUnity n R} :

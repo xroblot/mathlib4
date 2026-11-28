@@ -1040,10 +1040,17 @@ theorem eq_inf_of_isPrime_inf {s : Finset ι} {f : ι → Ideal R} (hp : IsPrime
     ∃ i ∈ s, f i = s.inf f :=
   (hp.inf_le'.mp le_rfl).imp (fun _ ⟨h1, h2⟩ ↦ ⟨h1, le_antisymm h2 (Finset.inf_le h1)⟩)
 
-theorem IsPrime.notMem_of_isCoprime_of_mem {I : Ideal R} [I.IsPrime] {x y : R} (h : IsCoprime x y)
-    (hx : x ∈ I) : y ∉ I := fun hy ↦
+theorem eq_top_of_isCoprime {I : Ideal R} {x y : R} (h : IsCoprime x y) (hx : x ∈ I)
+    (hy : y ∈ I) : I = ⊤ :=
   have ⟨a, b, e⟩ := h
-  Ideal.IsPrime.one_notMem ‹_› (e ▸ I.add_mem (I.mul_mem_left a hx) (I.mul_mem_left b hy))
+  I.eq_top_iff_one.mpr (e ▸ I.add_mem (I.mul_mem_left a hx) (I.mul_mem_left b hy))
+
+theorem eq_top_of_natCast_mem_of_coprime {R : Type*} [CommRing R] {I : Ideal R} {m n : ℕ}
+    (h : m.Coprime n) (hm : (m : R) ∈ I) (hn : (n : R) ∈ I) : I = ⊤ :=
+  eq_top_of_isCoprime h.cast hm hn
+
+theorem IsPrime.notMem_of_isCoprime_of_mem {I : Ideal R} [I.IsPrime] {x y : R} (h : IsCoprime x y)
+    (hx : x ∈ I) : y ∉ I := fun hy ↦ IsPrime.ne_top ‹_› (eq_top_of_isCoprime h hx hy)
 
 theorem subset_union {R : Type u} [Ring R] {I J K : Ideal R} :
     (I : Set R) ⊆ J ∪ K ↔ I ≤ J ∨ I ≤ K :=
