@@ -313,6 +313,13 @@ lemma algebraMap_comp_intCast (R A : Type*) [CommRing R] [Ring A] [Algebra R A] 
     algebraMap R A ∘ Int.cast = Int.cast := by
   ext; simp
 
+/-- If no prime number is a unit in `R`, then the only natural number that is a unit in `R`
+is `1`. -/
+@[simp]
+theorem isUnit_natCast_iff_eq_one [IsLocalHom (algebraMap ℤ R)] {n : ℕ} :
+    IsUnit (n : R) ↔ n = 1 := by
+  rw [← map_natCast (algebraMap ℤ R), isUnit_map_iff, Int.ofNat_isUnit, Nat.isUnit_iff]
+
 end Int
 
 section FaithfulSMul

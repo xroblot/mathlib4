@@ -563,27 +563,22 @@ theorem prime_dvd_of_dvd_norm_sub_one {n : ℕ} (hn : 2 ≤ n) {K : Type*}
   rw [h] at hp
   rsuffices ⟨q, hq, t, s, ht₁, ht₂, hs⟩ :
       ∃ q, q.Prime ∧ ∃ t s, t ≠ 0 ∧ n = q ^ t ∧ (p : ℤ) ∣ (q : ℤ) ^ s := by
-    obtain hn | hn := lt_or_eq_of_le hn
+    obtain hn | rfl := lt_or_eq_of_le hn
     · by_cases h : IsPrimePow n
-      · obtain ⟨q, t, hq, ht, hn'⟩ := (isPrimePow_nat_iff _).mp h
+      · obtain ⟨q, t, hq, ht, rfl⟩ := (isPrimePow_nat_iff _).mp h
         obtain ⟨r, rfl⟩ := Nat.exists_eq_add_one_of_ne_zero ht.ne'
         have : Fact (Nat.Prime q) := ⟨hq⟩
-        rw [← hn'] at hC hμ
-        refine ⟨q, hq, r + 1, Module.finrank (ℚ⟮ζ⟯) K, r.add_one_ne_zero, hn'.symm, ?_⟩
-        by_cases hq' : q = 2
+        refine ⟨q, hq, r + 1, Module.finrank (ℚ⟮ζ⟯) K, r.add_one_ne_zero, rfl, ?_⟩
+        obtain rfl | hq' := eq_or_ne q 2
         · cases r with
-          | zero =>
-              rw [← hn', hq', zero_add, pow_one] at hn
-              exact hn.false.elim
+          | zero => lia
           | succ k =>
-              rw [hq'] at hC hμ ⊢
               rwa [hμ.norm_toInteger_sub_one_of_eq_two_pow] at hp
         · rwa [hμ.norm_toInteger_sub_one_of_prime_ne_two hq'] at hp
-      · rw [IsPrimitiveRoot.norm_toInteger_sub_one_eq_one hμ hn h, one_pow,
-          Int.natCast_dvd_ofNat, Nat.dvd_one] at hp
-        exact (Nat.Prime.ne_one hF.out hp).elim
-    · rw [← hn] at hμ hC ⊢
-      refine ⟨2, Nat.prime_two, 1, Module.finrank ℚ⟮ζ⟯ K, one_ne_zero, by rw [pow_one], ?_⟩
+      · suffices p = 1 from (Nat.Prime.ne_one hF.out this).elim
+        simpa [IsPrimitiveRoot.norm_toInteger_sub_one_eq_one hμ hn h,
+          Int.natCast_dvd_ofNat] using hp
+    · refine ⟨2, Nat.prime_two, 1, Module.finrank ℚ⟮ζ⟯ K, one_ne_zero, by rw [pow_one], ?_⟩
       rwa [hμ.norm_toInteger_sub_one_of_eq_two, neg_eq_neg_one_mul, mul_pow, IsUnit.dvd_mul_left
         ((isUnit_pow_iff Module.finrank_pos.ne').mpr isUnit_neg_one)] at hp
   have : p = q := by

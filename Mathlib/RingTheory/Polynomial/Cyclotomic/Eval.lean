@@ -23,11 +23,11 @@ This file states some results about evaluating cyclotomic polynomials in various
 ## Main definitions
 
 * `Polynomial.eval(₂)_one_cyclotomic_prime(_pow)`: `eval 1 (cyclotomic p^k R) = p`.
-* `Polynomial.eval_one_cyclotomic_of_not_isPrimePow`: if `n` is neither `1` nor a prime power,
+* `Polynomial.eval_one_cyclotomic_of_not_isPrimePow`: if `n` isn't a prime power (and isn't `1`),
   then `eval 1 (cyclotomic n R) = 1`.
 * `Polynomial.cyclotomic_pos` : `∀ x, 0 < eval x (cyclotomic n R)` if `2 < n`.
-* `IsPrimitiveRoot.isUnit_sub_one_iff`: if no prime number is a unit in `R`, then `ζ - 1` is a unit
-  precisely when the order of `ζ` is not a prime power.
+* `IsPrimitiveRoot.isUnit_sub_one_iff`: if all prime numbers are not units in `R`, then `ζ - 1` is
+  a unit precisely when the order of `ζ` is not a prime power.
 -/
 
 public section
@@ -142,8 +142,8 @@ theorem cyclotomic_nonneg (n : ℕ) {R}
     0 ≤ eval x (cyclotomic n R) :=
   (cyclotomic_pos_and_nonneg n x).2 hx
 
-/-- The `n`-th cyclotomic polynomial takes the value `1` at `1` when `n` is neither `1` nor a prime
-power. -/
+/-- The `n`-th cyclotomic polynomial takes the value `1` at `1` when `n` isn't a prime power (and
+isn't `1`). -/
 theorem eval_one_cyclotomic_of_not_isPrimePow {R : Type*} [Ring R] {n : ℕ} (hn : n ≠ 1)
     (h : ¬ IsPrimePow n) : eval 1 (cyclotomic n R) = 1 := by
   obtain rfl | hn' := n.eq_zero_or_pos
@@ -366,8 +366,6 @@ theorem isUnit_sub_one_iff [IsLocalHom (algebraMap ℤ R)] (hζ : IsPrimitiveRoo
   refine ⟨fun h hpp ↦ ?_, hζ.isUnit_sub_one_of_not_isPrimePow hn⟩
   obtain ⟨p, k, hp, hk, rfl⟩ := (isPrimePow_nat_iff _).mp hpp
   have : Fact p.Prime := ⟨hp⟩
-  rw [hζ.isUnit_sub_one_iff_of_prime_pow hk.ne', ← map_natCast (algebraMap ℤ R), isUnit_map_iff,
-    Int.ofNat_isUnit, Nat.isUnit_iff] at h
-  exact hp.ne_one h
+  exact hp.ne_one (by simpa [hζ.isUnit_sub_one_iff_of_prime_pow hk.ne'] using h)
 
 end IsPrimitiveRoot
