@@ -5,7 +5,6 @@ Authors: Xavier Roblot
 -/
 module
 
-public import Mathlib.FieldTheory.Finite.GaloisField
 public import Mathlib.NumberTheory.RamificationInertia.Galois
 
 import Mathlib.LinearAlgebra.Dimension.Domain
@@ -270,72 +269,70 @@ theorem inertiaDeg_eq_one : 𝓟.inertiaDeg A = 1 := by
 
 end IsDecompositionRing
 
-/-! ### Splitting of a prime in an inertia ring -/
+/-! ## Splitting of a prime in an inertia ring -/
 
 namespace IsInertiaRing
 
-attribute [local instance] Ideal.Quotient.field
+variable [P.IsInertiaRing G R] [P.IsPrime] [Finite (inertia G P)]
 
-variable [P.IsInertiaRing G R]
-
+include G in
 /-- Let `R` be an inertia ring of `P` and `𝓟` the prime of `R` below `P`. Then `P` is the
 only prime of `B` above `𝓟`. -/
-theorem primesOver_eq_singleton [P.IsPrime] [Finite (inertia G P)] :
-    primesOver 𝓟 B = {P} := by
-  refine Set.eq_singleton_iff_unique_mem.mpr ⟨⟨inferInstance, inferInstance⟩, fun Q ⟨_, _⟩ ↦ ?_⟩
-  obtain ⟨σ, rfl⟩ := exists_smul_eq_of_isGaloisGroup 𝓟 P Q (inertia G P)
-  exact inertia_le_stabilizer _ σ.prop
+theorem primesOver_eq_singleton : 𝓟.primesOver B = {P} :=
+  Set.eq_singleton_iff_unique_mem.mpr ⟨⟨inferInstance, inferInstance⟩, fun Q ⟨_, _⟩ ↦ by
+    obtain ⟨σ, rfl⟩ := 𝓟.exists_smul_eq_of_isGaloisGroup P Q (inertia G P)
+    exact inertia_le_stabilizer _ σ.prop⟩
 
-variable [Finite G] [Ring.HasFiniteQuotients B] [P.IsMaximal]
+variable [p.IsPrime] [Algebra.HasSeparableResidueFieldsAt A B p]
 
-include G P in
+include G p in
+/-- The inertia degree of `P` over `R` equals `1`. -/
+theorem inertiaDeg_eq_one : P.inertiaDeg R = 1 := by
+  have : (P.under R).LiesOver p := LiesOver.tower_bot P (P.under R) p
+  have := Algebra.HasSeparableResidueFieldsAt.tower_top p (P.under R) (C := B)
+  have h := ncard_primesOver_mul_card_inertia_mul_finrank (G := inertia G P) (P.under R) P
+  rwa [primesOver_eq_singleton G P, Set.ncard_singleton, one_mul,
+    ((inertia (inertia G P) P).eq_top_iff').mpr fun σ ↦ σ.prop, Subgroup.card_top,
+    mul_eq_left₀ Nat.card_pos.ne'] at h
+
+include G P p in
 /-- The inertia degree of `𝓟` in `B` equals `1`. -/
-theorem inertiaDegIn_eq [Algebra.IsIntegral R B] (hP : P ≠ ⊥) :
-    inertiaDegIn 𝓟 B = 1 := by
-  have : 𝓟.IsMaximal := .of_isMaximal_liesOver P 𝓟
-  have : Finite (B ⧸ P) := Ring.HasFiniteQuotients.finiteQuotient hP
-  rw [inertiaDegIn_eq_inertiaDeg 𝓟 P (inertia G P), inertiaDeg_eq_of_isMaximal 𝓟 P,
-    ← IsGalois.card_aut_eq_finrank,
-    ← Nat.card_congr (Quotient.stabilizerQuotientInertiaEquiv (inertia G P) 𝓟 P).toEquiv]
-  refine Nat.card_eq_one_iff_unique.mpr ⟨?_, inferInstance⟩
-  rw [QuotientGroup.subsingleton_iff, Subgroup.eq_top_iff']
-  exact fun ⟨⟨σ, hσ⟩, hσ'⟩ ↦ hσ
+theorem inertiaDegIn_eq_one : 𝓟.inertiaDegIn B = 1 := by
+  rw [𝓟.inertiaDegIn_eq_inertiaDeg P (inertia G P), inertiaDeg_eq_one G P R p]
 
-variable [IsGaloisGroup G A B] [Module.Finite A B]
+variable [IsGaloisGroup G A B] [Finite G]
 
 include G P in
 /-- The inertia degree of `𝓟` over `A` equals the inertia degree of `p` in `B`. -/
-theorem inertiaDeg_eq (hP : P ≠ ⊥) :
-    𝓟.inertiaDeg A = p.inertiaDegIn B := by
-  have : Module.Finite R B := Module.Finite.right A R B
-  have := inertiaDeg_tower (R := A) 𝓟 P
-  rw [← inertiaDegIn_eq_inertiaDeg 𝓟 P (inertia G P), inertiaDegIn_eq G P R 𝓟 hP,
-    mul_one] at this
-  rw [inertiaDegIn_eq_inertiaDeg p P G, this]
+theorem inertiaDeg_eq : 𝓟.inertiaDeg A = p.inertiaDegIn B := by
+  rw [p.inertiaDegIn_eq_inertiaDeg P G, inertiaDeg_tower 𝓟 P, inertiaDeg_eq_one G P R p, mul_one]
 
-variable [IsDomain A] [IsDomain B] [IsDomain R] [Module.Flat A B] [Module.Flat R B]
-  [Ring.HasFiniteQuotients A]
+variable [IsDomain A] [IsDomain B] [FaithfulSMul R B] [Module.Finite A B] [Module.Flat A B]
+  [Module.Flat R B]
 
 include G P in
 /-- The ramification index of `𝓟` in `B` equals the ramification index of `p` in `B`. -/
-theorem ramificationIdxIn_eq (hp : p ≠ ⊥) :
-    ramificationIdxIn 𝓟 B = p.ramificationIdxIn B := by
-  have : Finite (A ⧸ p) := Ring.HasFiniteQuotients.finiteQuotient hp
-  have : p.IsMaximal := .of_isMaximal_liesOver P p
+theorem ramificationIdxIn_eq : 𝓟.ramificationIdxIn B = p.ramificationIdxIn B := by
+  have : IsDomain R := (FaithfulSMul.algebraMap_injective R B).isDomain
   have : Module.Finite R B := Module.Finite.right A R B
-  have : 𝓟.IsMaximal := .of_isMaximal_liesOver P 𝓟
-  have hP : P ≠ ⊥ := ne_bot_of_liesOver_of_ne_bot hp P
-  have := ncard_primesOver_mul_ramificationIdxIn_mul_inertiaDegIn 𝓟 B (inertia G P)
-  rwa [primesOver_eq_singleton G P, Set.ncard_singleton, one_mul, inertiaDegIn_eq G P R 𝓟 hP,
-    mul_one, card_inertia_eq_ramificationIdxIn p P] at this
+  have : 𝓟.IsPrime := P.isPrime_of_liesOver 𝓟
+  have : 𝓟.LiesOver p := LiesOver.tower_bot P 𝓟 p
+  have := Algebra.HasSeparableResidueFieldsAt.tower_top p 𝓟 (C := B)
+  rw [← card_inertia_eq_ramificationIdxIn (G := inertia G P) 𝓟 P,
+    ((inertia (inertia G P) P).eq_top_iff').mpr fun σ ↦ σ.prop, Subgroup.card_top,
+    card_inertia_eq_ramificationIdxIn p P]
 
-include G P in
-/-- `𝓟` is unramified over `A`. -/
-theorem ramificationIdx_eq (hp : p ≠ ⊥) :
-    𝓟.ramificationIdx A = 1 := by
-  have := ramificationIdx_tower (R := A) 𝓟 P
-  rwa [← ramificationIdxIn_eq_ramificationIdx 𝓟 P (inertia G P),
-    ramificationIdxIn_eq G P R p 𝓟 hp, ramificationIdxIn_eq_ramificationIdx p P G,
+include G in
+/-- The ramification index of `P` over `R` equals the ramification index of `p` in `B`. -/
+theorem ramificationIdx_eq : P.ramificationIdx R = p.ramificationIdxIn B := by
+  rw [← (P.under R).ramificationIdxIn_eq_ramificationIdx P (inertia G P),
+    ramificationIdxIn_eq G P R p (P.under R)]
+
+include G P p in
+/-- The ramification index of `𝓟` over `A` equals `1`. -/
+theorem ramificationIdx_eq_one : 𝓟.ramificationIdx A = 1 := by
+  have := 𝓟.ramificationIdx_tower (R := A) P
+  rwa [ramificationIdx_eq G P R p, p.ramificationIdxIn_eq_ramificationIdx P G,
     right_eq_mul₀ (P.ramificationIdx_pos A).ne'] at this
 
 end IsInertiaRing
