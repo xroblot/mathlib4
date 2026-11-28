@@ -254,6 +254,20 @@ theorem AntitoneOn.strictAntiOn_of_injOn (hanti : AntitoneOn f s) (hinj : s.InjO
     StrictAntiOn f s :=
   fun _ hx _ hy h ↦ hanti hx hy h.le |>.lt_of_ne' <| mt (hinj hx hy) h.ne
 
+/-- If a monotone function is equal at two points, it is equal between all of them. -/
+theorem Monotone.eq_of_ge_of_le {a₁ a₂ : α} (h_mon : Monotone f) (h_fa : f a₁ = f a₂) {i : α}
+    (h₁ : a₁ ≤ i) (h₂ : i ≤ a₂) : f i = f a₁ := by
+  apply le_antisymm
+  · rw [h_fa]; exact h_mon h₂
+  · exact h_mon h₁
+
+/-- If an antitone function is equal at two points, it is equal between all of them. -/
+theorem Antitone.eq_of_ge_of_le {a₁ a₂ : α} (h_anti : Antitone f) (h_fa : f a₁ = f a₂) {i : α}
+    (h₁ : a₁ ≤ i) (h₂ : i ≤ a₂) : f i = f a₁ := by
+  apply le_antisymm
+  · exact h_anti h₁
+  · rw [h_fa]; exact h_anti h₂
+
 end PreorderPartialOrder
 
 section Preorder
@@ -450,20 +464,6 @@ theorem MonotoneOn.strictMonoOn_iff_injOn (hf : MonotoneOn f s) : StrictMonoOn f
 theorem AntitoneOn.strictAnti_iff_injOn (hf : AntitoneOn f s) : StrictAntiOn f s ↔ s.InjOn f :=
   ⟨StrictAntiOn.injOn, hf.strictAntiOn_of_injOn⟩
 
-/-- If a monotone function is equal at two points, it is equal between all of them -/
-theorem Monotone.eq_of_ge_of_le {a₁ a₂ : α} (h_mon : Monotone f) (h_fa : f a₁ = f a₂) {i : α}
-    (h₁ : a₁ ≤ i) (h₂ : i ≤ a₂) : f i = f a₁ := by
-  apply le_antisymm
-  · rw [h_fa]; exact h_mon h₂
-  · exact h_mon h₁
-
-/-- If an antitone function is equal at two points, it is equal between all of them -/
-theorem Antitone.eq_of_ge_of_le {a₁ a₂ : α} (h_anti : Antitone f) (h_fa : f a₁ = f a₂) {i : α}
-    (h₁ : a₁ ≤ i) (h₂ : i ≤ a₂) : f i = f a₁ := by
-  apply le_antisymm
-  · exact h_anti h₁
-  · rw [h_fa]; exact h_anti h₂
-
 end PartialOrder
 
 variable [LinearOrder β] {f : α → β} {s : Set α} {x y : α}
@@ -537,6 +537,10 @@ theorem Nat.rel_of_forall_rel_succ_of_le (r : β → β → Prop) [Std.Refl r] [
 theorem monotone_nat_of_le_succ {f : ℕ → α} (hf : ∀ n, f n ≤ f (n + 1)) : Monotone f :=
   Nat.rel_of_forall_rel_succ_of_le (· ≤ ·) hf
 
+theorem monotone_nat_iff {f : ℕ → α} :
+    Monotone f ↔ ∀ n, f n ≤ f (n + 1) :=
+  ⟨fun h n ↦ h (Nat.le_succ n), monotone_nat_of_le_succ⟩
+
 theorem monotone_add_nat_of_le_succ {f : ℕ → α} {k : ℕ} (hf : ∀ n ≥ k, f n ≤ f (n + 1)) :
     Monotone (fun n ↦ f (n + k)) :=
   fun _ _ hle ↦ Nat.rel_of_forall_rel_succ_of_le_of_le (· ≤ ·) hf
@@ -560,6 +564,10 @@ theorem monotone_add_nat_iff_monotoneOn_nat_Ici {f : ℕ → α} {k : ℕ} :
 theorem antitone_nat_of_succ_le {f : ℕ → α} (hf : ∀ n, f (n + 1) ≤ f n) : Antitone f :=
   @monotone_nat_of_le_succ αᵒᵈ _ _ hf
 
+theorem antitone_nat_iff {f : ℕ → α} :
+    Antitone f ↔ ∀ n, f (n + 1) ≤ f n :=
+  ⟨fun h n ↦ h (Nat.le_succ n), antitone_nat_of_succ_le⟩
+
 theorem antitone_add_nat_of_succ_le {f : ℕ → α} {k : ℕ} (hf : ∀ n ≥ k, f (n + 1) ≤ f n) :
     Antitone (fun n ↦ f (n + k)) :=
   @monotone_add_nat_of_le_succ αᵒᵈ _ f k hf
@@ -579,6 +587,14 @@ theorem strictMono_nat_of_lt_succ {f : ℕ → α} (hf : ∀ n, f n < f (n + 1))
 
 theorem strictAnti_nat_of_succ_lt {f : ℕ → α} (hf : ∀ n, f (n + 1) < f n) : StrictAnti f :=
   @strictMono_nat_of_lt_succ αᵒᵈ _ f hf
+
+theorem strictMono_nat_iff {f : ℕ → α} :
+    StrictMono f ↔ ∀ n, f n < f (n + 1) :=
+  ⟨fun h n ↦ h (Nat.lt_succ_self n), strictMono_nat_of_lt_succ⟩
+
+theorem strictAnti_nat_iff {f : ℕ → α} :
+    StrictAnti f ↔ ∀ n, f (n + 1) < f n :=
+  ⟨fun h n ↦ h (Nat.lt_succ_self n), strictAnti_nat_of_succ_lt⟩
 
 namespace Nat
 

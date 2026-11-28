@@ -95,7 +95,7 @@ def mk : R[X] →+* AdjoinRoot f :=
 @[elab_as_elim]
 theorem induction_on {C : AdjoinRoot f → Prop} (x : AdjoinRoot f) (ih : ∀ p : R[X], C (mk f p)) :
     C x :=
-  Quotient.inductionOn' x ih
+  Quotient.inductionOn x ih
 
 /-- Embedding of the original ring `R` into `AdjoinRoot f`. -/
 def of : R →+* AdjoinRoot f :=
@@ -373,6 +373,11 @@ theorem algHom_subsingleton {S : Type*} [CommRing S] [Algebra R S] {r : R} :
 end AdjoinInv
 
 section Prime
+
+theorem isReduced_iff_isRadical : IsReduced (AdjoinRoot f) ↔ IsRadical f := by
+  rw [isRadical_iff_span_singleton, ← Ideal.mk_ker (I := span {f})]
+  exact (RingHom.ker_isRadical_iff_reduced_of_surjective
+    (Ideal.Quotient.mk_surjective (I := span {f}))).symm
 
 theorem isDomain_of_prime (hf : Prime f) : IsDomain (AdjoinRoot f) :=
   (Ideal.Quotient.isDomain_iff_prime (span {f} : Ideal R[X])).mpr <|
