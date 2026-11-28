@@ -82,7 +82,6 @@ instance : MulAction G (primesOver p B) where
 theorem coe_smul_primesOver (σ : G) (P : primesOver p B) : (σ • P).val = σ • P.val :=
   rfl
 
-@[simp]
 theorem coe_smul_primesOver_mk (σ : G) (P : Ideal B) [P.IsPrime] [P.LiesOver p] :
     (σ • primesOver.mk p P).val = σ • P :=
   rfl
@@ -188,6 +187,8 @@ variable (C : Type*) [CommRing C] [Algebra A C] [Algebra B C]
   (GAC : Type*) [Group GAC] [Finite GAC] [MulSemiringAction GAC C] [IsGaloisGroup GAC A C]
   (GBC : Type*) [Group GBC] [Finite GBC] [MulSemiringAction GBC C] [IsGaloisGroup GBC B C]
 
+-- Note that `hPp` is not needed in this section: indeed `Nonempty (P.primesOver C)` implies
+-- that `P` is prime (see `Ideal.isPrime_of_liesOver`).
 omit hPp
 
 include G GAC GBC in
