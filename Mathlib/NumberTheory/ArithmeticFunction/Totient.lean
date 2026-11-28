@@ -24,7 +24,7 @@ public import Mathlib.NumberTheory.ArithmeticFunction.Moebius
 
 @[expose] public section
 
-open Finset Nat
+open Nat
 
 variable {R : Type*}
 
@@ -53,13 +53,23 @@ theorem totient_mul_zeta : totient * ζ = .id := by
 theorem zeta_mul_totient : ζ * totient = .id := by
   rw [mul_comm, totient_mul_zeta]
 
-theorem coe_moebius_mul_coe_id [Ring R] :
-    (μ * ArithmeticFunction.id : ArithmeticFunction R) = totient := by
+variable (R) in
+@[simp]
+theorem coe_moebius_mul_coe_id [Ring R] : (μ * .id : ArithmeticFunction R) = totient := by
   rw [← zeta_mul_totient, natCoe_mul, ← mul_assoc, coe_moebius_mul_coe_zeta, one_mul]
 
-theorem coe_id_mul_coe_moebius [Ring R] :
-    (ArithmeticFunction.id * μ : ArithmeticFunction R) = totient := by
+variable (R) in
+@[simp]
+theorem coe_id_mul_coe_moebius [Ring R] : (.id * μ : ArithmeticFunction R) = totient := by
   rw [← totient_mul_zeta, natCoe_mul, mul_assoc, coe_zeta_mul_coe_moebius, mul_one]
+
+@[simp]
+theorem moebius_mul_coe_id : μ * .id = totient :=
+  coe_moebius_mul_coe_id ℤ
+
+@[simp]
+theorem coe_id_mul_moebius : .id * μ = totient :=
+  coe_id_mul_coe_moebius ℤ
 
 /-- The product of the totients of the lcm and of the gcd of two natural numbers is the product
 of their totients. -/
